@@ -10,16 +10,14 @@ LDFLAGS = -Llib -lglfw3dll -lopengl32 -lgdi32
 
 # Find all source files
 CPP_SRCS = $(wildcard $(SRC_DIR)/*.cpp)
-CPM_SRCS = $(wildcard $(SRC_DIR)/*.cppm)
 C_SRCS = $(wildcard $(SRC_DIR)/*.c)
 
 # Object files from sources
 OBJS = $(CPP_SRCS:$(SRC_DIR)/%.cpp=$(BIN_DIR)/%.o)
-MOD_OBJS = $(CPM_SRCS:$(SRC_DIR)/%.cppm=$(BIN_DIR)/%.o)
 C_OBJS = $(C_SRCS:$(SRC_DIR)/%.c=$(BIN_DIR)/%.o)
 
-# All objects to link (modules first, then C++, then C)
-ALL_OBJS = $(MOD_OBJS) $(OBJS) $(C_OBJS)
+# All objects to link (C++, then C)
+ALL_OBJS = $(OBJS) $(C_OBJS)
 
 # Default target
 all: $(TARGET)
