@@ -39,16 +39,16 @@ struct Camera {
         front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
         front.y = sin(glm::radians(pitch));
         front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+
         front = glm::normalize(front);
-        
         right = glm::normalize(glm::cross(front, worldUp));
-        up = glm::normalize(glm::cross(right, front));
+        up = glm::cross(right, front);
     }
 
-    void updateCameraPosition(float vx, float vy, float vz) {
-        position.x += vx;
-        position.y += vy;
-        position.z += vz;
+    void updateCameraPosition(float vx, float vy, float vz, float dt) {
+        position += front * vy * dt;
+        position += right * vx * dt;
+        position += worldUp * vz * dt;
     }
 };
 

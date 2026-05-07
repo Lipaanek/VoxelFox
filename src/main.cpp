@@ -12,19 +12,40 @@
 
 using namespace std;
 
+const float width = 1920;
+const float height = 1080;
+
 float velocityX = 0.0f;
 float velocityY = 0.0f;
 float velocityZ = 0.0f;
 
 const float speed = 0.05f;
+const float sens = 0.4f;
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
+double prevMouseX = 0;
+double prevMouseY = 0;
+
+float yaw;
+float pitch;
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-void input_fallback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
+void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
+    double dx = prevMouseX - xpos;
+    double dy = prevMouseY - ypos;
+
+    yaw += (float) dx * sens * -1;
+    pitch += (float) dy * sens;
+
+    pitch = glm::clamp(pitch, -89.0f, 89.0f);
+
+    prevMouseX = xpos;
+    prevMouseY = ypos;
+}
+
+void input_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_A && action == GLFW_PRESS)
         velocityX = -speed;
     if (key == GLFW_KEY_A && action == GLFW_RELEASE)
@@ -59,7 +80,7 @@ void input_fallback(GLFWwindow* window, int key, int scancode, int action, int m
 void setUniforms(int shaderProgram, Camera camera) {
     glm::mat4 model = glm::mat4(1.0f); // Identity, object at origin
     glm::mat4 view = camera.getViewMatrix();
-    glm::mat4 projection = camera.getProjectionMatrix(800.0f/600.0f);
+    glm::mat4 projection = camera.getProjectionMatrix(width/height);
 
     // Get & set uniform locations
     int modelLoc = glGetUniformLocation(shaderProgram, "model");
@@ -100,8 +121,7 @@ void clear() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-int main()
-{
+int main() {
     if (!glfwInit()) {
         printf("%s", "Failed to init a window");
 
@@ -128,8 +148,9 @@ int main()
         return -1;
     }
 
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, width, height);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSwapInterval(0);
 
     loadObject("src/meshes/test.obj");
     vector<Vertex> vertices = getWorldData();
@@ -150,22 +171,51 @@ int main()
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
 
-    glfwSetKeyCallback(window, input_fallback);
+    glfwSetKeyCallback(window, input_callback);
+    glfwSetCursorPosCallback(window, cursor_position_callback);
 
     Camera camera;
     camera.position = glm::vec3(0.0f, 0.0f, 5.0f);
     camera.updateCameraVectors();
+
+    // initializations
+    yaw = camera.yaw;
+    pitch = camera.pitch;
+
+    double previousTime = glfwGetTime(); // FPS
+    double previousFrame = glfwGetTime(); // Used for DT
+    int frameCount = 0;
 
     // main loop
     while(!glfwWindowShouldClose(window))
     {
         clear();
         predraw(mesh.VAO, shaderProgram);
-        camera.updateCameraPosition(velocityX, velocityY, velocityZ);
+
+        double currentTime = glfwGetTime();
+
+        camera.updateCameraPosition(velocityX, velocityY, velocityZ, currentTime - previousFrame);
+        camera.yaw = yaw;
+        camera.pitch = pitch;
+        camera.updateCameraVectors();
+
         setUniforms(shaderProgram, camera);
 
         draw(window, mesh.vertexCount);
         glfwPollEvents();   
+        
+        // FPS Counting
+        frameCount++;
+
+        if (currentTime - previousTime >= 1.0) {
+            printf("FPS: %d", frameCount);
+
+            frameCount = 0;
+            previousTime = currentTime;
+        }
+
+        // Update DT prevFrame var
+        previousFrame = currentTime;
     }
 
     glfwTerminate();
