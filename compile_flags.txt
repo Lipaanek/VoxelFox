@@ -1,0 +1,5 @@
+-std=c++20
+-fmodules-ts
+-Iinclude
+-Isrc
+-Wall
