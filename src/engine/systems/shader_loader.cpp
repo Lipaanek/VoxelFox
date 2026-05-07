@@ -2,9 +2,10 @@
 #include <sstream>
 #include <string>
 #include <iostream>
-#include "headers/shader_loader.hpp"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
+#include "../../headers/shader_loader.hpp"
 
 using namespace std;
 
@@ -13,7 +14,7 @@ string loadFile(const char* path)
     ifstream file(path, ios::in);
     if (!file.is_open())
     {
-        // Log failed file open
+        // Log failed file opening
         printf("Failed to open file: %s \n", path);
         return "";
     }

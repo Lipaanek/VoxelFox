@@ -9,8 +9,8 @@ TARGET   = $(BIN_DIR)/voxelfox.exe
 LDFLAGS = -Llib -lglfw3dll -lopengl32 -lgdi32
 
 # Find all source files
-CPP_SRCS = $(wildcard $(SRC_DIR)/*.cpp)
-C_SRCS = $(wildcard $(SRC_DIR)/*.c)
+CPP_SRCS = $(shell dir /s /b $(SRC_DIR)\*.cpp)
+C_SRCS   = $(shell dir /s /b $(SRC_DIR)\*.c)
 
 # Object files from sources
 OBJS = $(CPP_SRCS:$(SRC_DIR)/%.cpp=$(BIN_DIR)/%.o)
