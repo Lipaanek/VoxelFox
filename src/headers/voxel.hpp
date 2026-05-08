@@ -3,12 +3,20 @@
 
 #include <glm/glm.hpp>
 #include <functional>
+#include <vector>
 
 using namespace std;
 
 struct Voxel {
     glm::ivec3 position;
     bool solid;
+};
+
+struct VoxelChunk {
+    glm::ivec3 chunkPos;
+    glm::ivec3 chunkSize = glm::ivec3(32);
+    float voxelSize = 0.1f;
+    vector<Voxel> voxels;
 };
 
 struct VoxelHash {

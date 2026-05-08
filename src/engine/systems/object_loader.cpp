@@ -95,10 +95,10 @@ void parseFillLine(const string& line) {
             vi3 >= static_cast<int>(vertices.size())) continue;
 
         // Determine normal for this triangle
-        glm::vec3 normal(0.0f, 1.0f, 0.0f);
+        glm::vec4 normal(0.0f, 1.0f, 0.0f, 0.0f);
         int ni1 = faceIndices[0].second;
         if (ni1 >= 0 && ni1 < static_cast<int>(normals.size())) {
-            normal = normals[ni1];
+            normal = glm::vec4(normals[ni1], 0.0f);
         }
 
         // Create the three vertices for this triangle

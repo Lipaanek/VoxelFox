@@ -79,11 +79,10 @@ void input_callback(GLFWwindow* window, int key, int scancode, int action, int m
 }
 
 void setUniforms(int shaderProgram, Camera camera) {
-    glm::mat4 model = glm::mat4(1.0f); // Identity, object at origin
+    glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 view = camera.getViewMatrix();
     glm::mat4 projection = camera.getProjectionMatrix(width/height);
 
-    // Get & set uniform locations
     int modelLoc = glGetUniformLocation(shaderProgram, "model");
     int viewLoc = glGetUniformLocation(shaderProgram, "view");
     int projLoc = glGetUniformLocation(shaderProgram, "projection");
@@ -92,7 +91,6 @@ void setUniforms(int shaderProgram, Camera camera) {
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
-    // Get & Set lighting uniforms
     int viewPosLoc = glGetUniformLocation(shaderProgram, "viewPos");
     int lightPosLoc = glGetUniformLocation(shaderProgram, "lightPos");
     int lightColorLoc = glGetUniformLocation(shaderProgram, "lightColor");
@@ -109,14 +107,12 @@ void draw(GLFWwindow* window, int vertexCount) {
     glfwSwapBuffers(window);
 }
 
-// setup shaders and all that
 void predraw(int VAO, int shaderProgram) {
     glUseProgram(shaderProgram);
     glBindVertexArray(VAO);
     glEnable(GL_DEPTH_TEST);
 }
 
-// clear screen
 void clear() {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -125,7 +121,6 @@ void clear() {
 int main() {
     if (!glfwInit()) {
         printf("%s", "Failed to init a window");
-
         return -1;
     }
 
@@ -136,15 +131,13 @@ int main() {
 
     GLFWwindow* window;
     window = glfwCreateWindow(800, 600, "VoxelFox", NULL, NULL);
-    if (window == NULL)
-    {
+    if (window == NULL) {
         printf("Failed to open GLFW window");
         return -1;
     }
     glfwMakeContextCurrent(window);
 
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         printf("Failed to initialize GLAD");
         return -1;
     }
@@ -152,25 +145,22 @@ int main() {
     glViewport(0, 0, width, height);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-    // Load object
-    loadObject("src/meshes/weapon.obj");
+    loadObject("src/meshes/Studanka2.obj");
     vector<Vertex> vertices = getWorldData();
 
-    // Voxelize vertices
-    //vector<Voxel> voxels = voxelize(vertices);
-
-    // For now just normal mesh
+    float voxelSize = 1.0f;
+    //vector<VoxelChunk> chunks = voxelizeGPU(vertices, voxelSize);
+    
+    //saveChunks(chunks, "Studanka2.vox");
+    
     Mesh mesh = createMesh(vertices);
 
-    // both internal shaders are loaded
     string vertexCode = loadFile("src/shaders/vertex.glsl");
     string fragmentCode = loadFile("src/shaders/fragment.glsl");
 
-    // compile them both
     unsigned int vertexShader = compileShader(GL_VERTEX_SHADER, vertexCode);
     unsigned int fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragmentCode);
 
-    // shader where I bind all the shaders
     unsigned int shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
@@ -181,45 +171,38 @@ int main() {
 
     Camera camera;
     camera.position = glm::vec3(0.0f, 0.0f, 5.0f);
+    camera.yaw = 0.0f;
+    camera.pitch = 0.0f;
     camera.updateCameraVectors();
 
-    // initializations
-    yaw = camera.yaw;
-    pitch = camera.pitch;
-
-    double previousTime = glfwGetTime(); // FPS
-    double previousFrame = glfwGetTime(); // Used for DT
+    double previousTime = glfwGetTime();
+    double previousFrame = glfwGetTime();
     int frameCount = 0;
 
-    // main loop
-    while(!glfwWindowShouldClose(window))
-    {
+    while(!glfwWindowShouldClose(window)) {
         clear();
         predraw(mesh.VAO, shaderProgram);
 
         double currentTime = glfwGetTime();
 
-        camera.updateCameraPosition(velocityX, velocityY, velocityZ, currentTime - previousFrame);
         camera.yaw = yaw;
         camera.pitch = pitch;
         camera.updateCameraVectors();
+        camera.updateCameraPosition(velocityX, velocityY, velocityZ, currentTime - previousFrame);
 
         setUniforms(shaderProgram, camera);
 
         draw(window, mesh.vertexCount);
         glfwPollEvents();   
-        
-        // FPS Counting
+
         frameCount++;
 
         if (currentTime - previousTime >= 1.0) {
             printf("FPS: %d", frameCount);
-
             frameCount = 0;
             previousTime = currentTime;
         }
 
-        // Update DT prevFrame var
         previousFrame = currentTime;
     }
 

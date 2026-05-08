@@ -110,3 +110,24 @@ vector<Vertex> turnIntoVertices(const vector<Voxel>& voxels) {
 Mesh createMesh(const vector<Voxel>& voxels) {
     return createMesh(turnIntoVertices(voxels));
 }
+
+vector<Vertex> turnChunksIntoVertices(const vector<VoxelChunk>& chunks) {
+    vector<Vertex> vertices;
+    
+    for (const VoxelChunk& chunk : chunks) {
+        glm::vec3 chunkOrigin = glm::vec3(chunk.chunkPos) * glm::vec3(chunk.chunkSize) * chunk.voxelSize;
+        
+        for (const Voxel& v : chunk.voxels) {
+            if (!v.solid) continue;
+            
+            glm::vec3 worldPos = glm::vec3(v.position) * chunk.voxelSize + chunkOrigin;
+            addCube(worldPos, chunk.voxelSize, vertices);
+        }
+    }
+    
+    return vertices;
+}
+
+Mesh createMesh(const vector<VoxelChunk>& chunks) {
+    return createMesh(turnChunksIntoVertices(chunks));
+}

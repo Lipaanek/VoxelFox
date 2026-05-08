@@ -1,8 +1,8 @@
 # variables
 CXX = g++
 CC = gcc
-CXXFLAGS = -std=c++20 -Wall -Iinclude -fmodules-ts
-CFLAGS = -Wall -Iinclude
+CXXFLAGS = -std=c++20 -Wall -Iinclude -Isrc/include -fmodules-ts
+CFLAGS = -Wall -Iinclude -Isrc/include
 SRC_DIR  = src
 BIN_DIR  = bin
 TARGET   = $(BIN_DIR)/voxelfox.exe

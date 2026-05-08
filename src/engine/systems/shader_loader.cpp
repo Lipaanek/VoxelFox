@@ -14,14 +14,13 @@ string loadFile(const char* path)
     ifstream file(path, ios::in);
     if (!file.is_open())
     {
-        // Log failed file opening
         printf("Failed to open file: %s \n", path);
         return "";
     }
 
     stringstream buffer;
-    buffer << file.rdbuf(); // write to buffer
-    return buffer.str(); // return file contents
+    buffer << file.rdbuf();
+    return buffer.str();
 }
 
 unsigned int compileShader(unsigned int type, const string& source)

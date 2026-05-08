@@ -13,7 +13,7 @@ struct Camera {
     
     float yaw = -90.0f;
     float pitch = 0.0f;
-    float zoom = 45.0f; // FOV
+    float zoom = 45.0f;
     
     float nearPlane = 0.1f;
     float farPlane = 100.0f;
@@ -27,7 +27,8 @@ struct Camera {
     }
     
     glm::mat4 getViewMatrix() const {
-        return glm::lookAt(position, position + front, up);
+        
+        return glm::lookAt(position, position + front, worldUp);
     }
     
     glm::mat4 getProjectionMatrix(float aspectRatio) const {
@@ -35,7 +36,6 @@ struct Camera {
     }
     
     void updateCameraVectors() {
-        // Calculate front from yaw/pitch
         front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
         front.y = sin(glm::radians(pitch));
         front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
