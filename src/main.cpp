@@ -20,7 +20,7 @@ float velocityX = 0.0f;
 float velocityY = 0.0f;
 float velocityZ = 0.0f;
 
-const float speed = 1.0f;
+const float speed = 10.0f;
 const float sens = 0.4f;
 
 double prevMouseX = 0;
@@ -152,12 +152,15 @@ int main() {
     glViewport(0, 0, width, height);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-    loadObject("src/meshes/test.obj");
+    // Load object
+    loadObject("src/meshes/weapon.obj");
     vector<Vertex> vertices = getWorldData();
 
     // Voxelize vertices
-    vector<Voxel> voxels = voxelize(vertices);
-    Mesh mesh = createMesh(voxels);
+    //vector<Voxel> voxels = voxelize(vertices);
+
+    // For now just normal mesh
+    Mesh mesh = createMesh(vertices);
 
     // both internal shaders are loaded
     string vertexCode = loadFile("src/shaders/vertex.glsl");
