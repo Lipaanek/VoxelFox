@@ -9,6 +9,7 @@
 #include "headers/mesh.hpp"
 #include "headers/object_loader.hpp"
 #include "headers/camera.hpp"
+#include "headers/voxelizer.hpp"
 
 using namespace std;
 
@@ -19,7 +20,7 @@ float velocityX = 0.0f;
 float velocityY = 0.0f;
 float velocityZ = 0.0f;
 
-const float speed = 0.05f;
+const float speed = 1.0f;
 const float sens = 0.4f;
 
 double prevMouseX = 0;
@@ -98,7 +99,7 @@ void setUniforms(int shaderProgram, Camera camera) {
     int objectColorLoc = glGetUniformLocation(shaderProgram, "objectColor");
 
     glUniform3fv(viewPosLoc, 1, glm::value_ptr(camera.position));
-    glUniform3f(lightPosLoc, 1.0f, 1.0f, 1.0f);
+    glUniform3f(lightPosLoc, camera.position.x, camera.position.y, camera.position.z);
     glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);
     glUniform3f(objectColorLoc, 0.8f, 0.5f, 0.2f);
 }
@@ -150,12 +151,13 @@ int main() {
 
     glViewport(0, 0, width, height);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-    glfwSwapInterval(0);
 
     loadObject("src/meshes/test.obj");
     vector<Vertex> vertices = getWorldData();
 
-    Mesh mesh = createMesh(vertices);
+    // Voxelize vertices
+    vector<Voxel> voxels = voxelize(vertices);
+    Mesh mesh = createMesh(voxels);
 
     // both internal shaders are loaded
     string vertexCode = loadFile("src/shaders/vertex.glsl");

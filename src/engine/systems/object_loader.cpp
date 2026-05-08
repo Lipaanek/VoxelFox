@@ -65,7 +65,7 @@ void processLine(string line) {
     }
 }
 
-Mesh loadObject(string path) {
+void loadObject(string path) {
     ifstream file(path);
 
     string line;
@@ -81,10 +81,6 @@ Mesh loadObject(string path) {
     else {
         printf("Failed to read file");
     }
-
-    Mesh mesh;
-
-    return mesh;
 }
 
 vector<Vertex> getWorldData() {

@@ -2,6 +2,7 @@
 #define MESH_HPP
 
 #include "vertex.hpp"
+#include "voxel.hpp"
 using namespace std;
 
 // Each mesh is new object in GPU
@@ -13,5 +14,6 @@ struct Mesh
 };
 
 Mesh createMesh(const vector<Vertex>& vertices);
+Mesh createMesh(const vector<Voxel>& voxels);
 
 #endif

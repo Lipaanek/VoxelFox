@@ -9,6 +9,6 @@
 using namespace std;
 
 vector<Vertex> getWorldData();
-Mesh loadObject(string path);
+void loadObject(string path);
 
 #endif
