@@ -1,19 +1,37 @@
 #ifndef VERTEX_HPP
 #define VERTEX_HPP
 #include <glm/glm.hpp>
+#include <functional>
 
-struct Vertex
-{
-    glm::vec4 position; // Use vec4 for GPU alignment (w is ignored)
-    glm::vec4 normal;   // Use vec4 for GPU alignment (w is ignored)
-    glm::vec2 uv;
-    glm::vec2 padding;  // Keep the struct a multiple of 16 bytes for std430
+struct Vertex {
+    glm::vec3 position{};
+    glm::vec3 normal{};
+    glm::vec2 uv{};
 
-    Vertex(glm::vec3 pos, glm::vec3 norm, glm::vec2 texCoord)
-        : position(glm::vec4(pos, 0.0f)), normal(glm::vec4(norm, 0.0f)), uv(texCoord), padding(0.0f) {}
+    [[nodiscard]] Vertex() = default;
+    [[nodiscard]] Vertex(glm::vec3 pos, glm::vec3 norm, glm::vec2 texCoord)
+        : position(pos), normal(norm), uv(texCoord) {}
 
-    Vertex(glm::vec4 pos, glm::vec4 norm, glm::vec2 texCoord, glm::vec2 pad = glm::vec2(0.0f))
-        : position(pos), normal(norm), uv(texCoord), padding(pad) {}
+    bool operator==(const Vertex& other) const {
+        return position == other.position && normal == other.normal && uv == other.uv;
+    }
 };
+
+namespace std {
+    template<>
+    struct hash<Vertex> {
+        size_t operator()(const Vertex& v) const noexcept {
+            size_t h1 = std::hash<float>{}(v.position.x) ^ 
+                        (std::hash<float>{}(v.position.y) << 1) ^ 
+                        (std::hash<float>{}(v.position.z) << 2);
+            size_t h2 = std::hash<float>{}(v.normal.x) ^ 
+                        (std::hash<float>{}(v.normal.y) << 1) ^ 
+                        (std::hash<float>{}(v.normal.z) << 2);
+            size_t h3 = std::hash<float>{}(v.uv.x) ^ 
+                        (std::hash<float>{}(v.uv.y) << 1);
+            return h1 ^ (h2 << 1) ^ (h3 << 2);
+        }
+    };
+}
 
 #endif

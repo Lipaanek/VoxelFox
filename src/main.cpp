@@ -9,7 +9,6 @@
 #include "headers/mesh.hpp"
 #include "headers/object_loader.hpp"
 #include "headers/camera.hpp"
-#include "headers/voxelizer.hpp"
 
 using namespace std;
 
@@ -102,17 +101,6 @@ void setUniforms(int shaderProgram, Camera camera) {
     glUniform3f(objectColorLoc, 0.8f, 0.5f, 0.2f);
 }
 
-void draw(GLFWwindow* window, int vertexCount) {
-    glDrawArrays(GL_TRIANGLES, 0, vertexCount);
-    glfwSwapBuffers(window);
-}
-
-void predraw(int VAO, int shaderProgram) {
-    glUseProgram(shaderProgram);
-    glBindVertexArray(VAO);
-    glEnable(GL_DEPTH_TEST);
-}
-
 void clear() {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -143,17 +131,15 @@ int main() {
     }
 
     glViewport(0, 0, width, height);
+    glEnable(GL_DEPTH_TEST);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-    loadObject("src/meshes/Studanka2.obj");
-    vector<Vertex> vertices = getWorldData();
+    ObjectLoader loader;
+    if (!loader.load("src/meshes/Studanka2.obj")) {
+        return -1;
+    }
 
-    float voxelSize = 1.0f;
-    //vector<VoxelChunk> chunks = voxelizeGPU(vertices, voxelSize);
-    
-    //saveChunks(chunks, "Studanka2.vox");
-    
-    Mesh mesh = createMesh(vertices);
+    Mesh mesh(loader.getVertices(), loader.getIndices());
 
     string vertexCode = loadFile("src/shaders/vertex.glsl");
     string fragmentCode = loadFile("src/shaders/fragment.glsl");
@@ -181,7 +167,7 @@ int main() {
 
     while(!glfwWindowShouldClose(window)) {
         clear();
-        predraw(mesh.VAO, shaderProgram);
+        glUseProgram(shaderProgram);
 
         double currentTime = glfwGetTime();
 
@@ -192,8 +178,9 @@ int main() {
 
         setUniforms(shaderProgram, camera);
 
-        draw(window, mesh.vertexCount);
-        glfwPollEvents();   
+        mesh.draw();
+        glfwSwapBuffers(window);
+        glfwPollEvents();
 
         frameCount++;
 

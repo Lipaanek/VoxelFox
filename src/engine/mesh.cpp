@@ -1,133 +1,124 @@
 #include "../headers/mesh.hpp"
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include <utility>
 
-using namespace std;
+Mesh::Mesh(const std::vector<Vertex>& vertices) {
+    setupMesh(vertices);
+}
 
-Mesh createMesh(const vector<Vertex>& vertices)
-{
-    Mesh mesh;
-    mesh.vertexCount = (int)vertices.size();
+Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices) {
+    setupMesh(vertices, indices);
+}
 
-    glGenVertexArrays(1, &mesh.VAO); // Make the vert array
-    glGenBuffers(1, &mesh.VBO); // Make the buffer
+Mesh::~Mesh() {
+    if (VAO != 0) {
+        glDeleteVertexArrays(1, &VAO);
+    }
+    if (VBO != 0) {
+        glDeleteBuffers(1, &VBO);
+    }
+    if (EBO != 0) {
+        glDeleteBuffers(1, &EBO);
+    }
+}
 
-    glBindVertexArray(mesh.VAO); // Add vert array
+Mesh::Mesh(Mesh&& other) noexcept
+    : VAO(other.VAO), VBO(other.VBO), EBO(other.EBO), indexCount(other.indexCount) {
+    other.VAO = 0;
+    other.VBO = 0;
+    other.EBO = 0;
+    other.indexCount = 0;
+}
 
-    glBindBuffer(GL_ARRAY_BUFFER, mesh.VBO);
+Mesh& Mesh::operator=(Mesh&& other) noexcept {
+    if (this != &other) {
+        glDeleteVertexArrays(1, &VAO);
+        glDeleteBuffers(1, &VBO);
+        glDeleteBuffers(1, &EBO);
+
+        VAO = other.VAO;
+        VBO = other.VBO;
+        EBO = other.EBO;
+        indexCount = other.indexCount;
+
+        other.VAO = 0;
+        other.VBO = 0;
+        other.EBO = 0;
+        other.indexCount = 0;
+    }
+    return *this;
+}
+
+void Mesh::draw() const {
+    glBindVertexArray(VAO);
+    if (EBO != 0 && indexCount > 0) {
+        glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
+    } else {
+        glDrawArrays(GL_TRIANGLES, 0, indexCount);
+    }
+    glBindVertexArray(0);
+}
+
+void Mesh::setupMesh(const std::vector<Vertex>& vertices) {
+    indexCount = static_cast<GLsizei>(vertices.size());
+
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+
+    glBindVertexArray(VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER,
                  vertices.size() * sizeof(Vertex),
-                 vertices.data(), // set the buffer data onto the GPU memory
+                 vertices.data(),
                  GL_STATIC_DRAW);
 
-    glVertexAttribPointer(
-        0,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        sizeof(Vertex),
-        (void*) offsetof(Vertex, position)
-    );
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          reinterpret_cast<void*>(offsetof(Vertex, position)));
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        sizeof(Vertex), 
-        (void*)offsetof(Vertex, normal));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          reinterpret_cast<void*>(offsetof(Vertex, normal)));
     glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(
-        2, 
-        2, 
-        GL_FLOAT, 
-        GL_FALSE, 
-        sizeof(Vertex), 
-        (void*)offsetof(Vertex, uv));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          reinterpret_cast<void*>(offsetof(Vertex, uv)));
     glEnableVertexAttribArray(2);
 
-    return mesh;
+    glBindVertexArray(0);
 }
 
-void addCube(const glm::vec3& p, float s, vector<Vertex>& out) {
-    glm::vec3 h = glm::vec3(s * 0.5f);
+void Mesh::setupMesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices) {
+    indexCount = static_cast<GLsizei>(indices.size());
 
-    glm::vec3 v[8] = {
-        p + glm::vec3(-h.x, -h.y, -h.z),
-        p + glm::vec3( h.x, -h.y, -h.z),
-        p + glm::vec3( h.x,  h.y, -h.z),
-        p + glm::vec3(-h.x,  h.y, -h.z),
-        p + glm::vec3(-h.x, -h.y,  h.z),
-        p + glm::vec3( h.x, -h.y,  h.z),
-        p + glm::vec3( h.x,  h.y,  h.z),
-        p + glm::vec3(-h.x,  h.y,  h.z)
-    };
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
 
-    int faces[36] = {
-        0,1,2, 2,3,0,
-        1,5,6, 6,2,1,
-        5,4,7, 7,6,5,
-        4,0,3, 3,7,4,
-        3,2,6, 6,7,3,
-        4,5,1, 1,0,4
-    };
+    glBindVertexArray(VAO);
 
-    glm::vec3 normals[6] = {
-        { 0,0,-1 }, { 1,0,0 }, { 0,0,1 },
-        { -1,0,0 }, { 0,1,0 }, { 0,-1,0 }
-    };
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER,
+                 vertices.size() * sizeof(Vertex),
+                 vertices.data(),
+                 GL_STATIC_DRAW);
 
-    for (int i = 0; i < 36; i += 3) {
-        int f0 = faces[i];
-        int f1 = faces[i+1];
-        int f2 = faces[i+2];
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 indices.size() * sizeof(uint32_t),
+                 indices.data(),
+                 GL_STATIC_DRAW);
 
-        glm::vec3 normal = normals[i / 6];
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          reinterpret_cast<void*>(offsetof(Vertex, position)));
+    glEnableVertexAttribArray(0);
 
-        out.push_back({ v[f0], normal, {0,0} });
-        out.push_back({ v[f1], normal, {0,0} });
-        out.push_back({ v[f2], normal, {0,0} });
-    }
-}
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          reinterpret_cast<void*>(offsetof(Vertex, normal)));
+    glEnableVertexAttribArray(1);
 
-vector<Vertex> turnIntoVertices(const vector<Voxel>& voxels) {
-    vector<Vertex> vertices;
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          reinterpret_cast<void*>(offsetof(Vertex, uv)));
+    glEnableVertexAttribArray(2);
 
-    float voxelSize = 0.1f;
-
-    for (const Voxel& v : voxels) {
-        if (!v.solid) continue;
-
-        glm::vec3 worldPos = glm::vec3(v.position) * voxelSize;
-
-        addCube(worldPos, voxelSize, vertices);
-    }
-
-    return vertices;
-}
-
-Mesh createMesh(const vector<Voxel>& voxels) {
-    return createMesh(turnIntoVertices(voxels));
-}
-
-vector<Vertex> turnChunksIntoVertices(const vector<VoxelChunk>& chunks) {
-    vector<Vertex> vertices;
-    
-    for (const VoxelChunk& chunk : chunks) {
-        glm::vec3 chunkOrigin = glm::vec3(chunk.chunkPos) * glm::vec3(chunk.chunkSize) * chunk.voxelSize;
-        
-        for (const Voxel& v : chunk.voxels) {
-            if (!v.solid) continue;
-            
-            glm::vec3 worldPos = glm::vec3(v.position) * chunk.voxelSize + chunkOrigin;
-            addCube(worldPos, chunk.voxelSize, vertices);
-        }
-    }
-    
-    return vertices;
-}
-
-Mesh createMesh(const vector<VoxelChunk>& chunks) {
-    return createMesh(turnChunksIntoVertices(chunks));
+    glBindVertexArray(0);
 }

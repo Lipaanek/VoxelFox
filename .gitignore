@@ -3,3 +3,4 @@ bin/
 gcm.cache/
 .kilo/
 src/meshes/*.obj
+explanation/
