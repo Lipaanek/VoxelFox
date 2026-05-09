@@ -66,7 +66,6 @@ bool voxelIntersectsTriangle(vec3 voxelMin, vec3 voxelMax, Triangle t) {
     axes[3] = axis1;
     axes[4] = axis2;
 
-    bool satFailed = false;
     for (int i = 0; i < 5; i++) {
         vec3 axis = normalize(axes[i]);
         if (length(axis) < 0.0001) continue;
@@ -78,31 +77,39 @@ bool voxelIntersectsTriangle(vec3 voxelMin, vec3 voxelMax, Triangle t) {
         float projTriMax = max(max(dot(t.p0, axis), dot(t.p1, axis)), dot(t.p2, axis));
 
         if (projVoxelMax < projTriMin || projTriMax < projVoxelMin) {
-            satFailed = true;
-            break;
+            return false;
         }
     }
 
-    if (satFailed) {
-        vec3 corners[8];
-        corners[0] = voxelMin;
-        corners[1] = vec3(voxelMax.x, voxelMin.y, voxelMin.z);
-        corners[2] = vec3(voxelMax.x, voxelMax.y, voxelMin.z);
-        corners[3] = vec3(voxelMin.x, voxelMax.y, voxelMin.z);
-        corners[4] = vec3(voxelMin.x, voxelMin.y, voxelMax.z);
-        corners[5] = vec3(voxelMax.x, voxelMin.y, voxelMax.z);
-        corners[6] = voxelMax;
-        corners[7] = vec3(voxelMin.x, voxelMax.y, voxelMax.z);
+    vec3 corners[8];
+    corners[0] = voxelMin;
+    corners[1] = vec3(voxelMax.x, voxelMin.y, voxelMin.z);
+    corners[2] = vec3(voxelMax.x, voxelMax.y, voxelMin.z);
+    corners[3] = vec3(voxelMin.x, voxelMax.y, voxelMin.z);
+    corners[4] = vec3(voxelMin.x, voxelMin.y, voxelMax.z);
+    corners[5] = vec3(voxelMax.x, voxelMin.y, voxelMax.z);
+    corners[6] = voxelMax;
+    corners[7] = vec3(voxelMin.x, voxelMax.y, voxelMax.z);
 
-        for (int j = 0; j < 8; j++) {
-            if (pointInTriangle(corners[j], t)) {
-                return true;
-            }
+    for (int j = 0; j < 8; j++) {
+        if (pointInTriangle(corners[j], t)) {
+            return true;
         }
-        return false;
     }
 
-    return true;
+    if ((t.p0.x >= voxelMin.x && t.p0.x <= voxelMax.x &&
+         t.p0.y >= voxelMin.y && t.p0.y <= voxelMax.y &&
+         t.p0.z >= voxelMin.z && t.p0.z <= voxelMax.z) ||
+        (t.p1.x >= voxelMin.x && t.p1.x <= voxelMax.x &&
+         t.p1.y >= voxelMin.y && t.p1.y <= voxelMax.y &&
+         t.p1.z >= voxelMin.z && t.p1.z <= voxelMax.z) ||
+        (t.p2.x >= voxelMin.x && t.p2.x <= voxelMax.x &&
+         t.p2.y >= voxelMin.y && t.p2.y <= voxelMax.y &&
+         t.p2.z >= voxelMin.z && t.p2.z <= voxelMax.z)) {
+        return true;
+    }
+
+    return false;
 }
 
 void main() {

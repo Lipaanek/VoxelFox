@@ -84,12 +84,15 @@ bool voxelIntersectsTriangle(const AABB& voxel, const Triangle& t) {
     glm::vec3 halfExtents = (voxel.max - voxel.min) * 0.5f;
 
     glm::vec3 normal = computeTriangleNormal(t);
+    glm::vec3 crossEdge = glm::cross(normal, glm::vec3(1, 0, 0));
+    glm::vec3 edgeAxis = glm::length(crossEdge) < 0.0001f ? glm::vec3(0, 0, 1) : glm::normalize(crossEdge);
+
     glm::vec3 axes[5] = {
         glm::vec3(1, 0, 0),
         glm::vec3(0, 1, 0),
         glm::vec3(0, 0, 1),
         normal,
-        glm::normalize(glm::cross(normal, glm::vec3(1, 0, 0)))
+        edgeAxis
     };
 
     for (int i = 0; i < 5; ++i) {
@@ -130,6 +133,15 @@ bool voxelIntersectsTriangle(const AABB& voxel, const Triangle& t) {
         if (pointInTriangle(testPoints[i], t)) {
             return true;
         }
+    }
+
+    auto pointInVoxel = [&](const glm::vec3& p) {
+        return p.x >= voxel.min.x && p.x <= voxel.max.x &&
+               p.y >= voxel.min.y && p.y <= voxel.max.y &&
+               p.z >= voxel.min.z && p.z <= voxel.max.z;
+    };
+    if (pointInVoxel(t.p0) || pointInVoxel(t.p1) || pointInVoxel(t.p2)) {
+        return true;
     }
 
     return false;
@@ -199,22 +211,19 @@ vector<VoxelChunk> voxelizeGPU(vector<Vertex> vertices, vector<uint32_t> indices
 
 VoxelMesh generateVoxelMesh(const std::vector<VoxelChunk>& chunks) {
     VoxelMesh result;
-    std::vector<uint32_t> indices;
     std::vector<Vertex> vertices;
-    uint32_t vertexOffset = 0;
+    std::vector<uint32_t> indices;
 
-    static const glm::vec3 cubeVerts[8] = {
-        {0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0},
-        {0, 0, 1}, {1, 0, 1}, {1, 1, 1}, {0, 1, 1}
+    static const glm::vec3 faceVerts[6][4] = {
+        {{0,0,0}, {1,0,0}, {1,1,0}, {0,1,0}},
+        {{0,0,1}, {0,1,1}, {1,1,1}, {1,0,1}},
+        {{0,0,0}, {0,1,0}, {0,1,1}, {0,0,1}},
+        {{1,0,0}, {1,0,1}, {1,1,1}, {1,1,0}},
+        {{0,0,0}, {0,0,1}, {1,0,1}, {1,0,0}},
+        {{0,1,0}, {1,1,0}, {1,1,1}, {0,1,1}},
     };
-
-    static const uint32_t cubeIndices[36] = {
-        0, 2, 1, 0, 3, 2,
-        4, 5, 6, 4, 6, 7,
-        0, 1, 5, 0, 5, 4,
-        2, 3, 7, 2, 7, 6,
-        0, 4, 7, 0, 7, 3,
-        1, 2, 6, 1, 6, 5
+    static const glm::vec3 faceNormals[6] = {
+        {0,0,-1}, {0,0,1}, {-1,0,0}, {1,0,0}, {0,-1,0}, {0,1,0},
     };
 
     for (const auto& chunk : chunks) {
@@ -229,15 +238,19 @@ VoxelMesh generateVoxelMesh(const std::vector<VoxelChunk>& chunks) {
 
                     glm::vec3 basePos = chunkWorldPos + glm::vec3(x, y, z) * voxelSize;
 
-                    for (int i = 0; i < 8; ++i) {
-                        glm::vec3 pos = basePos + cubeVerts[i] * voxelSize;
-                        vertices.push_back({pos, {0, 0, 1}, {0, 0}});
+                    for (int face = 0; face < 6; ++face) {
+                        uint32_t faceStart = static_cast<uint32_t>(vertices.size());
+                        for (int v = 0; v < 4; ++v) {
+                            glm::vec3 pos = basePos + faceVerts[face][v] * voxelSize;
+                            vertices.push_back({pos, faceNormals[face], {0, 0}});
+                        }
+                        indices.push_back(faceStart + 0);
+                        indices.push_back(faceStart + 1);
+                        indices.push_back(faceStart + 2);
+                        indices.push_back(faceStart + 0);
+                        indices.push_back(faceStart + 2);
+                        indices.push_back(faceStart + 3);
                     }
-
-                    for (int i = 0; i < 36; ++i) {
-                        indices.push_back(vertexOffset + cubeIndices[i]);
-                    }
-                    vertexOffset += 8;
                 }
             }
         }

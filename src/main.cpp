@@ -16,6 +16,8 @@ using namespace std;
 const float width = 1920;
 const float height = 1080;
 
+const float voxelSize = 0.1f;
+
 float velocityX = 0.0f;
 float velocityY = 0.0f;
 float velocityZ = 0.0f;
@@ -136,7 +138,7 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     ObjectLoader loader;
-    if (!loader.load("src/meshes/weapon.obj")) {
+    if (!loader.load("src/meshes/Studanka2.obj")) {
         printf("Failed to load mesh\n");
         return -1;
     }
@@ -144,11 +146,11 @@ int main() {
 
 Mesh mesh(loader.getVertices(), loader.getIndices());
 
-    std::vector<VoxelChunk> voxelChunks = voxelizeGPUCompute(loader.getVertices(), loader.getIndices(), 0.1f);
+    std::vector<VoxelChunk> voxelChunks = voxelizeGPUCompute(loader.getVertices(), loader.getIndices(), voxelSize);
     printf("Voxel chunks generated: %zu\n", voxelChunks.size());
     if (voxelChunks.empty()) {
         printf("Failed to generate voxel chunks, falling back to CPU voxelization\n");
-        voxelChunks = voxelizeGPU(loader.getVertices(), loader.getIndices(), 0.1f);
+        voxelChunks = voxelizeGPU(loader.getVertices(), loader.getIndices(), voxelSize);
         printf("CPU voxel chunks generated: %zu\n", voxelChunks.size());
     }
     if (voxelChunks.empty()) {
