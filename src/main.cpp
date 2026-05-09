@@ -9,6 +9,7 @@
 #include "headers/mesh.hpp"
 #include "headers/object_loader.hpp"
 #include "headers/camera.hpp"
+#include "headers/voxelizer.hpp"
 
 using namespace std;
 
@@ -113,7 +114,7 @@ int main() {
     }
 
     glfwWindowHint(GLFW_SAMPLES, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -135,11 +136,27 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     ObjectLoader loader;
-    if (!loader.load("src/meshes/Studanka2.obj")) {
+    if (!loader.load("src/meshes/weapon.obj")) {
+        printf("Failed to load mesh\n");
         return -1;
     }
+    printf("Mesh loaded: %zu vertices, %zu indices\n", loader.getVertices().size(), loader.getIndices().size());
 
-    Mesh mesh(loader.getVertices(), loader.getIndices());
+Mesh mesh(loader.getVertices(), loader.getIndices());
+
+    std::vector<VoxelChunk> voxelChunks = voxelizeGPUCompute(loader.getVertices(), loader.getIndices(), 0.1f);
+    printf("Voxel chunks generated: %zu\n", voxelChunks.size());
+    if (voxelChunks.empty()) {
+        printf("Failed to generate voxel chunks, falling back to CPU voxelization\n");
+        voxelChunks = voxelizeGPU(loader.getVertices(), loader.getIndices(), 0.1f);
+        printf("CPU voxel chunks generated: %zu\n", voxelChunks.size());
+    }
+    if (voxelChunks.empty()) {
+        printf("Both voxelization methods failed\n");
+    }
+    VoxelMesh voxelMesh = generateVoxelMesh(voxelChunks);
+    printf("Voxel mesh generated: %zu vertices, %zu indices\n", voxelMesh.vertices.size(), voxelMesh.indices.size());
+    Mesh voxelRenderMesh(voxelMesh.vertices, voxelMesh.indices);
 
     string vertexCode = loadFile("src/shaders/vertex.glsl");
     string fragmentCode = loadFile("src/shaders/fragment.glsl");
@@ -179,6 +196,8 @@ int main() {
         setUniforms(shaderProgram, camera);
 
         mesh.draw();
+        glUniform3f(glGetUniformLocation(shaderProgram, "objectColor"), 0.2f, 0.8f, 0.3f);
+        voxelRenderMesh.draw();
         glfwSwapBuffers(window);
         glfwPollEvents();
 
@@ -194,5 +213,7 @@ int main() {
     }
 
     glfwTerminate();
+    printf("Press Enter to exit...\n");
+    getchar();
     return 0;
 }
