@@ -38,6 +38,7 @@ uniform uint baseIndex;
 
 shared PrecomputedTriangle sharedTri;
 
+// Helper function to see, if overlaps on the X axis
 bool axisTestX(vec3 e, vec3 v0, vec3 v1, vec3 v2, vec3 boxHalf) {
     float a = e.z * v0.y - e.y * v0.z;
     float b = e.z * v1.y - e.y * v1.z;
@@ -48,6 +49,7 @@ bool axisTestX(vec3 e, vec3 v0, vec3 v1, vec3 v2, vec3 boxHalf) {
     return !(mn > r || mx < -r);
 }
 
+// Helper function to see, if overlaps on the Y axis
 bool axisTestY(vec3 e, vec3 v0, vec3 v1, vec3 v2, vec3 boxHalf) {
     float a = -e.z * v0.x + e.x * v0.z;
     float b = -e.z * v1.x + e.x * v1.z;
@@ -58,6 +60,7 @@ bool axisTestY(vec3 e, vec3 v0, vec3 v1, vec3 v2, vec3 boxHalf) {
     return !(mn > r || mx < -r);
 }
 
+// Helper function to see, if overlaps on the Z axis
 bool axisTestZ(vec3 e, vec3 v0, vec3 v1, vec3 v2, vec3 boxHalf) {
     float a = e.y * v0.x - e.x * v0.y;
     float b = e.y * v1.x - e.x * v1.y;
@@ -68,6 +71,7 @@ bool axisTestZ(vec3 e, vec3 v0, vec3 v1, vec3 v2, vec3 boxHalf) {
     return !(mn > r || mx < -r);
 }
 
+// Akenine-Möller's triangle-box overlap test 
 bool mollerTriBoxOverlap(PrecomputedTriangle tri, vec3 boxCenter, vec3 boxHalf) {
     vec3 tv0 = tri.v0 - boxCenter;
     vec3 tv1 = tri.v1 - boxCenter;
@@ -130,6 +134,7 @@ void main() {
 
     uint strideXY = uint(gridSize.x) * uint(gridSize.y);
 
+    // Voxelization itself
     for (uint i = gl_LocalInvocationIndex; i < total; i += gl_WorkGroupSize.x) {
         uint vx = uint(mn.x) + (i % uint(extent.x));
         uint vy = uint(mn.y) + ((i / uint(extent.x)) % uint(extent.y));

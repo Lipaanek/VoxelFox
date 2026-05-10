@@ -64,7 +64,6 @@ static vector<PrecomputedTriangle> preprocessTriangles(
 
     outInfo.gridOrigin = meshMin;
 
-    glm::vec3 halfVoxel = glm::vec3(voxelSize * 0.5f);
     for (size_t i = 0; i < writeIdx; ++i) {
         auto& t = result[i];
         glm::vec3 aabbMin = glm::min(glm::min(t.v0, t.v1), t.v2);
@@ -103,8 +102,7 @@ vector<VoxelChunk> voxelizeGPUCompute(vector<Vertex> vertices, vector<uint32_t> 
            gridInfo.gridSize.x, gridInfo.gridSize.y, gridInfo.gridSize.z,
            totalVoxels, totalBytes / (1024.0 * 1024.0));
 
-    // --- Surface pass setup ---
-
+    // Surface pass setup
     GLuint triSSBO;
     glGenBuffers(1, &triSSBO);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, triSSBO);
@@ -131,6 +129,7 @@ vector<VoxelChunk> voxelizeGPUCompute(vector<Vertex> vertices, vector<uint32_t> 
         return {};
     }
 
+    // Voxel compute shader compilation
     unsigned int computeShader = compileComputeShader("src/shaders/voxel_compute.glsl");
     if (computeShader == 0) {
         printf("Failed to compile surface compute shader\n");
@@ -176,8 +175,7 @@ vector<VoxelChunk> voxelizeGPUCompute(vector<Vertex> vertices, vector<uint32_t> 
     }
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
-    // --- Readback ---
-
+    // Readback
     err = glGetError();
     if (err != GL_NO_ERROR) {
         printf("OpenGL error before readback: %d\n", err);
@@ -192,7 +190,7 @@ vector<VoxelChunk> voxelizeGPUCompute(vector<Vertex> vertices, vector<uint32_t> 
         printf("OpenGL error during readback: %d\n", err);
     }
 
-    // --- Flood fill from grid boundaries ---
+    // Flood fill from grid boundaries
 
     {
         int sx = gridInfo.gridSize.x;
@@ -267,8 +265,7 @@ vector<VoxelChunk> voxelizeGPUCompute(vector<Vertex> vertices, vector<uint32_t> 
             std::count_if(voxelData.begin(), voxelData.end(), [](uint32_t v) { return v == 2; }));
     }
 
-    // --- Slice into chunks ---
-
+    // Slicing model into chunks
     int numChunksX = (gridInfo.gridSize.x + chunkSize - 1) / chunkSize;
     int numChunksY = (gridInfo.gridSize.y + chunkSize - 1) / chunkSize;
     int numChunksZ = (gridInfo.gridSize.z + chunkSize - 1) / chunkSize;
@@ -317,10 +314,7 @@ vector<VoxelChunk> voxelizeGPUCompute(vector<Vertex> vertices, vector<uint32_t> 
         }
     }
 
-    printf("Created %zu chunks from voxel grid\n", chunks.size());
-
-    // --- Cleanup ---
-
+    // Cleanup
     glDeleteProgram(computeProgram);
     glDeleteShader(computeShader);
     glDeleteBuffers(1, &triSSBO);

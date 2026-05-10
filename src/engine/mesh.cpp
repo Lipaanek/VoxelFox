@@ -9,6 +9,7 @@ Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& ind
     setupMesh(vertices, indices);
 }
 
+// Mesh destructor for all objects
 Mesh::~Mesh() {
     if (VAO != 0) {
         glDeleteVertexArrays(1, &VAO);
@@ -58,6 +59,7 @@ void Mesh::draw() const {
     glBindVertexArray(0);
 }
 
+// Mesh setup with only vertices
 void Mesh::setupMesh(const std::vector<Vertex>& vertices) {
     indexCount = static_cast<GLsizei>(vertices.size());
 
@@ -87,6 +89,7 @@ void Mesh::setupMesh(const std::vector<Vertex>& vertices) {
     glBindVertexArray(0);
 }
 
+// Mesh setup with vertices and indices, better and more optimal approach
 void Mesh::setupMesh(const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices) {
     indexCount = static_cast<GLsizei>(indices.size());
 

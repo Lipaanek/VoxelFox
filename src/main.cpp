@@ -13,6 +13,7 @@
 
 using namespace std;
 
+// Variables
 const float width = 1920;
 const float height = 1080;
 
@@ -22,12 +23,14 @@ float velocityX = 0.0f;
 float velocityY = 0.0f;
 float velocityZ = 0.0f;
 
+// Camera settings
 const float speed = 10.0f;
 const float sens = 0.4f;
 
 double prevMouseX = 0;
 double prevMouseY = 0;
 
+// Camera stats
 float yaw;
 float pitch;
 
@@ -48,6 +51,7 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
     prevMouseY = ypos;
 }
 
+// Camera inputs
 void input_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (key == GLFW_KEY_A && action == GLFW_PRESS)
         velocityX = -speed;
@@ -80,6 +84,8 @@ void input_callback(GLFWwindow* window, int key, int scancode, int action, int m
         velocityZ = 0.0f;
 }
 
+// Rendering uniform setup
+// TODO: Change it, so it matches later with raycasting
 void setUniforms(int shaderProgram, Camera camera) {
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 view = camera.getViewMatrix();
@@ -104,6 +110,7 @@ void setUniforms(int shaderProgram, Camera camera) {
     glUniform3f(objectColorLoc, 0.8f, 0.5f, 0.2f);
 }
 
+// Clearing buffers and screen
 void clear() {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -115,6 +122,7 @@ int main() {
         return -1;
     }
 
+    // GLFW window stuff
     glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -138,7 +146,7 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     ObjectLoader loader;
-    if (!loader.load("src/meshes/weapon.obj")) {
+    if (!loader.load("src/meshes/test.obj")) {
         printf("Failed to load mesh\n");
         return -1;
     }
@@ -150,6 +158,7 @@ int main() {
     VoxelMesh voxelMesh = generateVoxelMesh(voxelChunks);
     Mesh voxelRenderMesh(voxelMesh.vertices, voxelMesh.indices);
 
+    // Shader loading
     string vertexCode = loadFile("src/shaders/vertex.glsl");
     string fragmentCode = loadFile("src/shaders/fragment.glsl");
 
@@ -164,6 +173,7 @@ int main() {
     glfwSetKeyCallback(window, input_callback);
     glfwSetCursorPosCallback(window, cursor_position_callback);
 
+    // Camera setup
     Camera camera;
     camera.position = glm::vec3(0.0f, 0.0f, 5.0f);
     camera.yaw = 0.0f;
@@ -174,17 +184,20 @@ int main() {
     double previousFrame = glfwGetTime();
     int frameCount = 0;
 
+    // Main update/render loop
     while(!glfwWindowShouldClose(window)) {
         clear();
         glUseProgram(shaderProgram);
 
         double currentTime = glfwGetTime();
 
+        // Camera updates
         camera.yaw = yaw;
         camera.pitch = pitch;
         camera.updateCameraVectors();
         camera.updateCameraPosition(velocityX, velocityY, velocityZ, currentTime - previousFrame);
 
+        // Rendering
         setUniforms(shaderProgram, camera);
 
         glUniform3f(glGetUniformLocation(shaderProgram, "objectColor"), 0.2f, 0.8f, 0.3f);

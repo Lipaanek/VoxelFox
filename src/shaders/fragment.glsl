@@ -12,6 +12,8 @@ uniform vec3 lightPos;
 uniform vec3 lightColor;
 uniform vec3 objectColor;
 
+// Basic lighting
+// TODO: Replace with raycasting
 void main() {
     vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(lightPos - FragPos); // Normalized vector pointing to the light
