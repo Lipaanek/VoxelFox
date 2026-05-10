@@ -171,15 +171,10 @@ vector<VoxelChunk> voxelizeGPUCompute(vector<Vertex> vertices, vector<uint32_t> 
         GLuint batchSize = (triCount - offset < batchMax) ? static_cast<GLuint>(triCount - offset) : batchMax;
         glUniform1ui(baseIndexLoc, offset);
         printf("  Dispatch batch: offset=%u, count=%u\n", offset, batchSize);
-        GLuint groups = triCount;
-        glDispatchCompute(groups, 1, 1);
+        glDispatchCompute(batchSize, 1, 1);
         offset += batchSize;
     }
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-    // --- Fill pass ---
-
-    
 
     // --- Readback ---
 
@@ -195,6 +190,81 @@ vector<VoxelChunk> voxelizeGPUCompute(vector<Vertex> vertices, vector<uint32_t> 
     err = glGetError();
     if (err != GL_NO_ERROR) {
         printf("OpenGL error during readback: %d\n", err);
+    }
+
+    // --- Flood fill from grid boundaries ---
+
+    {
+        int sx = gridInfo.gridSize.x;
+        int sy = gridInfo.gridSize.y;
+        int sz = gridInfo.gridSize.z;
+        size_t strideXY = static_cast<size_t>(sx) * static_cast<size_t>(sy);
+        size_t strideX = static_cast<size_t>(sx);
+
+        std::vector<glm::ivec3> stack;
+
+        auto seed = [&](int x, int y, int z) {
+            size_t idx = static_cast<size_t>(z) * strideXY + static_cast<size_t>(y) * strideX + static_cast<size_t>(x);
+            if (voxelData[idx] == 0) {
+                voxelData[idx] = 3;
+                stack.push_back(glm::ivec3(x, y, z));
+            }
+        };
+
+        for (int y = 0; y < sy; y++) {
+            for (int x = 0; x < sx; x++) {
+                seed(x, y, 0);
+                if (sz > 1) seed(x, y, sz - 1);
+            }
+        }
+        for (int z = 0; z < sz; z++) {
+            for (int x = 0; x < sx; x++) {
+                seed(x, 0, z);
+                if (sy > 1) seed(x, sy - 1, z);
+            }
+        }
+        for (int z = 0; z < sz; z++) {
+            for (int y = 0; y < sy; y++) {
+                seed(0, y, z);
+                if (sx > 1) seed(sx - 1, y, z);
+            }
+        }
+
+        static const glm::ivec3 neighbors[6] = {
+            {1, 0, 0}, {-1, 0, 0},
+            {0, 1, 0}, {0, -1, 0},
+            {0, 0, 1}, {0, 0, -1}
+        };
+
+        while (!stack.empty()) {
+            glm::ivec3 p = stack.back();
+            stack.pop_back();
+
+            for (int i = 0; i < 6; i++) {
+                int nx = p.x + neighbors[i].x;
+                int ny = p.y + neighbors[i].y;
+                int nz = p.z + neighbors[i].z;
+
+                if (nx < 0 || nx >= sx || ny < 0 || ny >= sy || nz < 0 || nz >= sz) continue;
+
+                size_t nidx = static_cast<size_t>(nz) * strideXY + static_cast<size_t>(ny) * strideX + static_cast<size_t>(nx);
+                if (voxelData[nidx] == 0) {
+                    voxelData[nidx] = 3;
+                    stack.push_back(glm::ivec3(nx, ny, nz));
+                }
+            }
+        }
+
+        size_t total = static_cast<size_t>(sx) * static_cast<size_t>(sy) * static_cast<size_t>(sz);
+        for (size_t i = 0; i < total; i++) {
+            if (voxelData[i] == 0) voxelData[i] = 2;
+        }
+        for (size_t i = 0; i < total; i++) {
+            if (voxelData[i] == 3) voxelData[i] = 0;
+        }
+
+        printf("Flood fill complete: %zu interior voxels filled\n",
+            std::count_if(voxelData.begin(), voxelData.end(), [](uint32_t v) { return v == 2; }));
     }
 
     // --- Slice into chunks ---
