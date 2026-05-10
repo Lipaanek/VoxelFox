@@ -1,8 +1,5 @@
 #include <glm/glm.hpp>
-#include <unordered_set>
-#include <unordered_map>
 #include <cmath>
-#include <fstream>
 #include <cstdint>
 #include <algorithm>
 #include <limits>
@@ -13,222 +10,275 @@
 #include "../../headers/vertex.hpp"
 #include "../../headers/shader_loader.hpp"
 #include "../../headers/triangle.hpp"
-#include "../../headers/aabb.hpp"
-#include "../../headers/chunk.hpp"
 
 using std::vector;
-using std::unordered_map;
 
 constexpr int chunkSize = 16;
 
-Triangle getTriangle(
+struct VoxelGridInfo {
+    glm::ivec3 gridSize;
+    glm::vec3  gridOrigin;
+};
+
+static vector<PrecomputedTriangle> preprocessTriangles(
     const vector<Vertex>& vertices,
     const vector<uint32_t>& indices,
-    size_t triIndex)
+    float voxelSize,
+    VoxelGridInfo& outInfo)
 {
-    uint32_t i0 = indices[triIndex * 3 + 0];
-    uint32_t i1 = indices[triIndex * 3 + 1];
-    uint32_t i2 = indices[triIndex * 3 + 2];
+    size_t triCount = indices.size() / 3;
+    vector<PrecomputedTriangle> result(triCount);
 
-    return {
-        vertices[i0].position,
-        vertices[i1].position,
-        vertices[i2].position
-    };
-}
+    glm::vec3 meshMin(INFINITY), meshMax(-INFINITY);
 
-AABB computeTriangleAABB(const Triangle& t) {
-    glm::vec3 minPos = glm::min(
-        glm::min(t.p0, t.p1),
-        t.p2
-    );
+    size_t writeIdx = 0;
+    for (size_t i = 0; i < triCount; ++i) {
+        glm::vec3 verts[3] = {
+            vertices[indices[i * 3 + 0]].position,
+            vertices[indices[i * 3 + 1]].position,
+            vertices[indices[i * 3 + 2]].position
+        };
 
-    glm::vec3 maxPos = glm::max(
-        glm::max(t.p0, t.p1),
-        t.p2
-    );
+        glm::vec3 e0 = verts[1] - verts[0];
+        glm::vec3 e1 = verts[2] - verts[0];
 
-    return { minPos, maxPos };
-}
+        if (glm::length(glm::cross(e0, e1)) < 1e-12f)
+            continue;
 
-glm::ivec3 worldToChunk(glm::vec3 pos, float chunkWorldSize) {
-    return glm::floor(pos / chunkWorldSize);
-}
+        auto& t = result[writeIdx++];
+        t.v0 = verts[0];
+        t.v1 = verts[1];
+        t.v2 = verts[2];
+        t.e0 = e0;
+        t.e1 = verts[2] - verts[1];
+        t.e2 = verts[0] - verts[2];
+        t.normal = glm::normalize(glm::cross(e0, t.e1));
+        t.d = -glm::dot(t.normal, verts[0]);
 
-glm::vec3 computeTriangleNormal(const Triangle& t) {
-    glm::vec3 edge1 = t.p1 - t.p0;
-    glm::vec3 edge2 = t.p2 - t.p0;
-    return glm::normalize(glm::cross(edge1, edge2));
-}
+        glm::vec3 aabbMin = glm::min(glm::min(verts[0], verts[1]), verts[2]);
+        glm::vec3 aabbMax = glm::max(glm::max(verts[0], verts[1]), verts[2]);
+        meshMin = glm::min(meshMin, aabbMin);
+        meshMax = glm::max(meshMax, aabbMax);
+    }
+    result.resize(writeIdx);
 
-bool pointInTriangle(glm::vec3 p, const Triangle& t) {
-    glm::vec3 v0 = t.p1 - t.p0;
-    glm::vec3 v1 = t.p2 - t.p0;
-    glm::vec3 v2 = p - t.p0;
+    outInfo.gridOrigin = meshMin;
 
-    float dot00 = glm::dot(v0, v0);
-    float dot01 = glm::dot(v0, v1);
-    float dot02 = glm::dot(v0, v2);
-    float dot11 = glm::dot(v1, v1);
-    float dot12 = glm::dot(v1, v2);
-
-    float invDenom = 1.0f / (dot00 * dot11 - dot01 * dot01);
-    float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-    float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-
-    return (u >= 0) && (v >= 0) && (u + v <= 1);
-}
-
-bool voxelIntersectsTriangle(const AABB& voxel, const Triangle& t) {
-    glm::vec3 center = (voxel.min + voxel.max) * 0.5f;
-    glm::vec3 halfExtents = (voxel.max - voxel.min) * 0.5f;
-
-    glm::vec3 normal = computeTriangleNormal(t);
-    glm::vec3 crossEdge = glm::cross(normal, glm::vec3(1, 0, 0));
-    glm::vec3 edgeAxis = glm::length(crossEdge) < 0.0001f ? glm::vec3(0, 0, 1) : glm::normalize(crossEdge);
-
-    glm::vec3 axes[5] = {
-        glm::vec3(1, 0, 0),
-        glm::vec3(0, 1, 0),
-        glm::vec3(0, 0, 1),
-        normal,
-        edgeAxis
-    };
-
-    for (int i = 0; i < 5; ++i) {
-        glm::vec3 axis = glm::normalize(axes[i]);
-        if (glm::length(axis) < 0.0001f) continue;
-
-        float projVoxelMin = glm::dot(center, axis) - glm::dot(halfExtents, glm::abs(axis));
-        float projVoxelMax = glm::dot(center, axis) + glm::dot(halfExtents, glm::abs(axis));
-
-        float projTriMin = std::min({
-            glm::dot(t.p0, axis),
-            glm::dot(t.p1, axis),
-            glm::dot(t.p2, axis)
-        });
-        float projTriMax = std::max({
-            glm::dot(t.p0, axis),
-            glm::dot(t.p1, axis),
-            glm::dot(t.p2, axis)
-        });
-
-        if (projVoxelMax < projTriMin || projTriMax < projVoxelMin) {
-            return false;
-        }
+    glm::vec3 halfVoxel = glm::vec3(voxelSize * 0.5f);
+    for (size_t i = 0; i < writeIdx; ++i) {
+        auto& t = result[i];
+        glm::vec3 aabbMin = glm::min(glm::min(t.v0, t.v1), t.v2);
+        glm::vec3 aabbMax = glm::max(glm::max(t.v0, t.v1), t.v2);
+        glm::vec3 aabbMinRel = aabbMin - outInfo.gridOrigin;
+        glm::vec3 aabbMaxRel = aabbMax - outInfo.gridOrigin;
+        t.voxelMin = glm::ivec3(glm::floor(aabbMinRel / voxelSize));
+        t.voxelMax = glm::ivec3(glm::floor(aabbMaxRel / voxelSize));
     }
 
-    glm::vec3 testPoints[8] = {
-        voxel.min,
-        voxel.max,
-        glm::vec3(voxel.min.x, voxel.min.y, voxel.max.z),
-        glm::vec3(voxel.min.x, voxel.max.y, voxel.min.z),
-        glm::vec3(voxel.max.x, voxel.min.y, voxel.min.z),
-        glm::vec3(voxel.max.x, voxel.max.y, voxel.min.z),
-        glm::vec3(voxel.min.x, voxel.max.y, voxel.max.z),
-        glm::vec3(voxel.max.x, voxel.min.y, voxel.max.z)
-    };
+    glm::vec3 gridExtent = meshMax - meshMin;
+    outInfo.gridSize = glm::ivec3(glm::ceil(gridExtent / voxelSize - 1e-7f));
 
-    for (int i = 0; i < 8; ++i) {
-        if (pointInTriangle(testPoints[i], t)) {
-            return true;
-        }
-    }
+    printf("Preprocessed %zu triangles, grid %dx%dx%d = %d voxels\n",
+        triCount, outInfo.gridSize.x, outInfo.gridSize.y, outInfo.gridSize.z,
+        outInfo.gridSize.x * outInfo.gridSize.y * outInfo.gridSize.z);
 
-    auto pointInVoxel = [&](const glm::vec3& p) {
-        return p.x >= voxel.min.x && p.x <= voxel.max.x &&
-               p.y >= voxel.min.y && p.y <= voxel.max.y &&
-               p.z >= voxel.min.z && p.z <= voxel.max.z;
-    };
-    if (pointInVoxel(t.p0) || pointInVoxel(t.p1) || pointInVoxel(t.p2)) {
-        return true;
-    }
-
-    return false;
+    return result;
 }
 
-vector<VoxelChunk> voxelizeGPU(vector<Vertex> vertices, vector<uint32_t> indices, float voxelSize) {
-    float chunkWorldSize = chunkSize * voxelSize;
+vector<VoxelChunk> voxelizeGPUCompute(vector<Vertex> vertices, vector<uint32_t> indices, float voxelSize) {
+    VoxelGridInfo gridInfo;
+    auto triangles = preprocessTriangles(vertices, indices, voxelSize, gridInfo);
 
-    unordered_map<ChunkKey, vector<uint32_t>, ChunkKeyHash> chunkTriangles;
-
-    size_t triangleCount = indices.size() / 3;
-    vector<Triangle> triangles(triangleCount);
-    vector<AABB> triangleBounds(triangleCount);
-
-    for (size_t tri = 0; tri < triangleCount; ++tri) {
-        triangles[tri] = getTriangle(vertices, indices, tri);
-        triangleBounds[tri] = computeTriangleAABB(triangles[tri]);
-
-        glm::ivec3 minChunk = worldToChunk(triangleBounds[tri].min, chunkWorldSize);
-        glm::ivec3 maxChunk = worldToChunk(triangleBounds[tri].max, chunkWorldSize);
-
-        for (int z = minChunk.z; z <= maxChunk.z; ++z) {
-            for (int y = minChunk.y; y <= maxChunk.y; ++y) {
-                for (int x = minChunk.x; x <= maxChunk.x; ++x) {
-                    ChunkKey key{x, y, z};
-                    chunkTriangles[key].push_back(static_cast<uint32_t>(tri));
-                }
-            }
-        }
+    size_t triCount = triangles.size();
+    if (triCount == 0) {
+        printf("No triangles to process\n");
+        return {};
     }
+
+    gridInfo.gridSize = ((gridInfo.gridSize + 15) / 16) * 16;
+
+    size_t totalVoxels = (size_t)gridInfo.gridSize.x * gridInfo.gridSize.y * gridInfo.gridSize.z;
+    size_t totalBytes = totalVoxels * sizeof(uint32_t);
+    printf("Grid aligned to %dx%dx%d = %zu voxels (%.2f MB)\n",
+           gridInfo.gridSize.x, gridInfo.gridSize.y, gridInfo.gridSize.z,
+           totalVoxels, totalBytes / (1024.0 * 1024.0));
+
+    // --- Surface pass setup ---
+
+    GLuint triSSBO;
+    glGenBuffers(1, &triSSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, triSSBO);
+    glBufferData(GL_SHADER_STORAGE_BUFFER,
+        triCount * sizeof(PrecomputedTriangle),
+        triangles.data(), GL_STATIC_DRAW);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, triSSBO);
+
+    GLuint voxelSSBO;
+    glGenBuffers(1, &voxelSSBO);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, voxelSSBO);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, totalBytes, nullptr, GL_DYNAMIC_READ);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, voxelSSBO);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, voxelSSBO);
+    std::vector<uint32_t> zeros(totalVoxels, 0);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, totalBytes, zeros.data());
+
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {
+        printf("OpenGL error after buffer setup: %d\n", err);
+        glDeleteBuffers(1, &triSSBO);
+        glDeleteBuffers(1, &voxelSSBO);
+        return {};
+    }
+
+    unsigned int computeShader = compileComputeShader("src/shaders/voxel_compute.glsl");
+    if (computeShader == 0) {
+        printf("Failed to compile surface compute shader\n");
+        glDeleteBuffers(1, &triSSBO);
+        glDeleteBuffers(1, &voxelSSBO);
+        return {};
+    }
+    unsigned int computeProgram = glCreateProgram();
+    glAttachShader(computeProgram, computeShader);
+    glLinkProgram(computeProgram);
+
+    int linkSuccess;
+    glGetProgramiv(computeProgram, GL_LINK_STATUS, &linkSuccess);
+    if (!linkSuccess) {
+        char infoLog[512];
+        glGetProgramInfoLog(computeProgram, 512, nullptr, infoLog);
+        printf("Surface compute program link error: %s\n", infoLog);
+        glDeleteShader(computeShader);
+        glDeleteProgram(computeProgram);
+        glDeleteBuffers(1, &triSSBO);
+        glDeleteBuffers(1, &voxelSSBO);
+        return {};
+    }
+
+    glUseProgram(computeProgram);
+    GLint gridOriginLoc = glGetUniformLocation(computeProgram, "gridOrigin");
+    GLint gridSizeLoc = glGetUniformLocation(computeProgram, "gridSize");
+    GLint voxelSizeLoc = glGetUniformLocation(computeProgram, "voxelSize");
+    GLint baseIndexLoc = glGetUniformLocation(computeProgram, "baseIndex");
+
+    glUniform3fv(gridOriginLoc, 1, &gridInfo.gridOrigin[0]);
+    glUniform3iv(gridSizeLoc, 1, &gridInfo.gridSize[0]);
+    glUniform1f(voxelSizeLoc, voxelSize);
+
+    const GLuint batchMax = 65535u;
+    GLuint offset = 0;
+    while (offset < triCount) {
+        GLuint batchSize = (triCount - offset < batchMax) ? static_cast<GLuint>(triCount - offset) : batchMax;
+        glUniform1ui(baseIndexLoc, offset);
+        printf("  Dispatch batch: offset=%u, count=%u\n", offset, batchSize);
+        GLuint groups = triCount;
+        glDispatchCompute(groups, 1, 1);
+        offset += batchSize;
+    }
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+    // --- Fill pass ---
+
+    
+
+    // --- Readback ---
+
+    err = glGetError();
+    if (err != GL_NO_ERROR) {
+        printf("OpenGL error before readback: %d\n", err);
+    }
+
+    vector<uint32_t> voxelData(totalVoxels, 0);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, voxelSSBO);
+    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, totalBytes, voxelData.data());
+
+    err = glGetError();
+    if (err != GL_NO_ERROR) {
+        printf("OpenGL error during readback: %d\n", err);
+    }
+
+    // --- Slice into chunks ---
+
+    int numChunksX = (gridInfo.gridSize.x + chunkSize - 1) / chunkSize;
+    int numChunksY = (gridInfo.gridSize.y + chunkSize - 1) / chunkSize;
+    int numChunksZ = (gridInfo.gridSize.z + chunkSize - 1) / chunkSize;
 
     vector<VoxelChunk> chunks;
-    for (auto& [key, triIndices] : chunkTriangles) {
-        VoxelChunk chunk;
+    chunks.reserve(static_cast<size_t>(numChunksX) * numChunksY * numChunksZ);
 
-        chunk.chunkPos = glm::ivec3(key.x, key.y, key.z);
-        chunk.chunkSize = glm::ivec3(chunkSize);
-        chunk.voxelSize = voxelSize;
-        chunk.voxels.resize(chunkSize * chunkSize * chunkSize);
+    for (int cz = 0; cz < numChunksZ; cz++) {
+        for (int cy = 0; cy < numChunksY; cy++) {
+            for (int cx = 0; cx < numChunksX; cx++) {
+                VoxelChunk chunk;
+                chunk.chunkPos = glm::ivec3(cx, cy, cz);
+                chunk.chunkSize = glm::ivec3(chunkSize);
+                chunk.voxelSize = voxelSize;
+                chunk.gridOrigin = gridInfo.gridOrigin;
+                chunk.voxels.resize(chunkSize * chunkSize * chunkSize);
 
-        glm::vec3 chunkOrigin = glm::vec3(key.x, key.y, key.z) * chunkWorldSize;
+                int baseX = cx * chunkSize;
+                int baseY = cy * chunkSize;
+                int baseZ = cz * chunkSize;
 
-        for (int z = 0; z < chunkSize; ++z) {
-            for (int y = 0; y < chunkSize; ++y) {
-                for (int x = 0; x < chunkSize; ++x) {
-                    int voxelIndex = x + y * chunkSize + z * chunkSize * chunkSize;
+                for (int vz = 0; vz < chunkSize; vz++) {
+                    int gz = baseZ + vz;
+                    if (gz >= gridInfo.gridSize.z) continue;
+                    for (int vy = 0; vy < chunkSize; vy++) {
+                        int gy = baseY + vy;
+                        if (gy >= gridInfo.gridSize.y) continue;
+                        for (int vx = 0; vx < chunkSize; vx++) {
+                            int gx = baseX + vx;
+                            if (gx >= gridInfo.gridSize.x) continue;
 
-                    glm::vec3 voxelMin = chunkOrigin + glm::vec3(x, y, z) * voxelSize;
-                    glm::vec3 voxelMax = voxelMin + glm::vec3(voxelSize);
-                    AABB voxelBounds{voxelMin, voxelMax};
+                            uint32_t val = voxelData[
+                                static_cast<size_t>(gz) * gridInfo.gridSize.x * gridInfo.gridSize.y +
+                                static_cast<size_t>(gy) * gridInfo.gridSize.x +
+                                gx];
 
-                    for (uint32_t triIdx : triIndices) {
-                        if (voxelIntersectsTriangle(voxelBounds, triangles[triIdx])) {
-                            chunk.voxels[voxelIndex].solid = true;
-                            chunk.voxels[voxelIndex].data.x = static_cast<int>(triIdx);
-                            break;
+                            int localIdx = vx + vy * chunkSize + vz * chunkSize * chunkSize;
+                            chunk.voxels[localIdx].solid = val != 0;
+                            chunk.voxels[localIdx].data.x = static_cast<int>(val);
                         }
                     }
                 }
+
+                chunks.push_back(chunk);
             }
         }
-
-        chunks.push_back(chunk);
     }
+
+    printf("Created %zu chunks from voxel grid\n", chunks.size());
+
+    // --- Cleanup ---
+
+    glDeleteProgram(computeProgram);
+    glDeleteShader(computeShader);
+    glDeleteBuffers(1, &triSSBO);
+    glDeleteBuffers(1, &voxelSSBO);
+
     return chunks;
 }
 
-VoxelMesh generateVoxelMesh(const std::vector<VoxelChunk>& chunks) {
+VoxelMesh generateVoxelMesh(const vector<VoxelChunk>& chunks) {
     VoxelMesh result;
-    std::vector<Vertex> vertices;
-    std::vector<uint32_t> indices;
+    vector<Vertex> vertices;
+    vector<uint32_t> indices;
 
     static const glm::vec3 faceVerts[6][4] = {
         {{0,0,0}, {1,0,0}, {1,1,0}, {0,1,0}},
         {{0,0,1}, {0,1,1}, {1,1,1}, {1,0,1}},
-        {{0,0,0}, {0,1,0}, {0,1,1}, {0,0,1}},
-        {{1,0,0}, {1,0,1}, {1,1,1}, {1,1,0}},
-        {{0,0,0}, {0,0,1}, {1,0,1}, {1,0,0}},
+        {{0,0,0}, {1,0,0}, {1,0,1}, {0,0,1}},
         {{0,1,0}, {1,1,0}, {1,1,1}, {0,1,1}},
+        {{0,0,0}, {0,0,1}, {0,1,1}, {0,1,0}},
+        {{1,0,0}, {1,0,1}, {1,1,1}, {1,1,0}},
     };
     static const glm::vec3 faceNormals[6] = {
-        {0,0,-1}, {0,0,1}, {-1,0,0}, {1,0,0}, {0,-1,0}, {0,1,0},
+        {0,0,-1}, {0,0,1}, {0,-1,0}, {0,1,0}, {-1,0,0}, {1,0,0},
     };
 
     for (const auto& chunk : chunks) {
-        float voxelSize = chunk.voxelSize;
-        glm::vec3 chunkWorldPos = glm::vec3(chunk.chunkPos) * (chunkSize * voxelSize);
+        float vSize = chunk.voxelSize;
+        glm::vec3 chunkWorldPos = chunk.gridOrigin + glm::vec3(chunk.chunkPos) * (static_cast<float>(chunkSize) * vSize);
 
         for (int z = 0; z < chunkSize; ++z) {
             for (int y = 0; y < chunkSize; ++y) {
@@ -236,12 +286,12 @@ VoxelMesh generateVoxelMesh(const std::vector<VoxelChunk>& chunks) {
                     int idx = x + y * chunkSize + z * chunkSize * chunkSize;
                     if (!chunk.voxels[idx].solid) continue;
 
-                    glm::vec3 basePos = chunkWorldPos + glm::vec3(x, y, z) * voxelSize;
+                    glm::vec3 basePos = chunkWorldPos + glm::vec3(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)) * vSize;
 
                     for (int face = 0; face < 6; ++face) {
                         uint32_t faceStart = static_cast<uint32_t>(vertices.size());
                         for (int v = 0; v < 4; ++v) {
-                            glm::vec3 pos = basePos + faceVerts[face][v] * voxelSize;
+                            glm::vec3 pos = basePos + faceVerts[face][v] * vSize;
                             vertices.push_back({pos, faceNormals[face], {0, 0}});
                         }
                         indices.push_back(faceStart + 0);
@@ -259,152 +309,4 @@ VoxelMesh generateVoxelMesh(const std::vector<VoxelChunk>& chunks) {
     result.vertices = std::move(vertices);
     result.indices = std::move(indices);
     return result;
-}
-
-struct TriangleSSBO {
-    glm::vec3 p0;
-    float _pad0;
-    glm::vec3 p1;
-    float _pad1;
-    glm::vec3 p2;
-    float _pad2;
-};
-
-std::vector<VoxelChunk> voxelizeGPUCompute(std::vector<Vertex> vertices, std::vector<uint32_t> indices, float voxelSize) {
-    unsigned int computeShader = compileComputeShader("src/shaders/voxel_compute.glsl");
-    if (computeShader == 0) {
-        printf("Failed to compile compute shader\n");
-        return {};
-    }
-    unsigned int computeProgram = glCreateProgram();
-    glAttachShader(computeProgram, computeShader);
-    glLinkProgram(computeProgram);
-
-    int linkSuccess;
-    glGetProgramiv(computeProgram, GL_LINK_STATUS, &linkSuccess);
-    if (!linkSuccess) {
-        char infoLog[512];
-        glGetProgramInfoLog(computeProgram, 512, nullptr, infoLog);
-        printf("Compute program link error: %s\n", infoLog);
-        return {};
-    }
-
-    size_t triangleCount = indices.size() / 3;
-    printf("Processing %zu triangles\n", triangleCount);
-    if (triangleCount == 0) {
-        printf("No triangles to process\n");
-        return {};
-    }
-
-    printf("About to compile compute shader\n");
-    std::vector<TriangleSSBO> triangleSSBO(triangleCount);
-    for (size_t i = 0; i < triangleCount; ++i) {
-        Triangle t = getTriangle(vertices, indices, i);
-        triangleSSBO[i] = {t.p0, 0.0f, t.p1, 0.0f, t.p2, 0.0f};
-    }
-
-    GLuint triangleSSBOHandle;
-    glGenBuffers(1, &triangleSSBOHandle);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, triangleSSBOHandle);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, triangleCount * sizeof(TriangleSSBO), triangleSSBO.data(), GL_STATIC_DRAW);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, triangleSSBOHandle);
-
-    float chunkWorldSize = chunkSize * voxelSize;
-    std::unordered_map<ChunkKey, std::vector<uint32_t>, ChunkKeyHash> chunkTriangles;
-
-    for (size_t tri = 0; tri < triangleCount; ++tri) {
-        Triangle triangle = getTriangle(vertices, indices, tri);
-        AABB bounds = computeTriangleAABB(triangle);
-
-        glm::ivec3 minChunk = worldToChunk(bounds.min, chunkWorldSize);
-        glm::ivec3 maxChunk = worldToChunk(bounds.max, chunkWorldSize);
-
-        for (int z = minChunk.z; z <= maxChunk.z; ++z) {
-            for (int y = minChunk.y; y <= maxChunk.y; ++y) {
-                for (int x = minChunk.x; x <= maxChunk.x; ++x) {
-                    ChunkKey key{x, y, z};
-                    chunkTriangles[key].push_back(static_cast<uint32_t>(tri));
-                }
-            }
-        }
-    }
-
-    std::vector<VoxelChunk> chunks;
-    chunks.reserve(chunkTriangles.size());
-
-    std::vector<GLuint> voxelSSBOs;
-    glUseProgram(computeProgram);
-
-    printf("Processing %zu chunks\n", chunkTriangles.size());
-
-    for (auto& [key, triIndices] : chunkTriangles) {
-        printf("Processing chunk (%d,%d,%d) with %zu triangles\n", key.x, key.y, key.z, triIndices.size());
-
-        if (triIndices.empty()) {
-            continue;
-        }
-
-        VoxelChunk chunk;
-        chunk.chunkPos = glm::ivec3(key.x, key.y, key.z);
-        chunk.chunkSize = glm::ivec3(chunkSize);
-        chunk.voxelSize = voxelSize;
-        chunk.voxels.resize(chunkSize * chunkSize * chunkSize);
-
-        GLuint voxelSSBO;
-        glGenBuffers(1, &voxelSSBO);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, voxelSSBO);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, chunkSize * chunkSize * chunkSize * sizeof(uint32_t), nullptr, GL_DYNAMIC_READ);
-
-        size_t triIdxCount = triIndices.size();
-        GLuint triIdxSSBO;
-        glGenBuffers(1, &triIdxSSBO);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, triIdxSSBO);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, triIdxCount * sizeof(uint32_t), triIndices.data(), GL_STATIC_DRAW);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, triIdxSSBO);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, voxelSSBO);
-
-        GLint triIdxCountLoc = glGetUniformLocation(computeProgram, "triIndexCount");
-        GLint chunkOffsetLoc = glGetUniformLocation(computeProgram, "chunkOffset");
-        GLint chunkSizeLoc = glGetUniformLocation(computeProgram, "chunkSize");
-        GLint voxelSizeLoc = glGetUniformLocation(computeProgram, "voxelSize");
-
-        printf("Uniform locations: triIndexCount=%d, chunkOffset=%d, chunkSize=%d, voxelSize=%d\n",
-               triIdxCountLoc, chunkOffsetLoc, chunkSizeLoc, voxelSizeLoc);
-
-        if (triIdxCountLoc != -1) glUniform1ui(triIdxCountLoc, static_cast<unsigned int>(triIdxCount));
-        if (chunkOffsetLoc != -1) glUniform3fv(chunkOffsetLoc, 1, &(glm::vec3(key.x, key.y, key.z) * chunkWorldSize)[0]);
-        if (chunkSizeLoc != -1) glUniform1ui(chunkSizeLoc, static_cast<unsigned int>(chunkSize));
-        if (voxelSizeLoc != -1) glUniform1f(voxelSizeLoc, voxelSize);
-
-        glDispatchCompute((chunkSize * chunkSize * chunkSize + 63) / 64, 1, 1);
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-        GLenum err = glGetError();
-        if (err != GL_NO_ERROR) {
-            printf("OpenGL error after dispatch: %d\n", err);
-        }
-
-        std::vector<uint32_t> solidVoxels(chunkSize * chunkSize * chunkSize);
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, voxelSSBO);
-        glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, solidVoxels.size() * sizeof(uint32_t), solidVoxels.data());
-
-        err = glGetError();
-        if (err != GL_NO_ERROR) {
-            printf("OpenGL error after read: %d\n", err);
-        }
-
-        for (size_t i = 0; i < solidVoxels.size(); ++i) {
-            chunk.voxels[i].solid = solidVoxels[i] != 0u;
-        }
-
-        chunks.push_back(chunk);
-        voxelSSBOs.push_back(voxelSSBO);
-    }
-
-    glDeleteProgram(computeProgram);
-    glDeleteShader(computeShader);
-    glDeleteBuffers(1, &triangleSSBOHandle);
-    glDeleteBuffers(static_cast<GLsizei>(voxelSSBOs.size()), voxelSSBOs.data());
-
-    return chunks;
 }

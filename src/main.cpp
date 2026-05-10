@@ -16,7 +16,7 @@ using namespace std;
 const float width = 1920;
 const float height = 1080;
 
-const float voxelSize = 0.25f;
+const float voxelSize = 0.1f;
 
 float velocityX = 0.0f;
 float velocityY = 0.0f;
@@ -138,17 +138,14 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     ObjectLoader loader;
-    if (!loader.load("src/meshes/bugatti.obj")) {
+    if (!loader.load("src/meshes/weapon.obj")) {
         printf("Failed to load mesh\n");
         return -1;
     }
 
     std::vector<VoxelChunk> voxelChunks = voxelizeGPUCompute(loader.getVertices(), loader.getIndices(), voxelSize);
     if (voxelChunks.empty()) {
-        voxelChunks = voxelizeGPU(loader.getVertices(), loader.getIndices(), voxelSize);
-    }
-    if (voxelChunks.empty()) {
-        printf("Both voxelization methods failed\n");
+        printf("Voxelization failed\n");
     }
     VoxelMesh voxelMesh = generateVoxelMesh(voxelChunks);
     Mesh voxelRenderMesh(voxelMesh.vertices, voxelMesh.indices);

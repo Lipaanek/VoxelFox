@@ -1,138 +1,148 @@
 #version 430 core
 
-layout(local_size_x = 64) in;
+layout(local_size_x = 1) in;
 
-struct Triangle {
-    vec3 p0;
-    vec3 p1;
-    vec3 p2;
+struct PrecomputedTriangle {
+    vec3 v0;
+    float _pad0;
+    vec3 v1;
+    float _pad1;
+    vec3 v2;
+    float _pad2;
+    vec3 e0;
+    float _pad3;
+    vec3 e1;
+    float _pad4;
+    vec3 e2;
+    float _pad5;
+    vec3 normal;
+    float d;
+    ivec3 voxelMin;
+    float _pad_voxelMin;
+    ivec3 voxelMax;
+    float _pad6;
 };
 
-layout(std430, binding = 0) restrict readonly buffer TriangleBuffer {
-    Triangle triangles[];
+layout(std430, binding = 0) readonly buffer TriangleBuffer {
+    PrecomputedTriangle triangles[];
 };
 
-layout(std430, binding = 1) restrict readonly buffer TriangleIndices {
-    uint triIndices[];
+layout(std430, binding = 1) buffer VoxelGrid {
+    uint voxels[];
 };
 
-layout(std430, binding = 2) restrict writeonly buffer VoxelOutput {
-    uint solidVoxels[];
-};
-
-uniform uint triIndexCount;
-uniform uint chunkSize;
 uniform float voxelSize;
-uniform vec3 chunkOffset;
+uniform vec3 gridOrigin;
+uniform ivec3 gridSize;
+uniform uint baseIndex;
 
-vec3 computeTriangleNormal(Triangle t) {
-    vec3 edge1 = t.p1 - t.p0;
-    vec3 edge2 = t.p2 - t.p0;
-    vec3 n = cross(edge1, edge2);
-    return length(n) < 0.0001 ? vec3(0, 1, 0) : normalize(n);
+shared PrecomputedTriangle sharedTri;
+
+bool axisTestX(vec3 e, vec3 v0, vec3 v1, vec3 v2, vec3 boxHalf) {
+    float a = e.z * v0.y - e.y * v0.z;
+    float b = e.z * v1.y - e.y * v1.z;
+    float c = e.z * v2.y - e.y * v2.z;
+    float mn = min(min(a, b), c);
+    float mx = max(max(a, b), c);
+    float r = boxHalf.y * abs(e.z) + boxHalf.z * abs(e.y);
+    return !(mn > r || mx < -r);
 }
 
-bool pointInTriangle(vec3 p, Triangle t) {
-    vec3 v0 = t.p1 - t.p0;
-    vec3 v1 = t.p2 - t.p0;
-    vec3 v2 = p - t.p0;
-
-    float dot00 = dot(v0, v0);
-    float dot01 = dot(v0, v1);
-    float dot02 = dot(v0, v2);
-    float dot11 = dot(v1, v1);
-    float dot12 = dot(v1, v2);
-
-    float invDenom = 1.0 / (dot00 * dot11 - dot01 * dot01);
-    float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-    float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-
-    return (u >= 0.0) && (v >= 0.0) && (u + v <= 1.0);
+bool axisTestY(vec3 e, vec3 v0, vec3 v1, vec3 v2, vec3 boxHalf) {
+    float a = -e.z * v0.x + e.x * v0.z;
+    float b = -e.z * v1.x + e.x * v1.z;
+    float c = -e.z * v2.x + e.x * v2.z;
+    float mn = min(min(a, b), c);
+    float mx = max(max(a, b), c);
+    float r = boxHalf.x * abs(e.z) + boxHalf.z * abs(e.x);
+    return !(mn > r || mx < -r);
 }
 
-bool voxelIntersectsTriangle(vec3 voxelMin, vec3 voxelMax, Triangle t) {
-    vec3 center = (voxelMin + voxelMax) * 0.5;
-    vec3 halfExtents = (voxelMax - voxelMin) * 0.5;
+bool axisTestZ(vec3 e, vec3 v0, vec3 v1, vec3 v2, vec3 boxHalf) {
+    float a = e.y * v0.x - e.x * v0.y;
+    float b = e.y * v1.x - e.x * v1.y;
+    float c = e.y * v2.x - e.x * v2.y;
+    float mn = min(min(a, b), c);
+    float mx = max(max(a, b), c);
+    float r = boxHalf.x * abs(e.y) + boxHalf.y * abs(e.x);
+    return !(mn > r || mx < -r);
+}
 
-    vec3 normal = computeTriangleNormal(t);
-    vec3 axis1 = normalize(normal);
-    vec3 crossAxis = cross(axis1, vec3(1, 0, 0));
-    vec3 axis2 = length(crossAxis) < 0.0001 ? vec3(0, 0, 1) : normalize(crossAxis);
+bool mollerTriBoxOverlap(PrecomputedTriangle tri, vec3 boxCenter, vec3 boxHalf) {
+    vec3 tv0 = tri.v0 - boxCenter;
+    vec3 tv1 = tri.v1 - boxCenter;
+    vec3 tv2 = tri.v2 - boxCenter;
 
-    vec3 axes[5];
-    axes[0] = vec3(1, 0, 0);
-    axes[1] = vec3(0, 1, 0);
-    axes[2] = vec3(0, 0, 1);
-    axes[3] = axis1;
-    axes[4] = axis2;
+    float mn, mx;
 
-    for (int i = 0; i < 5; i++) {
-        vec3 axis = normalize(axes[i]);
-        if (length(axis) < 0.0001) continue;
+    mn = min(min(tv0.x, tv1.x), tv2.x);
+    mx = max(max(tv0.x, tv1.x), tv2.x);
+    if (mn > boxHalf.x || mx < -boxHalf.x) return false;
 
-        float projVoxelMin = dot(center, axis) - dot(halfExtents, abs(axis));
-        float projVoxelMax = dot(center, axis) + dot(halfExtents, abs(axis));
+    mn = min(min(tv0.y, tv1.y), tv2.y);
+    mx = max(max(tv0.y, tv1.y), tv2.y);
+    if (mn > boxHalf.y || mx < -boxHalf.y) return false;
 
-        float projTriMin = min(min(dot(t.p0, axis), dot(t.p1, axis)), dot(t.p2, axis));
-        float projTriMax = max(max(dot(t.p0, axis), dot(t.p1, axis)), dot(t.p2, axis));
+    mn = min(min(tv0.z, tv1.z), tv2.z);
+    mx = max(max(tv0.z, tv1.z), tv2.z);
+    if (mn > boxHalf.z || mx < -boxHalf.z) return false;
 
-        if (projVoxelMax < projTriMin || projTriMax < projVoxelMin) {
-            return false;
-        }
-    }
+    float v0n = dot(tv0, tri.normal);
+    float v1n = dot(tv1, tri.normal);
+    float v2n = dot(tv2, tri.normal);
+    float rn = dot(boxHalf, abs(tri.normal));
+    mn = min(min(v0n, v1n), v2n);
+    mx = max(max(v0n, v1n), v2n);
+    if (mn > rn || mx < -rn) return false;
 
-    vec3 corners[8];
-    corners[0] = voxelMin;
-    corners[1] = vec3(voxelMax.x, voxelMin.y, voxelMin.z);
-    corners[2] = vec3(voxelMax.x, voxelMax.y, voxelMin.z);
-    corners[3] = vec3(voxelMin.x, voxelMax.y, voxelMin.z);
-    corners[4] = vec3(voxelMin.x, voxelMin.y, voxelMax.z);
-    corners[5] = vec3(voxelMax.x, voxelMin.y, voxelMax.z);
-    corners[6] = voxelMax;
-    corners[7] = vec3(voxelMin.x, voxelMax.y, voxelMax.z);
+    if (!axisTestX(tri.e0, tv0, tv1, tv2, boxHalf)) return false;
+    if (!axisTestY(tri.e0, tv0, tv1, tv2, boxHalf)) return false;
+    if (!axisTestZ(tri.e0, tv0, tv1, tv2, boxHalf)) return false;
 
-    for (int j = 0; j < 8; j++) {
-        if (pointInTriangle(corners[j], t)) {
-            return true;
-        }
-    }
+    if (!axisTestX(tri.e1, tv0, tv1, tv2, boxHalf)) return false;
+    if (!axisTestY(tri.e1, tv0, tv1, tv2, boxHalf)) return false;
+    if (!axisTestZ(tri.e1, tv0, tv1, tv2, boxHalf)) return false;
 
-    if ((t.p0.x >= voxelMin.x && t.p0.x <= voxelMax.x &&
-         t.p0.y >= voxelMin.y && t.p0.y <= voxelMax.y &&
-         t.p0.z >= voxelMin.z && t.p0.z <= voxelMax.z) ||
-        (t.p1.x >= voxelMin.x && t.p1.x <= voxelMax.x &&
-         t.p1.y >= voxelMin.y && t.p1.y <= voxelMax.y &&
-         t.p1.z >= voxelMin.z && t.p1.z <= voxelMax.z) ||
-        (t.p2.x >= voxelMin.x && t.p2.x <= voxelMax.x &&
-         t.p2.y >= voxelMin.y && t.p2.y <= voxelMax.y &&
-         t.p2.z >= voxelMin.z && t.p2.z <= voxelMax.z)) {
-        return true;
-    }
+    if (!axisTestX(tri.e2, tv0, tv1, tv2, boxHalf)) return false;
+    if (!axisTestY(tri.e2, tv0, tv1, tv2, boxHalf)) return false;
+    if (!axisTestZ(tri.e2, tv0, tv1, tv2, boxHalf)) return false;
 
-    return false;
+    return true;
 }
 
 void main() {
-    uint globalIdx = gl_GlobalInvocationID.x;
-    uint voxelsPerChunk = chunkSize * chunkSize * chunkSize;
+    uint triIdx = gl_GlobalInvocationID.x + baseIndex;
+    if (triIdx >= triangles.length()) return;
 
-    if (globalIdx >= voxelsPerChunk) return;
+    if (gl_LocalInvocationIndex == 0) {
+        sharedTri = triangles[triIdx];
+    }
+    barrier();
 
-    uint x = globalIdx % chunkSize;
-    uint y = (globalIdx / chunkSize) % chunkSize;
-    uint z = globalIdx / (chunkSize * chunkSize);
+    PrecomputedTriangle tri = sharedTri;
 
-    vec3 voxelMin = chunkOffset + vec3(x, y, z) * voxelSize;
-    vec3 voxelMax = voxelMin + vec3(voxelSize);
+    ivec3 mn = tri.voxelMin;
+    ivec3 mx = tri.voxelMax;
+    ivec3 extent = mx - mn + 1;
+    uint total = extent.x * extent.y * extent.z;
 
-    for (uint i = 0; i < triIndexCount; i++) {
-        uint idx = triIndices[i];
-        Triangle t = triangles[idx];
-        if (voxelIntersectsTriangle(voxelMin, voxelMax, t)) {
-            solidVoxels[globalIdx] = 1u;
-            return;
+    vec3 boxHalf = vec3(voxelSize * 0.5);
+
+    uint strideXY = uint(gridSize.x) * uint(gridSize.y);
+
+    for (uint i = gl_LocalInvocationIndex; i < total; i += gl_WorkGroupSize.x) {
+        uint vx = uint(mn.x) + (i % uint(extent.x));
+        uint vy = uint(mn.y) + ((i / uint(extent.x)) % uint(extent.y));
+        uint vz = uint(mn.z) + (i / (uint(extent.x) * uint(extent.y)));
+
+        if (vx >= uint(gridSize.x) || vy >= uint(gridSize.y) || vz >= uint(gridSize.z)) continue;
+
+        uint idx = vz * strideXY + vy * uint(gridSize.x) + vx;
+
+        vec3 center = gridOrigin + (vec3(vx, vy, vz) + 0.5) * voxelSize;
+
+        if (mollerTriBoxOverlap(tri, center, boxHalf)) {
+            atomicOr(voxels[idx], 1u);
         }
     }
-
-    solidVoxels[globalIdx] = 0u;
 }

@@ -13,6 +13,7 @@ struct VoxelChunk {
     glm::ivec3 chunkPos{};
     glm::ivec3 chunkSize{};
     float voxelSize = 1.0f;
+    glm::vec3 gridOrigin{};
     std::vector<Voxel> voxels;
 };
 
