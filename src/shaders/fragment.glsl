@@ -6,20 +6,20 @@ out vec4 FragColor;
 in vec3 FragPos;
 in vec3 Normal;
 in vec2 TexCoord;
+in vec3 VertexColor;
 
 uniform vec3 viewPos;
 uniform vec3 lightPos;
 uniform vec3 lightColor;
-uniform vec3 objectColor;
 
 // Basic lighting
 // TODO: Replace with raycasting
 void main() {
     vec3 norm = normalize(Normal);
-    vec3 lightDir = normalize(lightPos - FragPos); // Normalized vector pointing to the light
-    float diff = max(dot(norm, lightDir), 0.0); // Lambert (Diffuse) lighting
-    vec3 diffuse = diff * lightColor; // Apply light color
+    vec3 lightDir = normalize(lightPos - FragPos);
+    float diff = max(dot(norm, lightDir), 0.0);
+    vec3 diffuse = diff * lightColor;
     
-    vec3 result = (diffuse + 0.1) * objectColor;  // + 0.1 ambient
-    FragColor = vec4(result, 1.0); // Apply color
+    vec3 result = (diffuse + 0.1) * VertexColor;
+    FragColor = vec4(result, 1.0);
 }

@@ -7,13 +7,14 @@ struct Vertex {
     glm::vec3 position{};
     glm::vec3 normal{};
     glm::vec2 uv{};
+    glm::vec3 color{1.0f};
 
     [[nodiscard]] Vertex() = default;
-    [[nodiscard]] Vertex(glm::vec3 pos, glm::vec3 norm, glm::vec2 texCoord)
-        : position(pos), normal(norm), uv(texCoord) {}
+    [[nodiscard]] Vertex(glm::vec3 pos, glm::vec3 norm, glm::vec2 texCoord, glm::vec3 col = glm::vec3(1.0f))
+        : position(pos), normal(norm), uv(texCoord), color(col) {}
 
     bool operator==(const Vertex& other) const {
-        return position == other.position && normal == other.normal && uv == other.uv;
+        return position == other.position && normal == other.normal && uv == other.uv && color == other.color;
     }
 };
 
@@ -29,7 +30,10 @@ namespace std {
                         (std::hash<float>{}(v.normal.z) << 2);
             size_t h3 = std::hash<float>{}(v.uv.x) ^ 
                         (std::hash<float>{}(v.uv.y) << 1);
-            return h1 ^ (h2 << 1) ^ (h3 << 2);
+            size_t h4 = std::hash<float>{}(v.color.x) ^ 
+                        (std::hash<float>{}(v.color.y) << 1) ^ 
+                        (std::hash<float>{}(v.color.z) << 2);
+            return h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3);
         }
     };
 }

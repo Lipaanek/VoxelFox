@@ -14,6 +14,7 @@ public:
     bool load(const std::string& path);
     [[nodiscard]] const std::vector<Vertex>& getVertices() const { return processedVertices_; }
     [[nodiscard]] const std::vector<uint32_t>& getIndices() const { return indices_; }
+    [[nodiscard]] const std::vector<int>& getTriangleMaterials() const { return triangleMaterialIndices_; }
     [[nodiscard]] bool hasIndices() const { return !indices_.empty(); }
     void clear();
 
@@ -24,9 +25,14 @@ private:
     std::vector<uint32_t> indices_;
     std::unordered_map<Vertex, uint32_t> uniqueVertexMap_;
 
+    std::vector<int> triangleMaterialIndices_;
+    int currentMaterialIndex_ = -1;
+    std::vector<std::string> materialNames_;
+
     void parseVertexLine(const std::string& line);
     void parseNormalLine(const std::string& line);
     void parseFaceLine(const std::string& line);
+    void parseMaterialLine(const std::string& line);
     uint32_t getOrCreateVertex(const Vertex& v);
 };
 

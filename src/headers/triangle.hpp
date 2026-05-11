@@ -28,7 +28,7 @@ struct PrecomputedTriangle {
     glm::ivec3 voxelMin;    // 112-123
     float _pad_voxelMin;    // 124-127
     glm::ivec3 voxelMax;    // 128-139
-    float _pad6;            // 140-143
+    int materialIndex;      // 140-143
 };
 
 static_assert(sizeof(PrecomputedTriangle) == 144,

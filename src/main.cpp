@@ -10,6 +10,7 @@
 #include "headers/object_loader.hpp"
 #include "headers/camera.hpp"
 #include "headers/voxelizer.hpp"
+#include "headers/color_loader.hpp"
 
 using namespace std;
 
@@ -102,12 +103,10 @@ void setUniforms(int shaderProgram, Camera camera) {
     int viewPosLoc = glGetUniformLocation(shaderProgram, "viewPos");
     int lightPosLoc = glGetUniformLocation(shaderProgram, "lightPos");
     int lightColorLoc = glGetUniformLocation(shaderProgram, "lightColor");
-    int objectColorLoc = glGetUniformLocation(shaderProgram, "objectColor");
 
     glUniform3fv(viewPosLoc, 1, glm::value_ptr(camera.position));
     glUniform3f(lightPosLoc, camera.position.x, camera.position.y, camera.position.z);
     glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);
-    glUniform3f(objectColorLoc, 0.8f, 0.5f, 0.2f);
 }
 
 // Clearing buffers and screen
@@ -146,16 +145,18 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     ObjectLoader loader;
-    if (!loader.load("src/meshes/test.obj")) {
+    if (!loader.load("src/meshes/Studanka2.obj")) {
         printf("Failed to load mesh\n");
         return -1;
     }
 
-    std::vector<VoxelChunk> voxelChunks = voxelizeGPUCompute(loader.getVertices(), loader.getIndices(), voxelSize);
+    std::vector<Material> materials = loadColorFile("src/color_files/Studanka2.mtl");
+
+    std::vector<VoxelChunk> voxelChunks = voxelizeGPUCompute(loader.getVertices(), loader.getIndices(), loader.getTriangleMaterials(), voxelSize);
     if (voxelChunks.empty()) {
         printf("Voxelization failed\n");
     }
-    VoxelMesh voxelMesh = generateVoxelMesh(voxelChunks);
+    VoxelMesh voxelMesh = generateVoxelMesh(voxelChunks, materials);
     Mesh voxelRenderMesh(voxelMesh.vertices, voxelMesh.indices);
 
     // Shader loading
@@ -200,7 +201,6 @@ int main() {
         // Rendering
         setUniforms(shaderProgram, camera);
 
-        glUniform3f(glGetUniformLocation(shaderProgram, "objectColor"), 0.2f, 0.8f, 0.3f);
         voxelRenderMesh.draw();
         glfwSwapBuffers(window);
         glfwPollEvents();

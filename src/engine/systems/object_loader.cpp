@@ -50,6 +50,8 @@ bool ObjectLoader::load(const std::string& path) {
             }
         } else if (line[0] == 'f') {
             parseFaceLine(line);
+        } else if (line[0] == 'u' && line.substr(0, 6) == "usemtl") {
+            parseMaterialLine(line);
         }
     }
 
@@ -77,6 +79,21 @@ void ObjectLoader::parseNormalLine(const string& line) {
     float z = std::stof(tokens[3]);
 
     normals_.emplace_back(x, y, z);
+}
+
+void ObjectLoader::parseMaterialLine(const string& line) {
+    auto tokens = split(line);
+    if (tokens.size() < 2) return;
+
+    const string& name = tokens[1];
+    for (size_t i = 0; i < materialNames_.size(); i++) {
+        if (materialNames_[i] == name) {
+            currentMaterialIndex_ = static_cast<int>(i);
+            return;
+        }
+    }
+    currentMaterialIndex_ = static_cast<int>(materialNames_.size());
+    materialNames_.push_back(name);
 }
 
 uint32_t ObjectLoader::getOrCreateVertex(const Vertex& v) {
@@ -141,5 +158,7 @@ void ObjectLoader::parseFaceLine(const string& line) {
         indices_.push_back(getOrCreateVertex(v1));
         indices_.push_back(getOrCreateVertex(v2));
         indices_.push_back(getOrCreateVertex(v3));
+
+        triangleMaterialIndices_.push_back(currentMaterialIndex_);
     }
 }

@@ -10,6 +10,7 @@
 #include "../../headers/vertex.hpp"
 #include "../../headers/shader_loader.hpp"
 #include "../../headers/triangle.hpp"
+#include "../../headers/color_loader.hpp"
 
 using std::vector;
 
@@ -23,6 +24,7 @@ struct VoxelGridInfo {
 static vector<PrecomputedTriangle> preprocessTriangles(
     const vector<Vertex>& vertices,
     const vector<uint32_t>& indices,
+    const vector<int>& triMaterials,
     float voxelSize,
     VoxelGridInfo& outInfo)
 {
@@ -54,6 +56,7 @@ static vector<PrecomputedTriangle> preprocessTriangles(
         t.e2 = verts[0] - verts[2];
         t.normal = glm::normalize(glm::cross(e0, t.e1));
         t.d = -glm::dot(t.normal, verts[0]);
+        t.materialIndex = triMaterials.empty() ? 0 : std::max(0, triMaterials[i]);
 
         glm::vec3 aabbMin = glm::min(glm::min(verts[0], verts[1]), verts[2]);
         glm::vec3 aabbMax = glm::max(glm::max(verts[0], verts[1]), verts[2]);
@@ -84,9 +87,9 @@ static vector<PrecomputedTriangle> preprocessTriangles(
     return result;
 }
 
-vector<VoxelChunk> voxelizeGPUCompute(vector<Vertex> vertices, vector<uint32_t> indices, float voxelSize) {
+vector<VoxelChunk> voxelizeGPUCompute(vector<Vertex> vertices, vector<uint32_t> indices, const vector<int>& triMaterials, float voxelSize) {
     VoxelGridInfo gridInfo;
-    auto triangles = preprocessTriangles(vertices, indices, voxelSize, gridInfo);
+    auto triangles = preprocessTriangles(vertices, indices, triMaterials, voxelSize, gridInfo);
 
     size_t triCount = triangles.size();
     if (triCount == 0) {
@@ -323,7 +326,7 @@ vector<VoxelChunk> voxelizeGPUCompute(vector<Vertex> vertices, vector<uint32_t> 
     return chunks;
 }
 
-VoxelMesh generateVoxelMesh(const vector<VoxelChunk>& chunks) {
+VoxelMesh generateVoxelMesh(const vector<VoxelChunk>& chunks, const vector<Material>& materials) {
     VoxelMesh result;
     vector<Vertex> vertices;
     vector<uint32_t> indices;
@@ -350,13 +353,22 @@ VoxelMesh generateVoxelMesh(const vector<VoxelChunk>& chunks) {
                     int idx = x + y * chunkSize + z * chunkSize * chunkSize;
                     if (!chunk.voxels[idx].solid) continue;
 
+                    int voxelVal = chunk.voxels[idx].data.x;
+                    glm::vec3 voxelColor = {0.6f, 0.6f, 0.6f};
+                    if ((voxelVal & 1) && !materials.empty()) {
+                        int matIdx = voxelVal >> 2;
+                        if (matIdx >= 0 && matIdx < static_cast<int>(materials.size())) {
+                            voxelColor = {materials[matIdx].color.r, materials[matIdx].color.g, materials[matIdx].color.b};
+                        }
+                    }
+
                     glm::vec3 basePos = chunkWorldPos + glm::vec3(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)) * vSize;
 
                     for (int face = 0; face < 6; ++face) {
                         uint32_t faceStart = static_cast<uint32_t>(vertices.size());
                         for (int v = 0; v < 4; ++v) {
                             glm::vec3 pos = basePos + faceVerts[face][v] * vSize;
-                            vertices.push_back({pos, faceNormals[face], {0, 0}});
+                            vertices.push_back({pos, faceNormals[face], {0, 0}, voxelColor});
                         }
                         indices.push_back(faceStart + 0);
                         indices.push_back(faceStart + 1);

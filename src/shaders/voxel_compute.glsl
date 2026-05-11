@@ -20,7 +20,7 @@ struct PrecomputedTriangle {
     ivec3 voxelMin;
     float _pad_voxelMin;
     ivec3 voxelMax;
-    float _pad6;
+    int materialIndex;
 };
 
 layout(std430, binding = 0) readonly buffer TriangleBuffer {
@@ -147,7 +147,8 @@ void main() {
         vec3 center = gridOrigin + (vec3(vx, vy, vz) + 0.5) * voxelSize;
 
         if (mollerTriBoxOverlap(tri, center, boxHalf)) {
-            atomicOr(voxels[idx], 1u);
+            uint matVal = 1u | (uint(tri.materialIndex) << 2u);
+            atomicMax(voxels[idx], matVal);
         }
     }
 }
