@@ -1,48 +1,67 @@
-# variables
+# Compiler
 CXX = g++
-CC = gcc
-CXXFLAGS = -std=c++20 -Wall -Iinclude -Isrc/include -fmodules-ts
-CFLAGS = -Wall -Iinclude -Isrc/include
-SRC_DIR  = src
-BIN_DIR  = bin
-TARGET   = $(BIN_DIR)/voxelfox.exe
+CC  = gcc
+
+# Directories
+SRC_DIR = src
+BIN_DIR = bin
+INC_DIR = include
+
+# Output
+TARGET = $(BIN_DIR)/voxelfox.exe
+
+# Flags
+CXXFLAGS = -std=c++20 -Wall -fmodules-ts -Iinclude -Iinclude/imgui
+CFLAGS   = -Wall -Iinclude -Iinclude/imgui
+
 LDFLAGS = -Llib -lglfw3dll -lopengl32 -lgdi32
 
-# Find all source files
-CPP_SRCS = $(shell dir /s /b $(SRC_DIR)\*.cpp)
-C_SRCS   = $(shell dir /s /b $(SRC_DIR)\*.c)
+# ImGui sources
+IMGUI_SRCS = \
+	include/imgui/imgui.cpp \
+	include/imgui/imgui_draw.cpp \
+	include/imgui/imgui_widgets.cpp \
+	include/imgui/imgui_tables.cpp \
+	include/imgui/backends/imgui_impl_glfw.cpp \
+	include/imgui/backends/imgui_impl_opengl3.cpp
 
-# Object files from sources
-OBJS = $(CPP_SRCS:$(SRC_DIR)/%.cpp=$(BIN_DIR)/%.o)
-C_OBJS = $(C_SRCS:$(SRC_DIR)/%.c=$(BIN_DIR)/%.o)
+# Source files (from src/ directory only)
+CPP_SRCS := $(shell powershell -Command "Get-ChildItem -Path src -Recurse -Filter *.cpp | Resolve-Path -Relative")
+C_SRCS   := $(shell powershell -Command "Get-ChildItem -Path src -Recurse -Filter *.c | Resolve-Path -Relative")
 
-# All objects to link (C++, then C)
-ALL_OBJS = $(OBJS) $(C_OBJS)
+CPP_SRCS := $(subst \,/,$(CPP_SRCS))
+C_SRCS   := $(subst \,/,$(C_SRCS))
+
+CPP_SRCS += $(IMGUI_SRCS)
+
+# Object files
+OBJS := $(patsubst %.cpp,$(BIN_DIR)/%.o,$(CPP_SRCS))
+OBJS += $(patsubst %.c,$(BIN_DIR)/%.o,$(C_SRCS))
 
 # Default target
 all: $(TARGET)
 
-# Create bin directory and link
-$(TARGET): $(ALL_OBJS)
+# Link
+$(TARGET): $(OBJS)
 	@if not exist "$(BIN_DIR)" mkdir "$(BIN_DIR)"
-	$(CXX) $(CXXFLAGS) $(ALL_OBJS) $(LDFLAGS) -o $(TARGET)
+	$(CXX) $(OBJS) $(LDFLAGS) -o $@
 
-# Compile .cppm module interface files first (generates BMI in bin/gcm.cache)
-$(BIN_DIR)/%.o: $(SRC_DIR)/%.cppm
-	@if not exist "$(BIN_DIR)" mkdir "$(BIN_DIR)"
+# Compile C++
+$(BIN_DIR)/%.o: %.cpp
+	@if not exist "$(dir $@)" mkdir "$(dir $@)"
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Compile .cpp files into .o files
-$(BIN_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@if not exist "$(BIN_DIR)" mkdir "$(BIN_DIR)"
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-# Compile .c files into .o files
-$(BIN_DIR)/%.o: $(SRC_DIR)/%.c
-	@if not exist "$(BIN_DIR)" mkdir "$(BIN_DIR)"
+# Compile C
+$(BIN_DIR)/%.o: %.c
+	@if not exist "$(dir $@)" mkdir "$(dir $@)"
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Clean up
+# Compile modules
+$(BIN_DIR)/%.o: %.cppm
+	@if not exist "$(dir $@)" mkdir "$(dir $@)"
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Clean
 clean:
 	@if exist "$(BIN_DIR)" rmdir /s /q "$(BIN_DIR)"
 	@if exist "gcm.cache" rmdir /s /q "gcm.cache"

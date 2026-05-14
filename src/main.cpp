@@ -4,6 +4,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <imgui/imgui.h>
+#include <imgui/backends/imgui_impl_glfw.h>
+#include <imgui/backends/imgui_impl_opengl3.h>
+
 #include "headers/shader_loader.hpp"
 #include "headers/vertex.hpp"
 #include "headers/mesh.hpp"
@@ -26,7 +30,7 @@ float velocityZ = 0.0f;
 
 // Camera settings
 const float speed = 10.0f;
-const float sens = 0.4f;
+const float sens = 0.2f;
 
 double prevMouseX = 0;
 double prevMouseY = 0;
@@ -40,6 +44,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
 }
 
 void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
+    if (ImGui::GetIO().WantCaptureMouse) return;
     double dx = prevMouseX - xpos;
     double dy = prevMouseY - ypos;
 
@@ -54,6 +59,7 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
 
 // Camera inputs
 void input_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    if (ImGui::GetIO().WantCaptureKeyboard) return;
     if (key == GLFW_KEY_A && action == GLFW_PRESS)
         velocityX = -speed;
     if (key == GLFW_KEY_A && action == GLFW_RELEASE)
@@ -115,6 +121,48 @@ void clear() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
+void drawUI() {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    // UI
+    ImGui::Begin("Inspector");
+
+    static float value = 0.5f;
+    ImGui::SliderFloat("Value", &value, 0.0f, 1.0f);
+
+    if (ImGui::Button("Test"))
+    {
+    }
+
+    ImGui::End();
+
+    ImGui::Render();
+
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    // multi-viewport handling
+    if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+    }
+}
+
+// Setup Dear ImGui
+void createImGuiContext() {
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+
+    ImGuiIO& io = ImGui::GetIO();
+    io.IniFilename = NULL;
+
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+
+    ImGui::StyleColorsDark();
+}
+
 int main() {
     if (!glfwInit()) {
         printf("%s", "Failed to init a window");
@@ -143,6 +191,12 @@ int main() {
     glViewport(0, 0, width, height);
     glEnable(GL_DEPTH_TEST);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetKeyCallback(window, input_callback);
+    glfwSetCursorPosCallback(window, cursor_position_callback);
+
+    createImGuiContext();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 430");
 
     ObjectLoader loader;
     if (!loader.load("src/meshes/Studanka2.obj")) {
@@ -170,9 +224,6 @@ int main() {
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
-
-    glfwSetKeyCallback(window, input_callback);
-    glfwSetCursorPosCallback(window, cursor_position_callback);
 
     // Camera setup
     Camera camera;
@@ -202,9 +253,12 @@ int main() {
         setUniforms(shaderProgram, camera);
 
         voxelRenderMesh.draw();
+
+        drawUI();
+
         glfwSwapBuffers(window);
         glfwPollEvents();
-
+        
         frameCount++;
 
         if (currentTime - previousTime >= 1.0) {
