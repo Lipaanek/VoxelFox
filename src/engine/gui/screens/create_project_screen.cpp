@@ -1,7 +1,9 @@
 #include <glad/glad.h>
 #include <imgui/imgui.h>
+#include <filesystem>
 
 #include "create_project_screen.hpp"
+#include "../../../engine/project_config.hpp"
 #include "../../../utils/file_rule.hpp"
 #include <tinyfiledialogs/tinyfiledialogs.h>
 
@@ -23,11 +25,15 @@ void createProject(const std::string& projectName, const std::string& projectPat
                     "# Do not edit unless you know what you are doing\n\n"
                     "engine_version = \"1\"\n"
                     "project_name = \""
-                ) + projectName + "\n";
+                ) + projectName + "\"\n"
+                  "voxel_size = \"0.1\"\n";
             })
         });
 
     structure.Build(projectPath);
+
+    std::string fullProjectPath = (std::filesystem::path(projectPath) / projectName).string();
+    ProjectConfig config = ProjectConfigLoader::Load(fullProjectPath);
 }
 
 void CreateProjectScreen::Update() {

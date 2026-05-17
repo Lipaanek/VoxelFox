@@ -9,6 +9,7 @@
 #include "../../../include/object_loader.hpp"
 #include "../../../include/color_loader.hpp"
 #include "../../../include/voxelizer.hpp"
+#include "../../project_config.hpp"
 
 extern float velocityX;
 extern float velocityY;
@@ -20,22 +21,17 @@ void MainEditorScreen::OnEnter() {
     // Clear any stale OpenGL errors before starting
     while (glGetError() != GL_NO_ERROR) {}
 
-    ObjectLoader loader;
-    if (!loader.load("src/meshes/Studanka2.obj")) {
-        printf("Failed to load mesh\n");
-        return;
+    // Load project configuration
+    if (!projectPath.empty()) {
+        ProjectConfig config = ProjectConfigLoader::Load(projectPath);
+        voxelSize = config.voxelSize;
+        printf("Loaded project config: name=%s, voxelSize=%.2f\n", config.projectName.c_str(), voxelSize);
+    } else {
+        printf("Warning: No project path set in MainEditorScreen\n");
+        voxelSize = 0.1f;  // Use default
     }
 
-    std::vector<Material> materials = loadColorFile("src/color_files/Studanka2.mtl");
-
-    const float voxelSize = 0.1f;
-    std::vector<VoxelChunk> voxelChunks = voxelizeGPUCompute(
-        loader.getVertices(), loader.getIndices(),
-        loader.getTriangleMaterials(), voxelSize);
-
-    VoxelMesh voxelMesh = generateVoxelMesh(voxelChunks, materials);
-    voxelRenderMesh = Mesh(voxelMesh.vertices, voxelMesh.indices);
-
+    // Load and compile shaders
     std::string vertexCode = loadFile("src/shaders/vertex.glsl");
     std::string fragmentCode = loadFile("src/shaders/fragment.glsl");
 
@@ -94,8 +90,32 @@ void MainEditorScreen::Render() {
     if (!shaderProgram) return;
 
     glUseProgram(shaderProgram);
-    setUniforms();
-    voxelRenderMesh.draw();
+
+    // Set view and projection matrices (shared by all meshes)
+    glm::mat4 view = camera.getViewMatrix();
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+    glm::mat4 projection = camera.getProjectionMatrix(static_cast<float>(fbWidth) / static_cast<float>(fbHeight));
+
+    int viewLoc = glGetUniformLocation(shaderProgram, "view");
+    int projLoc = glGetUniformLocation(shaderProgram, "projection");
+    int viewPosLoc = glGetUniformLocation(shaderProgram, "viewPos");
+    int lightPosLoc = glGetUniformLocation(shaderProgram, "lightPos");
+    int lightColorLoc = glGetUniformLocation(shaderProgram, "lightColor");
+
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+    glUniform3fv(viewPosLoc, 1, glm::value_ptr(camera.position));
+    glUniform3f(lightPosLoc, camera.position.x, camera.position.y, camera.position.z);
+    glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);
+
+    int modelLoc = glGetUniformLocation(shaderProgram, "model");
+
+    // Render all loaded meshes
+    for (auto& mesh : meshManager.GetLoadedMeshes()) {
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(mesh.modelMatrix));
+        mesh.renderMesh.draw();
+    }
 
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
