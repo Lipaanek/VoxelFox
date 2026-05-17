@@ -3,67 +3,51 @@ CXX = g++
 CC  = gcc
 
 # Directories
-SRC_DIR = src
 BIN_DIR = bin
-INC_DIR = include
 
 # Output
 TARGET = $(BIN_DIR)/voxelfox.exe
 
 # Flags
-CXXFLAGS = -std=c++20 -Wall -fmodules-ts -Iinclude -Iinclude/imgui
-CFLAGS   = -Wall -Iinclude -Iinclude/imgui
+CXXFLAGS = -std=c++20 -Wall -fmodules-ts -Isrc/include -Isrc/thirdparty -Isrc/thirdparty/imgui
+CFLAGS   = -Wall -Isrc/include -Isrc/thirdparty -Isrc/thirdparty/imgui
 
-LDFLAGS = -Llib -lglfw3dll -lopengl32 -lgdi32
+# --- FIX: Added -lole32 and -lcomdlg32 to support tinyfiledialogs ---
+LDFLAGS = -Llib -lglfw3dll -lopengl32 -lgdi32 -lole32 -lcomdlg32
 
-# ImGui sources
-IMGUI_SRCS = \
-	include/imgui/imgui.cpp \
-	include/imgui/imgui_draw.cpp \
-	include/imgui/imgui_widgets.cpp \
-	include/imgui/imgui_tables.cpp \
-	include/imgui/backends/imgui_impl_glfw.cpp \
-	include/imgui/backends/imgui_impl_opengl3.cpp
+# --- Safe Source Gathering ---
+ALL_CPP := $(wildcard src/*.cpp) $(wildcard src/**/*.cpp) $(wildcard src/**/**/*.cpp) $(wildcard src/**/**/**/*.cpp)
 
-# Source files (from src/ directory only)
-CPP_SRCS := $(shell powershell -Command "Get-ChildItem -Path src -Recurse -Filter *.cpp | Resolve-Path -Relative")
-C_SRCS   := $(shell powershell -Command "Get-ChildItem -Path src -Recurse -Filter *.c | Resolve-Path -Relative")
+# Filter out all ImGui backends, then manually add back only GLFW and OpenGL3
+CPP_SRCS := $(filter-out src/thirdparty/imgui/backends/%, $(ALL_CPP)) \
+            src/thirdparty/imgui/backends/imgui_impl_glfw.cpp \
+            src/thirdparty/imgui/backends/imgui_impl_opengl3.cpp
 
-CPP_SRCS := $(subst \,/,$(CPP_SRCS))
-C_SRCS   := $(subst \,/,$(C_SRCS))
+C_SRCS   := $(wildcard src/*.c)   $(wildcard src/**/*.c)   $(wildcard src/**/**/*.c)   $(wildcard src/**/**/**/*.c)
 
-CPP_SRCS += $(IMGUI_SRCS)
-
-# Object files
-OBJS := $(patsubst %.cpp,$(BIN_DIR)/%.o,$(CPP_SRCS))
-OBJS += $(patsubst %.c,$(BIN_DIR)/%.o,$(C_SRCS))
+# Object file generation
+OBJS := $(patsubst %.cpp,$(BIN_DIR)/%.o,$(CPP_SRCS)) \
+        $(patsubst %.c,$(BIN_DIR)/%.o,$(C_SRCS))
 
 # Default target
 all: $(TARGET)
 
-# Link
 $(TARGET): $(OBJS)
 	@if not exist "$(BIN_DIR)" mkdir "$(BIN_DIR)"
 	$(CXX) $(OBJS) $(LDFLAGS) -o $@
 
-# Compile C++
+# Compile C++ files
 $(BIN_DIR)/%.o: %.cpp
-	@if not exist "$(dir $@)" mkdir "$(dir $@)"
+	@if not exist "$(subst /,\,$(dir $@))" mkdir "$(subst /,\,$(dir $@))"
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Compile C
+# Compile C files
 $(BIN_DIR)/%.o: %.c
-	@if not exist "$(dir $@)" mkdir "$(dir $@)"
+	@if not exist "$(subst /,\,$(dir $@))" mkdir "$(subst /,\,$(dir $@))"
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Compile modules
-$(BIN_DIR)/%.o: %.cppm
-	@if not exist "$(dir $@)" mkdir "$(dir $@)"
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-# Clean
+# Clean up
 clean:
 	@if exist "$(BIN_DIR)" rmdir /s /q "$(BIN_DIR)"
-	@if exist "gcm.cache" rmdir /s /q "gcm.cache"
 
 .PHONY: all clean

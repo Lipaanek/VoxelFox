@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../screen.hpp"
-#include "../../../rendering_headers/camera.hpp"
-#include "../../../rendering_headers/mesh.hpp"
+#include "../../../include/camera.hpp"
+#include "../../../include/mesh.hpp"
 
 struct GLFWwindow;
 

@@ -6,11 +6,11 @@
 
 #include <glad/glad.h>
 
-#include "../../rendering_headers/voxelizer.hpp"
-#include "../../rendering_headers/vertex.hpp"
-#include "../../rendering_headers/shader_loader.hpp"
-#include "../../rendering_headers/triangle.hpp"
-#include "../../rendering_headers/color_loader.hpp"
+#include "../../include/voxelizer.hpp"
+#include "../../include/vertex.hpp"
+#include "../../include/shader_loader.hpp"
+#include "../../include/triangle.hpp"
+#include "../../include/color_loader.hpp"
 
 using std::vector;
 

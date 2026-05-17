@@ -2,6 +2,33 @@
 #include <imgui/imgui.h>
 
 #include "create_project_screen.hpp"
+#include "../../../utils/file_rule.hpp"
+#include <tinyfiledialogs/tinyfiledialogs.h>
+
+void createProject(const std::string& projectName, const std::string& projectPath) {
+    FileRule structure =
+        FileRule::Dir(projectName)
+        .Children({
+            FileRule::Dir("assets")
+            .Children({
+                FileRule::Dir("objects"),
+                FileRule::Dir("objectColors"),
+                FileRule::Dir("audio"),
+                FileRule::Dir("scripts")
+            }),
+
+            FileRule::File("project.vfp", [projectName]() {
+                return std::string(
+                    "# VoxelFox engine project configuration file\n"
+                    "# Do not edit unless you know what you are doing\n\n"
+                    "engine_version = \"1\"\n"
+                    "project_name = \""
+                ) + projectName + "\n";
+            })
+        });
+
+    structure.Build(projectPath);
+}
 
 void CreateProjectScreen::Update() {
     if (projectCreated) {
@@ -32,13 +59,24 @@ void CreateProjectScreen::Render() {
     ImGui::Spacing();
 
     ImGui::TextColored(ImVec4(1, 1, 0, 1), "Project Path");
-    ImGui::InputText("##ProjectPath", projectPath, sizeof(projectPath));
+    if (ImGui::Button("Browse")) {
+        const char* path = tinyfd_selectFolderDialog(
+            "Select Project Folder",
+            ""
+        );
+
+        if (path) {
+            strncpy(projectPath, path, sizeof(projectPath));
+        }
+    }
     
     ImGui::Spacing();
     ImGui::Spacing();
 
     if (ImGui::Button("Create", ImVec2(formWidth, 0))) {
         projectCreated = true;
+
+        createProject(std::string(projectName), std::string(projectPath));
     }
 
     ImGui::End();

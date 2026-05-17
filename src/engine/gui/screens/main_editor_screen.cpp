@@ -5,10 +5,10 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "main_editor_screen.hpp"
-#include "../../../rendering_headers/shader_loader.hpp"
-#include "../../../rendering_headers/object_loader.hpp"
-#include "../../../rendering_headers/color_loader.hpp"
-#include "../../../rendering_headers/voxelizer.hpp"
+#include "../../../include/shader_loader.hpp"
+#include "../../../include/object_loader.hpp"
+#include "../../../include/color_loader.hpp"
+#include "../../../include/voxelizer.hpp"
 
 extern float velocityX;
 extern float velocityY;

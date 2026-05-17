@@ -39,6 +39,7 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
     prevMouseY = ypos;
 }
 
+// Editor input
 void input_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (ImGui::GetIO().WantCaptureKeyboard)                   return;
     if (key == GLFW_KEY_A && action == GLFW_PRESS)            velocityX = -speed;
