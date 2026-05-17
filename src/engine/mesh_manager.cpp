@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <cstdio>
 #include <algorithm>
+#include <utility>
 
 LoadedMesh* MeshManager::LoadMesh(const std::string& projectPath, const std::string& relativePath, float voxelSize) {
     // Check if mesh is already loaded
@@ -61,6 +62,18 @@ LoadedMesh* MeshManager::LoadMesh(const std::string& projectPath, const std::str
     loadedMeshes_.push_back(std::move(loadedMesh));
 
     printf("Successfully loaded and voxelized mesh: %s\n", relativePath.c_str());
+    return &loadedMeshes_.back();
+}
+
+LoadedMesh* MeshManager::LoadMesh(Mesh&& mesh, const std::string& identifier) {
+    if (IsMeshLoaded(identifier)) {
+        printf("Mesh already loaded: %s\n", identifier.c_str());
+        return GetMeshByPath(identifier);
+    }
+
+    LoadedMesh loadedMesh(identifier, std::move(mesh));
+    loadedMeshes_.push_back(std::move(loadedMesh));
+    printf("Successfully loaded mesh from existing Mesh object: %s\n", identifier.c_str());
     return &loadedMeshes_.back();
 }
 

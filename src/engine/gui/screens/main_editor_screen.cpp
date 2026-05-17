@@ -17,6 +17,8 @@ extern float velocityZ;
 extern float yaw;
 extern float pitch;
 
+std::vector<Vertex> gridVertices;
+
 void MainEditorScreen::OnEnter() {
     // Clear any stale OpenGL errors before starting
     while (glGetError() != GL_NO_ERROR) {}
@@ -60,6 +62,45 @@ void MainEditorScreen::OnEnter() {
     camera.updateCameraVectors();
 
     lastFrameTime = glfwGetTime();
+
+    const int gridSize = 20;
+    const float spacing = 1.0f;
+
+    for (int i = -gridSize; i <= gridSize; i++) {
+        glm::vec3 color = (i == 0)
+            ? glm::vec3(0.8f, 0.8f, 0.8f)
+            : glm::vec3(0.35f, 0.35f, 0.35f);
+
+        // Vertical lines (parallel to Z)
+        gridVertices.emplace_back(
+            glm::vec3(i * spacing, 0.0f, -gridSize * spacing),
+            glm::vec3(0.0f, 1.0f, 0.0f),
+            glm::vec2(0.0f),
+            color
+        );
+
+        gridVertices.emplace_back(
+            glm::vec3(i * spacing, 0.0f, gridSize * spacing),
+            glm::vec3(0.0f, 1.0f, 0.0f),
+            glm::vec2(0.0f),
+            color
+        );
+
+        // Horizontal lines (parallel to X)
+        gridVertices.emplace_back(
+            glm::vec3(-gridSize * spacing, 0.0f, i * spacing),
+            glm::vec3(0.0f, 1.0f, 0.0f),
+            glm::vec2(0.0f),
+            color
+        );
+
+        gridVertices.emplace_back(
+            glm::vec3(gridSize * spacing, 0.0f, i * spacing),
+            glm::vec3(0.0f, 1.0f, 0.0f),
+            glm::vec2(0.0f),
+            color
+        );
+    }
 }
 
 void MainEditorScreen::OnExit() {
