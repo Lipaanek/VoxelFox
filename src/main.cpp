@@ -109,6 +109,8 @@ int main() {
     MainEditorScreen editorScreen(window);
 
     createScreen.OnProjectCreated = [&]() {
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        glfwMaximizeWindow(window);
         screenManager.SwitchTo(&editorScreen);
     };
 

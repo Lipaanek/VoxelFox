@@ -17,6 +17,9 @@ extern float yaw;
 extern float pitch;
 
 void MainEditorScreen::OnEnter() {
+    // Clear any stale OpenGL errors before starting
+    while (glGetError() != GL_NO_ERROR) {}
+
     ObjectLoader loader;
     if (!loader.load("src/meshes/Studanka2.obj")) {
         printf("Failed to load mesh\n");
@@ -44,12 +47,20 @@ void MainEditorScreen::OnEnter() {
     glAttachShader(shaderProgram, fragShader);
     glLinkProgram(shaderProgram);
 
+    GLint success;
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if (!success) {
+        char infoLog[512];
+        glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
+        printf("Shader program linking failed: %s\n", infoLog);
+        glDeleteProgram(shaderProgram);
+        shaderProgram = 0;
+    }
+
     glDeleteShader(vertShader);
     glDeleteShader(fragShader);
 
     camera.position = glm::vec3(0.0f, 0.0f, 5.0f);
-    camera.yaw = 0.0f;
-    camera.pitch = 0.0f;
     camera.updateCameraVectors();
 
     lastFrameTime = glfwGetTime();
@@ -74,6 +85,9 @@ void MainEditorScreen::Update() {
 }
 
 void MainEditorScreen::Render() {
+    // Clear stale errors from previous frame (ImGui, etc.)
+    while (glGetError() != GL_NO_ERROR) {}
+
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -82,6 +96,11 @@ void MainEditorScreen::Render() {
     glUseProgram(shaderProgram);
     setUniforms();
     voxelRenderMesh.draw();
+
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR) {
+        printf("OpenGL error in MainEditorScreen::Render: 0x%x\n", err);
+    }
 }
 
 void MainEditorScreen::setUniforms() {

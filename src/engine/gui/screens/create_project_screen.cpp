@@ -18,20 +18,14 @@ void CreateProjectScreen::Render() {
 
     ImGuiIO& io = ImGui::GetIO();
 
-    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
-    ImGui::SetNextWindowSize(io.DisplaySize, ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(420, 180), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f),
+        ImGuiCond_FirstUseEver, ImVec2(0.5f, 0.5f));
 
-    ImGui::Begin("Create Project", nullptr,
-        ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBringToFrontOnFocus);
+    ImGui::Begin("Create Project", nullptr);
 
-    float formWidth = 400.0f;
-    float formHeight = 150.0f;
-    ImGui::SetCursorPos(ImVec2(
-        (io.DisplaySize.x - formWidth) * 0.5f,
-        (io.DisplaySize.y - formHeight) * 0.5f));
+    float formWidth = ImGui::GetContentRegionAvail().x;
 
-    ImGui::BeginGroup();
     ImGui::TextColored(ImVec4(1, 1, 0, 1), "Project Name");
     ImGui::InputText("##ProjectName", projectName, sizeof(projectName));
 
@@ -46,7 +40,6 @@ void CreateProjectScreen::Render() {
     if (ImGui::Button("Create", ImVec2(formWidth, 0))) {
         projectCreated = true;
     }
-    ImGui::EndGroup();
 
     ImGui::End();
 }
