@@ -5,7 +5,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "../../headers/shader_loader.hpp"
+#include "../../rendering_headers/shader_loader.hpp"
 
 using namespace std;
 

@@ -3,8 +3,8 @@
 #include <sstream>
 #include <string>
 
-#include "../../headers/object_loader.hpp"
-#include "../../headers/vertex.hpp"
+#include "../../rendering_headers/object_loader.hpp"
+#include "../../rendering_headers/vertex.hpp"
 
 using std::string;
 using std::vector;

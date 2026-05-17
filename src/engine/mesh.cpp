@@ -1,4 +1,4 @@
-#include "../headers/mesh.hpp"
+#include "../rendering_headers/mesh.hpp"
 #include <utility>
 
 Mesh::Mesh(const std::vector<Vertex>& vertices) {

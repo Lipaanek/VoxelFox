@@ -8,13 +8,16 @@
 #include <imgui/backends/imgui_impl_glfw.h>
 #include <imgui/backends/imgui_impl_opengl3.h>
 
-#include "headers/shader_loader.hpp"
-#include "headers/vertex.hpp"
-#include "headers/mesh.hpp"
-#include "headers/object_loader.hpp"
-#include "headers/camera.hpp"
-#include "headers/voxelizer.hpp"
-#include "headers/color_loader.hpp"
+#include "rendering_headers/shader_loader.hpp"
+#include "rendering_headers/vertex.hpp"
+#include "rendering_headers/mesh.hpp"
+#include "rendering_headers/object_loader.hpp"
+#include "rendering_headers/camera.hpp"
+#include "rendering_headers/voxelizer.hpp"
+#include "rendering_headers/color_loader.hpp"
+
+// UI
+#include "engine/gui/screens/create_project_screen.hpp"
 
 using namespace std;
 
@@ -38,6 +41,8 @@ double prevMouseY = 0;
 // Camera stats
 float yaw;
 float pitch;
+
+static CreateProjectScreen createProjectScreen;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -126,17 +131,7 @@ void drawUI() {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    // UI
-    ImGui::Begin("Inspector");
-
-    static float value = 0.5f;
-    ImGui::SliderFloat("Value", &value, 0.0f, 1.0f);
-
-    if (ImGui::Button("Test"))
-    {
-    }
-
-    ImGui::End();
+    createProjectScreen.Render();
 
     ImGui::Render();
 

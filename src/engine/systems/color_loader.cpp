@@ -4,7 +4,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "../../headers/color_loader.hpp"
+#include "../../rendering_headers/color_loader.hpp"
 
 static std::vector<std::string> splitLine(const std::string& str) {
     std::vector<std::string> tokens;
