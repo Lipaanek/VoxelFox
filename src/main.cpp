@@ -116,6 +116,12 @@ int main() {
         glfwMaximizeWindow(window);
         screenManager.SwitchTo(&editorScreen);
     };
+    createScreen.OnProjectOpened = [&]() {
+        editorScreen.SetProjectPath(createScreen.GetProjectPath());
+
+        glfwMaximizeWindow(window);
+        screenManager.SwitchTo(&editorScreen);
+    };
 
     screenManager.SwitchTo(&createScreen);
 

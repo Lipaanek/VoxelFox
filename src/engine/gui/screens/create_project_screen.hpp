@@ -10,6 +10,7 @@ class CreateProjectScreen : public Screen {
         void Render() override;
 
         std::function<void()> OnProjectCreated;
+        std::function<void()> OnProjectOpened;
 
         // Getters for project information
         std::string GetProjectPath() const { return std::string(projectPath); }
@@ -19,4 +20,5 @@ class CreateProjectScreen : public Screen {
         char projectName[128] = "";
         char projectPath[128] = "";
         bool projectCreated = false;
+        bool projectOpened = false;
 };

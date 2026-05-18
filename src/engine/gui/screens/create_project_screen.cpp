@@ -36,11 +36,22 @@ void createProject(const std::string& projectName, const std::string& projectPat
     ProjectConfig config = ProjectConfigLoader::Load(fullProjectPath);
 }
 
+void loadProject(const std::string& projectPath) {
+    std::string fullProjectPath = (std::filesystem::path(projectPath) / projectPath).string();
+    ProjectConfig config = ProjectConfigLoader::Load(fullProjectPath);
+}
+
 void CreateProjectScreen::Update() {
     if (projectCreated) {
         projectCreated = false;
         if (OnProjectCreated) {
             OnProjectCreated();
+        }
+    }
+    if (projectOpened) {
+        projectOpened = false;
+        if (OnProjectOpened) {
+            OnProjectOpened();
         }
     }
 }
@@ -84,6 +95,24 @@ void CreateProjectScreen::Render() {
 
         createProject(std::string(projectName), std::string(projectPath));
     }
+
+    ImGui::TextColored(ImVec4(1, 1, 0, 1), "Open Project");
+    if (ImGui::Button("Open..")) {
+        const char* path = tinyfd_selectFolderDialog(
+            "Select Project Folder",
+            ""
+        );
+
+        if (path) {
+            strncpy(projectPath, path, sizeof(projectPath));
+
+            projectOpened = true;
+            loadProject(std::string(projectPath));
+        }
+    }
+    
+    ImGui::Spacing();
+    ImGui::Spacing();
 
     ImGui::End();
 }

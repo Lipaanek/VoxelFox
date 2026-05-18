@@ -30,7 +30,7 @@ void MainEditorScreen::OnEnter() {
         printf("Loaded project config: name=%s, voxelSize=%.2f\n", config.projectName.c_str(), voxelSize);
     } else {
         printf("Warning: No project path set in MainEditorScreen\n");
-        voxelSize = 0.1f;  // Use default
+        voxelSize = 0.1f; // Use default
     }
 
     // Load and compile shaders
