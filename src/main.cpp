@@ -62,7 +62,7 @@ void initImGui(GLFWwindow* window) {
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = NULL;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
     ImGui::StyleColorsDark();
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -126,6 +126,8 @@ int main() {
     screenManager.SwitchTo(&createScreen);
 
     while (!glfwWindowShouldClose(window)) {
+        glfwPollEvents();
+
         screenManager.UpdateCurrent();
 
         ImGui_ImplOpenGL3_NewFrame();
@@ -142,7 +144,6 @@ int main() {
         }
 
         glfwSwapBuffers(window);
-        glfwPollEvents();
     }
 
     if (screenManager.GetCurrent()) {
