@@ -1,3 +1,4 @@
+#include <cmath>
 #include <cstdio>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -58,16 +59,40 @@ void MainEditorScreen::OnEnter() {
     glDeleteShader(vertShader);
     glDeleteShader(fragShader);
 
+    // Load and compile line grid shaders
+    std::string lineVertCode = loadFile("src/shaders/vertex_line.glsl");
+    std::string lineFragCode = loadFile("src/shaders/fragment_line.glsl");
+
+    unsigned int lineVertShader = compileShader(GL_VERTEX_SHADER, lineVertCode);
+    unsigned int lineFragShader = compileShader(GL_FRAGMENT_SHADER, lineFragCode);
+
+    gridShaderProgram = glCreateProgram();
+    glAttachShader(gridShaderProgram, lineVertShader);
+    glAttachShader(gridShaderProgram, lineFragShader);
+    glLinkProgram(gridShaderProgram);
+
+    glGetProgramiv(gridShaderProgram, GL_LINK_STATUS, &success);
+    if (!success) {
+        char infoLog[512];
+        glGetProgramInfoLog(gridShaderProgram, 512, nullptr, infoLog);
+        printf("Grid shader program linking failed: %s\n", infoLog);
+        glDeleteProgram(gridShaderProgram);
+        gridShaderProgram = 0;
+    }
+
+    glDeleteShader(lineVertShader);
+    glDeleteShader(lineFragShader);
+
     camera.position = glm::vec3(0.0f, 0.0f, 5.0f);
     camera.updateCameraVectors();
 
     lastFrameTime = glfwGetTime();
 
-    const int gridSize = 20;
+    const int gridSize = 40;
     const float spacing = 1.0f;
 
     for (int i = -gridSize; i <= gridSize; i++) {
-        glm::vec3 color = (i == 0)
+        glm::vec3 color = (i % 10 == 0)
             ? glm::vec3(0.8f, 0.8f, 0.8f)
             : glm::vec3(0.35f, 0.35f, 0.35f);
 
@@ -101,6 +126,8 @@ void MainEditorScreen::OnEnter() {
             color
         );
     }
+
+    setupGridBuffers();
 }
 
 void MainEditorScreen::OnExit() {
@@ -108,6 +135,19 @@ void MainEditorScreen::OnExit() {
         glDeleteProgram(shaderProgram);
         shaderProgram = 0;
     }
+    if (gridShaderProgram) {
+        glDeleteProgram(gridShaderProgram);
+        gridShaderProgram = 0;
+    }
+    if (gridVAO) {
+        glDeleteVertexArrays(1, &gridVAO);
+        gridVAO = 0;
+    }
+    if (gridVBO) {
+        glDeleteBuffers(1, &gridVBO);
+        gridVBO = 0;
+    }
+    gridVertexCount = 0;
 }
 
 void MainEditorScreen::Update() {
@@ -158,6 +198,9 @@ void MainEditorScreen::Render() {
         mesh.renderMesh.draw();
     }
 
+    // Render grid lines (Y-axis orientation lines + XZ plane)
+    drawGrid();
+
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
         printf("OpenGL error in MainEditorScreen::Render: 0x%x\n", err);
@@ -187,4 +230,138 @@ void MainEditorScreen::setUniforms() {
     glUniform3fv(viewPosLoc, 1, glm::value_ptr(camera.position));
     glUniform3f(lightPosLoc, camera.position.x, camera.position.y, camera.position.z);
     glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);
+}
+
+void MainEditorScreen::setupGridBuffers() {
+    glGenVertexArrays(1, &gridVAO);
+    glGenBuffers(1, &gridVBO);
+
+    glBindVertexArray(gridVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, gridVBO);
+    // DYNAMIC_DRAW because the tile content changes every frame
+    glBufferData(GL_ARRAY_BUFFER,
+                 gridVertices.size() * sizeof(Vertex),
+                 gridVertices.data(),
+                 GL_DYNAMIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          reinterpret_cast<void*>(offsetof(Vertex, position)));
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          reinterpret_cast<void*>(offsetof(Vertex, normal)));
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          reinterpret_cast<void*>(offsetof(Vertex, uv)));
+    glEnableVertexAttribArray(2);
+
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          reinterpret_cast<void*>(offsetof(Vertex, color)));
+    glEnableVertexAttribArray(3);
+
+    glBindVertexArray(0);
+
+    gridVertexCount = static_cast<GLsizei>(gridVertices.size());
+}
+
+// Orientation tile grid
+void MainEditorScreen::generateGridTiles(glm::ivec2 tileOrigin) {
+    gridVertices.clear();
+
+    const int tileSize = 10;
+    const int gridRadius = 4;
+    const float spacing = 1.0f;
+    const float halfRange = gridRadius * static_cast<float>(tileSize);
+
+    for (int tx = -gridRadius; tx <= gridRadius; tx++) {
+        for (int tz = -gridRadius; tz <= gridRadius; tz++) {
+            float baseX = tileOrigin.x + tx * tileSize;
+            float baseZ = tileOrigin.y + tz * tileSize;
+
+            for (int i = -halfRange; i <= halfRange; i++) {
+                // Bold line every 10 units
+                bool bold = (i % tileSize == 0);
+                glm::vec3 color = bold
+                    ? glm::vec3(0.8f, 0.8f, 0.8f)
+                    : glm::vec3(0.3f, 0.3f, 0.3f);
+
+                float x  = baseX + i * spacing;
+                float z0 = baseZ - halfRange * spacing;
+                float z1 = baseZ + halfRange * spacing;
+
+                gridVertices.emplace_back(
+                    glm::vec3(x, 0.0f, z0), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f), color);
+                gridVertices.emplace_back(
+                    glm::vec3(x, 0.0f, z1), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f), color);
+            }
+        }
+    }
+
+    for (int tz = -gridRadius; tz <= gridRadius; tz++) {
+        for (int tx = -gridRadius; tx <= gridRadius; tx++) {
+            float baseX = tileOrigin.x + tx * tileSize;
+            float baseZ = tileOrigin.y + tz * tileSize;
+
+            for (int i = -halfRange; i <= halfRange; i++) {
+                bool bold = (i % tileSize == 0);
+                glm::vec3 color = bold
+                    ? glm::vec3(0.8f, 0.8f, 0.8f)
+                    : glm::vec3(0.3f, 0.3f, 0.3f);
+
+                float x0 = baseX - halfRange * spacing;
+                float x1 = baseX + halfRange * spacing;
+                float z  = baseZ + i * spacing;
+
+                gridVertices.emplace_back(
+                    glm::vec3(x0, 0.0f, z), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f), color);
+                gridVertices.emplace_back(
+                    glm::vec3(x1, 0.0f, z), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f), color);
+            }
+        }
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, gridVBO);
+    glBufferData(GL_ARRAY_BUFFER,
+                 gridVertices.size() * sizeof(Vertex),
+                 gridVertices.data(),
+                 GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    gridVertexCount = static_cast<GLsizei>(gridVertices.size());
+}
+
+void MainEditorScreen::drawGrid() {
+    if (!gridShaderProgram || gridVAO == 0) return;
+
+    // Rebuild tile grid whenever the camera crosses into a new 10-unit cell
+    glm::ivec2 tileOrigin(
+        static_cast<int>(std::floor(camera.position.x / 10.0f)) * 10,
+        static_cast<int>(std::floor(camera.position.z / 10.0f)) * 10
+    );
+    if (tileOrigin != prevTileOrigin) {
+        prevTileOrigin = tileOrigin;
+        generateGridTiles(tileOrigin);
+    }
+
+    glm::mat4 view = camera.getViewMatrix();
+    int fbWidth, fbHeight;
+    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+    glm::mat4 projection = camera.getProjectionMatrix(static_cast<float>(fbWidth) / static_cast<float>(fbHeight));
+
+    glUseProgram(gridShaderProgram);
+    glUniformMatrix4fv(glGetUniformLocation(gridShaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(glGetUniformLocation(gridShaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    glUniform3fv(glGetUniformLocation(gridShaderProgram, "viewPos"), 1, glm::value_ptr(camera.position));
+    glUniform1f(glGetUniformLocation(gridShaderProgram, "fadeNear"), 0.0f);
+    glUniform1f(glGetUniformLocation(gridShaderProgram, "fadeFar"), 65.0f);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDepthMask(GL_FALSE);
+    glBindVertexArray(gridVAO);
+    glDrawArrays(GL_LINES, 0, gridVertexCount);
+    glBindVertexArray(0);
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
 }
