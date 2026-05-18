@@ -11,7 +11,7 @@ VoxelFox is an open-source voxel game engine built with C++ and OpenGL.
 It provides unified systems and tools for game development, allowing developers to focus on creating games instead of rebuilding core engine features.
 
 ## 100% Free
-VoxelFox is open sourced and developed by [Lipaanek](https://github.com/Lipaanek). VoxelFox is under the [CC4.0 license](https://github.com/Lipaanek/VoxelFox/blob/main/License) and doesn't apply any fees. Community members may contribute to this project, letting users shape and develop the engine to match their expectations.
+VoxelFox is open sourced and developed by [Lipaanek](https://github.com/Lipaanek). VoxelFox is under the [MIT license](https://github.com/Lipaanek/VoxelFox/blob/main/License) and doesn't apply any fees. Community members may contribute to this project, letting users shape and develop the engine to match their expectations.
 
 ## How to download VoxelFox?
 
