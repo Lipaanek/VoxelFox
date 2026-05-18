@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <imgui/imgui.h>
 
 #include "main_editor_screen.hpp"
 #include "../../../include/shader_loader.hpp"
@@ -150,6 +151,38 @@ void MainEditorScreen::OnExit() {
     gridVertexCount = 0;
 }
 
+void drawGui() {
+    if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("File")) {
+            ImGui::MenuItem("Open");
+            ImGui::MenuItem("Save");
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Edit")) {
+            ImGui::MenuItem("Undo");
+            ImGui::MenuItem("Redo");
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMainMenuBar();
+    }
+
+    ImGui::Begin("Editor");
+
+    ImGui::BeginChild("LeftPanel", ImVec2(200, 0), true);
+    ImGui::Text("Hierarchy");
+    ImGui::EndChild();
+
+    ImGui::SameLine();
+
+    ImGui::BeginChild("RightPanel", ImVec2(250, 0), true);
+    ImGui::Text("Inspector");
+    ImGui::EndChild();
+
+    ImGui::End();
+}
+
 void MainEditorScreen::Update() {
     double currentTime = glfwGetTime();
     float dt = static_cast<float>(currentTime - lastFrameTime);
@@ -162,7 +195,7 @@ void MainEditorScreen::Update() {
 }
 
 void MainEditorScreen::Render() {
-    // Clear stale errors from previous frame (ImGui, etc.)
+    // Clear stale errors from previous frame
     while (glGetError() != GL_NO_ERROR) {}
 
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -172,7 +205,7 @@ void MainEditorScreen::Render() {
 
     glUseProgram(shaderProgram);
 
-    // Set view and projection matrices (shared by all meshes)
+    // Set view and projection matrices
     glm::mat4 view = camera.getViewMatrix();
     int fbWidth, fbHeight;
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
@@ -198,8 +231,8 @@ void MainEditorScreen::Render() {
         mesh.renderMesh.draw();
     }
 
-    // Render grid lines (Y-axis orientation lines + XZ plane)
     drawGrid();
+    drawGui();
 
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
@@ -334,7 +367,7 @@ void MainEditorScreen::generateGridTiles(glm::ivec2 tileOrigin) {
 void MainEditorScreen::drawGrid() {
     if (!gridShaderProgram || gridVAO == 0) return;
 
-    // Rebuild tile grid whenever the camera crosses into a new 10-unit cell
+    // Rebuild tile grid whenever the camera crosses into a new 10 unit cell
     glm::ivec2 tileOrigin(
         static_cast<int>(std::floor(camera.position.x / 10.0f)) * 10,
         static_cast<int>(std::floor(camera.position.z / 10.0f)) * 10
