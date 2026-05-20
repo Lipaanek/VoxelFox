@@ -5,6 +5,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <imgui/imgui.h>
+#include <filesystem>
+#include <string>
+
+namespace fs = std::filesystem;
 
 #include "main_editor_screen.hpp"
 #include "../../../include/shader_loader.hpp"
@@ -21,6 +25,9 @@ extern float pitch;
 
 std::vector<Vertex> gridVertices;
 
+static fs::path g_rootPath;
+static fs::path g_selectedPath;
+
 void MainEditorScreen::OnEnter() {
     // Clear any stale OpenGL errors before starting
     while (glGetError() != GL_NO_ERROR) {}
@@ -28,6 +35,7 @@ void MainEditorScreen::OnEnter() {
     // Load project configuration
     if (!projectPath.empty()) {
         ProjectConfig config = ProjectConfigLoader::Load(projectPath);
+        g_rootPath = projectPath;
         voxelSize = config.voxelSize;
         printf("Loaded project config: name=%s, voxelSize=%.2f\n", config.projectName.c_str(), voxelSize);
     } else {
@@ -151,6 +159,39 @@ void MainEditorScreen::OnExit() {
     gridVertexCount = 0;
 }
 
+void DrawFileNode(const fs::path& path) {
+    std::string name = path.filename().string();
+
+    bool isDir = fs::is_directory(path);
+
+    ImGuiTreeNodeFlags flags =
+        ImGuiTreeNodeFlags_OpenOnArrow |
+        ImGuiTreeNodeFlags_SpanAvailWidth;
+
+    if (!isDir)
+        flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+
+    if (path == g_selectedPath)
+        flags |= ImGuiTreeNodeFlags_Selected;
+
+    bool open = false;
+
+    if (isDir)
+        open = ImGui::TreeNodeEx(name.c_str(), flags);
+    else
+        ImGui::TreeNodeEx(name.c_str(), flags, "%s", name.c_str());
+
+    if (ImGui::IsItemClicked())
+        g_selectedPath = path;
+
+    if (isDir && open) {
+        for (auto& entry : fs::directory_iterator(path)) {
+            DrawFileNode(entry.path());
+        }
+        ImGui::TreePop();
+    }
+}
+
 void drawGui() {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
@@ -168,19 +209,22 @@ void drawGui() {
         ImGui::EndMainMenuBar();
     }
 
-    ImGui::Begin("Editor");
+    ImGui::SetNextWindowSizeConstraints(
+        ImVec2(200, 400),
+        ImVec2(FLT_MAX, FLT_MAX)
+    );
+    ImGui::Begin("File Explorer");
 
-    ImGui::BeginChild("LeftPanel", ImVec2(200, 0), true);
-    ImGui::Text("Hierarchy");
-    ImGui::EndChild();
+    if (fs::exists(g_rootPath)) {
+        DrawFileNode(g_rootPath);
+    } else {
+        ImGui::Text("Invalid root path");
+    }
 
-    ImGui::SameLine();
+    ImGui::Separator();
+    ImGui::Text("Selected: %s", g_selectedPath.string().c_str());
 
-    ImGui::BeginChild("RightPanel", ImVec2(250, 0), true);
-    ImGui::Text("Inspector");
-    ImGui::EndChild();
-
-    ImGui::End();
+    ImGui::End(); // File Explorer
 }
 
 void MainEditorScreen::Update() {
