@@ -1,7 +1,7 @@
 #ifndef PROPERTY_SYSTEM_HPP
 #define PROPERTY_SYSTEM_HPP
 
-// Basic types, can be extended
+// Basic types, can be extended later on
 enum class PropertyType {
     FLOAT, VEC2, VEC3, VEC4, COLOR, BOOL, STRING, ENUM
 };

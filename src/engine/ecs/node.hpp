@@ -1,18 +1,29 @@
 #ifndef NODE_HPP
 #define NODE_HPP
 
-#include "propert_system.hpp"
 #include "node_type.hpp"
+
+using Entity = uint32_t;
+constexpr Entity INVALID_ENTITY = 0;
 
 class Node {
     public:
         std::string name;
         Node* parent = nullptr;
-        std::vector<Node*> children;
+        std::vector<std::unique_ptr<Node>> children;
 
-        virtual std::vector<PropertyDescriptor> GetProperties() const = 0;
-        virtual NodeType GetType() const = 0;
-        virtual const char* GetName() const = 0;
+        Entity id = INVALID_ENTITY;
+        
+        const std:string& GetName() const {
+            return name;
+        }
+        
+        void AddChildren(Node* child) {
+            child->parent = this;
+            children.push_back(child);
+        }
+
+        virtual ~Node() = default;
 };
 
 #endif
