@@ -225,6 +225,10 @@ void drawGui() {
     ImGui::Text("Selected: %s", g_selectedPath.string().c_str());
 
     ImGui::End(); // File Explorer
+
+    ImGui::Begin("Model Loader");
+    ImGui::Text("Object File");
+    ImGui::End(); // Model Loader
 }
 
 void MainEditorScreen::Update() {
