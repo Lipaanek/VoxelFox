@@ -1,3 +1,12 @@
+// WARNING:
+// Please do not touch the code unless
+// you know what you are doing.
+// It barely works and I feel like
+// it can't be any faster.
+// If yes, please open an issue or
+// commit directly
+// Then increase this counter:
+//      total_hours_spent = 5 
 #version 430 core
 
 layout(local_size_x = 1) in;

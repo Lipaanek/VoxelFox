@@ -3,6 +3,7 @@
 
 #include "node.hpp"
 #include "components.hpp"
+#include "system.hpp"
 #include <unordered_map>
 
 using Entity = uint32_t;
@@ -56,6 +57,20 @@ class ComponentStorage {
         }
 };
 
+class SystemManager {
+    public:
+        std::vector<System*> systems;
+
+        void Add(System* s) {
+            systems.push_back(s);
+        }
+
+        void UpdateAll(float dt) {
+            for (System* s : systems)
+                s->Update(dt);
+        }
+};
+
 // For every component add
 // A new ComponentStorage<T>,
 // So the engine can work
@@ -63,6 +78,6 @@ class ComponentStorage {
 class ECS {
     public:
         ComponentStorage<Transform> transforms;
-}
+};
 
 #endif
