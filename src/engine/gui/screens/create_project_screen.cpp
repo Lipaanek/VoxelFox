@@ -91,9 +91,11 @@ void CreateProjectScreen::Render() {
     ImGui::Spacing();
 
     if (ImGui::Button("Create", ImVec2(formWidth, 0))) {
-        projectCreated = true;
+        if (!(strcmp(projectName, "") == 0 || strcmp(projectPath, "") == 0)) {
+            projectCreated = true;
 
-        createProject(std::string(projectName), std::string(projectPath));
+            createProject(std::string(projectName), std::string(projectPath));
+        }
     }
 
     ImGui::TextColored(ImVec4(1, 1, 0, 1), "Open Project");
