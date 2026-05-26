@@ -10,6 +10,7 @@
 #include "engine/gui/screen_manager.hpp"
 #include "engine/gui/screens/create_project_screen.hpp"
 #include "engine/gui/screens/main_editor_screen.hpp"
+#include "engine/gui/screens/playtest_screen.hpp"
 
 // Camera globals (set by GLFW callbacks, consumed by MainEditorScreen)
 float velocityX = 0.0f;
@@ -107,7 +108,20 @@ int main() {
     // Screen state machine
     ScreenManager screenManager;
     CreateProjectScreen createScreen;
-    MainEditorScreen editorScreen(window);
+    MeshManager meshMgr;
+    PlaytestScreen playtestScreen(window, "", meshMgr);
+    MainEditorScreen editorScreen(window, meshMgr);
+
+    // Wire up playtest screen to return to editor
+    playtestScreen.SetReturnCallback([&]() {
+        screenManager.SwitchTo(&editorScreen);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    });
+
+    editorScreen.onEnterPlaytest_f = [&]() {
+        playtestScreen.SetProjectPath(editorScreen.GetProjectPath());
+        screenManager.SwitchTo(&playtestScreen);
+    };
 
     createScreen.OnProjectCreated = [&]() {
         // Pass the project path to the editor screen

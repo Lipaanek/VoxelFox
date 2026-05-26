@@ -7,7 +7,7 @@
 #include "../../../utils/file_rule.hpp"
 #include <tinyfiledialogs/tinyfiledialogs.h>
 
-void createProject(const std::string& projectName, const std::string& projectPath) {
+void CreateProject(const std::string& projectName, const std::string& projectPath) {
     FileRule structure =
         FileRule::Dir(projectName)
         .Children({
@@ -36,11 +36,22 @@ void createProject(const std::string& projectName, const std::string& projectPat
     ProjectConfig config = ProjectConfigLoader::Load(fullProjectPath);
 }
 
+void OpenProject(const std::string& projectPath) {
+    std::string fullProjectPath = (std::filesystem::path(projectPath)).string();
+    ProjectConfig config = ProjectConfigLoader::Load(fullProjectPath);
+}
+
 void CreateProjectScreen::Update() {
     if (projectCreated) {
         projectCreated = false;
         if (OnProjectCreated) {
             OnProjectCreated();
+        }
+    }
+    if (projectOpened) {
+        projectOpened = false;
+        if (OnProjectOpened) {
+            OnProjectOpened();
         }
     }
 }
@@ -83,7 +94,25 @@ void CreateProjectScreen::Render() {
         if (!(strcmp(projectName, "") == 0 || strcmp(projectPath, "") == 0)) {
             projectCreated = true;
 
-            createProject(std::string(projectName), std::string(projectPath));
+            CreateProject(std::string(projectName), std::string(projectPath));
+        }
+    }
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::TextColored(ImVec4(1, 1, 0, 1), "Open Project");
+    if (ImGui::Button("Open")) {
+        const char* path = tinyfd_selectFolderDialog(
+            "Select Project Folder",
+            ""
+        );
+
+        if (path) {
+            projectOpened = true;
+
+            strncpy(projectPath, path, sizeof(projectPath));
+            OpenProject(std::string(projectPath));
         }
     }
 

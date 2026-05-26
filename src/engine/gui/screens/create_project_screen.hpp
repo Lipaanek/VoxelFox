@@ -12,7 +12,6 @@ class CreateProjectScreen : public Screen {
         std::function<void()> OnProjectCreated;
         std::function<void()> OnProjectOpened;
 
-        // Getters for project information
         std::string GetProjectPath() const { return std::string(projectPath); }
         std::string GetProjectName() const { return std::string(projectName); }
 

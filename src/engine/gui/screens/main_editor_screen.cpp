@@ -236,6 +236,17 @@ void MainEditorScreen::Update() {
     float dt = static_cast<float>(currentTime - lastFrameTime);
     lastFrameTime = currentTime;
 
+    // Check for F5 to enter playtest mode
+    static bool f5PressedLastFrame = false;
+    bool f5Pressed = glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS;
+
+    if (f5Pressed && !f5PressedLastFrame) {
+        if (onEnterPlaytest_f)
+            onEnterPlaytest_f();
+    }
+    
+    f5PressedLastFrame = f5Pressed;
+
     camera.yaw = yaw;
     camera.pitch = pitch;
     camera.updateCameraVectors();
