@@ -22,13 +22,78 @@ double prevMouseX = 0.0;
 double prevMouseY = 0.0;
 float yaw = 0.0f;
 float pitch = 0.0f;
+bool editorRmbHeld = false;
+bool editorFirstMouse = true;
+double cursorLockX = 0.0;
+double cursorLockY = 0.0;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+    ScreenManager* screenMgr = static_cast<ScreenManager*>(glfwGetWindowUserPointer(window));
+    if (screenMgr) {
+        Screen* current = screenMgr->GetCurrent();
+        if (current && button == GLFW_MOUSE_BUTTON_RIGHT) {
+            PlaytestScreen* playtest = dynamic_cast<PlaytestScreen*>(current);
+            if (playtest) {
+                if (action == GLFW_PRESS) {
+                    playtest->HandleRMB(true);
+                }
+                return;
+            }
+
+            MainEditorScreen* editor = dynamic_cast<MainEditorScreen*>(current);
+            if (editor) {
+                if (action == GLFW_PRESS) {
+                    editorRmbHeld = true;
+                    editorFirstMouse = true;
+                    glfwGetCursorPos(window, &cursorLockX, &cursorLockY);
+                    prevMouseX = cursorLockX;
+                    prevMouseY = cursorLockY;
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                } else if (action == GLFW_RELEASE) {
+                    editorRmbHeld = false;
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                    glfwSetCursorPos(window, cursorLockX, cursorLockY);
+                }
+            }
+        }
+    }
+}
+
 void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
-    if (ImGui::GetIO().WantCaptureMouse) return;
+    ScreenManager* screenMgr = static_cast<ScreenManager*>(glfwGetWindowUserPointer(window));
+    if (screenMgr) {
+        Screen* current = screenMgr->GetCurrent();
+        if (current) {
+            PlaytestScreen* playtest = dynamic_cast<PlaytestScreen*>(current);
+            if (playtest && playtest->IsMouseCaptured()) {
+                return; // Playtest handles its own mouse look
+            }
+        }
+    }
+
+    if (ImGui::GetIO().WantCaptureMouse) {
+        prevMouseX = xpos;
+        prevMouseY = ypos;
+        return;
+    }
+
+    if (!editorRmbHeld) {
+        prevMouseX = xpos;
+        prevMouseY = ypos;
+        return;
+    }
+
+    if (editorFirstMouse) {
+        prevMouseX = xpos;
+        prevMouseY = ypos;
+        editorFirstMouse = false;
+        return;
+    }
+
     double dx = prevMouseX - xpos;
     double dy = prevMouseY - ypos;
 
@@ -102,23 +167,27 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetKeyCallback(window, input_callback);
     glfwSetCursorPosCallback(window, cursor_position_callback);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
 
     initImGui(window);
 
     // Screen state machine
     ScreenManager screenManager;
     CreateProjectScreen createScreen;
+    glfwSetWindowUserPointer(window, &screenManager);
     MeshManager meshMgr;
     PlaytestScreen playtestScreen(window, "", meshMgr);
     MainEditorScreen editorScreen(window, meshMgr);
 
     // Wire up playtest screen to return to editor
     playtestScreen.SetReturnCallback([&]() {
+        editorRmbHeld = false;
         screenManager.SwitchTo(&editorScreen);
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     });
 
     editorScreen.onEnterPlaytest_f = [&]() {
+        editorRmbHeld = false;
         playtestScreen.SetProjectPath(editorScreen.GetProjectPath());
         screenManager.SwitchTo(&playtestScreen);
     };

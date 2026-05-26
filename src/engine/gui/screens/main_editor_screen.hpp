@@ -31,10 +31,8 @@ class MainEditorScreen : public Screen {
 
      private:
         GLFWwindow* window;
-
-        std::string projectPath;
-
         MeshManager& meshManager;
+        std::string projectPath;
 
         unsigned int shaderProgram = 0;
         unsigned int gridVAO = 0;

@@ -16,7 +16,6 @@ extern float velocityY;
 extern float velocityZ;
 
 void PlaytestScreen::OnEnter() {
-    // Clear stale errors from previous frame
     while (glGetError() != GL_NO_ERROR) {}
 
     if (!projectPath.empty()) {
@@ -24,7 +23,7 @@ void PlaytestScreen::OnEnter() {
         voxelSize = config.voxelSize;
     }
 
-    // Load and compile shaders
+    // Shaders
     std::string vertexCode = loadFile("src/shaders/vertex.glsl");
     std::string fragmentCode = loadFile("src/shaders/fragment.glsl");
 
@@ -49,13 +48,14 @@ void PlaytestScreen::OnEnter() {
     glDeleteShader(vertShader);
     glDeleteShader(fragShader);
 
-    // Init player pos
-    camera.position = glm::vec3(0.0f, 1.0f, 3.0f); // Eye level
+    camera.position = glm::vec3(0.0f, 1.0f, 3.0f);
     camera.updateCameraVectors();
 
-    // Reset mouse state
+    // Initialize mouse for captured mode
+    mouseCaptured = true;
+    firstMouse = true;
     glfwGetCursorPos(window, &lastMouseX, &lastMouseY);
-    fpsMouse = true;
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
 
 void PlaytestScreen::OnExit() {
@@ -71,52 +71,54 @@ void PlaytestScreen::Update() {
     if (lastDt == 0.0f) dt = 0.0f;
     lastDt = currentTime;
 
-    // Captured mouse look for FPS-like control
-    if (fpsMouse) {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        fpsMouse = false;
+    // Mouse look only when captured
+    if (mouseCaptured) {
+        double mouseX, mouseY;
+        glfwGetCursorPos(window, &mouseX, &mouseY);
+
+        static float playYaw = 0.0f;
+        static float playPitch = 0.0f;
+        const float sens = 0.1f;
+
+        if (firstMouse) {
+            lastMouseX = mouseX;
+            lastMouseY = mouseY;
+            firstMouse = false;
+        }
+
+        float dx = static_cast<float>(lastMouseX - mouseX);
+        float dy = static_cast<float>(lastMouseY - mouseY);
+
+        playYaw += dx * sens;
+        playPitch += dy * sens;
+        playPitch = glm::clamp(playPitch, -89.0f, 89.0f);
+
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+
+        camera.yaw = playYaw;
+        camera.pitch = playPitch;
+        camera.updateCameraVectors();
     }
-
-    double mouseX, mouseY;
-    glfwGetCursorPos(window, &mouseX, &mouseY);
-
-    static float playYaw = 0.0f;
-    static float playPitch = 0.0f;
-    const float sens = 0.1f;
-
-    float dx = static_cast<float>(lastMouseX - mouseX);
-    float dy = static_cast<float>(lastMouseY - mouseY);
-
-    playYaw += dx * sens;
-    playPitch += dy * sens;
-    playPitch = glm::clamp(playPitch, -89.0f, 89.0f);
-
-    lastMouseX = mouseX;
-    lastMouseY = mouseY;
-
-    camera.yaw = playYaw;
-    camera.pitch = playPitch;
-    camera.updateCameraVectors();
 
     camera.updateCameraPosition(velocityX, velocityY, velocityZ, dt);
 
     // Simple ground collision
-    // TODO: Change it to proper collisions
     if (camera.position.y < 0.5f) {
         camera.position.y = 0.5f;
     }
 
     // Return to editor with Escape
-    static bool escapePressedLastFrame = false;
+    static bool escapeWasPressed = false;
     bool escapePressed = glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS;
 
-    if (escapePressed && !escapePressedLastFrame) {
+    if (escapePressed && !escapeWasPressed) {
         glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        
-        if (onReturn_f)
+        if (onReturn_f) {
             onReturn_f();
+        }
     }
-    escapePressedLastFrame = escapePressed;
+    escapeWasPressed = escapePressed;
 }
 
 void PlaytestScreen::Render() {
