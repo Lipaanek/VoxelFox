@@ -2,6 +2,7 @@
 #include "../include/object_loader.hpp"
 #include "../include/voxelizer.hpp"
 #include "../include/color_loader.hpp"
+#include "../include/voxel_model_io.hpp"
 #include <filesystem>
 #include <cstdio>
 #include <algorithm>
@@ -9,47 +10,60 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 LoadedMesh* MeshManager::LoadMesh(const std::string& projectPath, const std::string& relativePath, float voxelSize) {
-    // Check if mesh is already loaded
-    if (IsMeshLoaded(relativePath)) {
-        printf("Mesh already loaded: %s\n", relativePath.c_str());
-        return GetMeshByPath(relativePath);
-    }
+    namespace fs = std::filesystem;
 
-    // Construct full path to OBJ file
-    std::filesystem::path fullPath = std::filesystem::path(projectPath) / "assets" / "objects" / relativePath;
+    fs::path fullPath = fs::path(projectPath) / "assets" / "objects" / relativePath;
+    fs::path voxfPath = fullPath;
+    voxfPath.replace_extension(".voxf");
 
-    // Load OBJ file
-    ObjectLoader loader;
-    if (!loader.load(fullPath.string())) {
-        printf("Failed to load mesh from: %s\n", fullPath.string().c_str());
-        return nullptr;
-    }
-
-    // Try to load materials - look for MTL file in same directory
+    // Load materials (needed in both cached and fresh paths)
     std::vector<Material> materials;
-    std::filesystem::path mtlPath = fullPath;
+    fs::path mtlPath = fullPath;
     mtlPath.replace_extension(".mtl");
-    
     materials = loadColorFile(mtlPath.string());
     if (materials.empty()) {
         printf("Warning: No materials loaded for %s, using default\n", relativePath.c_str());
-        materials.push_back(Material{Color{1.0f, 1.0f, 1.0f}, "default"});  // Default white material
+        materials.push_back(Material{Color{1.0f, 1.0f, 1.0f}, "default"});
     }
 
-    // Voxelize the mesh
-    std::vector<VoxelChunk> voxelChunks = voxelizeGPUCompute(
-        loader.getVertices(),
-        loader.getIndices(),
-        loader.getTriangleMaterials(),
-        voxelSize
-    );
+    std::vector<VoxelChunk> voxelChunks;
+
+    // Try loading from cached .voxf file (skip OBJ + GPU voxelization)
+    if (fs::exists(voxfPath)) {
+        voxelChunks = VoxelModelIO::LoadVoxelModel(voxfPath.string());
+        if (!voxelChunks.empty()) {
+            printf("Loaded cached voxel model: %s\n", voxfPath.string().c_str());
+        } else {
+            printf("Cached voxel file corrupt, re-voxelizing: %s\n", voxfPath.string().c_str());
+        }
+    }
 
     if (voxelChunks.empty()) {
-        printf("Voxelization produced no chunks for: %s\n", relativePath.c_str());
-        return nullptr;
+        // Full pipeline: load OBJ and GPU voxelize
+        ObjectLoader loader;
+        if (!loader.load(fullPath.string())) {
+            printf("Failed to load mesh from: %s\n", fullPath.string().c_str());
+            return nullptr;
+        }
+
+        voxelChunks = voxelizeGPUCompute(
+            loader.getVertices(),
+            loader.getIndices(),
+            loader.getTriangleMaterials(),
+            voxelSize
+        );
+
+        if (voxelChunks.empty()) {
+            printf("Voxelization produced no chunks for: %s\n", relativePath.c_str());
+            return nullptr;
+        }
+
+        // Cache the voxel data to .voxf for future loads
+        VoxelModelIO::SaveVoxelModel(voxfPath.string(), voxelChunks);
+        printf("Cached voxel model to: %s\n", voxfPath.string().c_str());
     }
 
-    // Generate render mesh
+    // Generate render mesh from chunks + materials
     VoxelMesh voxelMesh = generateVoxelMesh(voxelChunks, materials);
 
     // Compute bounding box from generated mesh vertices
@@ -63,7 +77,7 @@ LoadedMesh* MeshManager::LoadMesh(const std::string& projectPath, const std::str
         bmax.z = std::max(bmax.z, v.position.z);
     }
 
-    // Create LoadedMesh entry
+    // Create new LoadedMesh entry (always, for multi-instance support)
     LoadedMesh loadedMesh;
     loadedMesh.filePath = relativePath;
     loadedMesh.voxelChunks = std::move(voxelChunks);
@@ -76,19 +90,14 @@ LoadedMesh* MeshManager::LoadMesh(const std::string& projectPath, const std::str
 
     loadedMeshes_.push_back(std::move(loadedMesh));
 
-    printf("Successfully loaded and voxelized mesh: %s\n", relativePath.c_str());
+    printf("Created instance of mesh: %s\n", relativePath.c_str());
     return &loadedMeshes_.back();
 }
 
 LoadedMesh* MeshManager::LoadMesh(Mesh&& mesh, const std::string& identifier) {
-    if (IsMeshLoaded(identifier)) {
-        printf("Mesh already loaded: %s\n", identifier.c_str());
-        return GetMeshByPath(identifier);
-    }
-
     LoadedMesh loadedMesh(identifier, std::move(mesh));
     loadedMeshes_.push_back(std::move(loadedMesh));
-    printf("Successfully loaded mesh from existing Mesh object: %s\n", identifier.c_str());
+    printf("Loaded mesh from existing Mesh object: %s\n", identifier.c_str());
     return &loadedMeshes_.back();
 }
 
@@ -117,8 +126,4 @@ LoadedMesh* MeshManager::GetMeshByPath(const std::string& filePath) {
     return nullptr;
 }
 
-bool MeshManager::IsMeshLoaded(const std::string& filePath) const {
-    return std::find_if(loadedMeshes_.begin(), loadedMeshes_.end(),
-        [&filePath](const LoadedMesh& mesh) { return mesh.filePath == filePath; })
-        != loadedMeshes_.end();
-}
+

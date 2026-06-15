@@ -26,6 +26,4 @@ public:
 
 private:
     std::vector<LoadedMesh> loadedMeshes_;
-
-    bool IsMeshLoaded(const std::string& filePath) const;
 };

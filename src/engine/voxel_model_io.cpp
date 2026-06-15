@@ -106,7 +106,12 @@ bool VoxelModelIO::SaveVoxelModel(const std::string& filepath,
 
         // Write voxel data array (only the data field, solid is derived)
         if (voxelCount > 0) {
-            file.write(reinterpret_cast<const char*>(chunk.voxels.data()),
+            // Pack into flat ivec4 array to handle sizeof(Voxel) > sizeof(ivec4)
+            std::vector<glm::ivec4> flatData(voxelCount);
+            for (size_t i = 0; i < voxelCount; i++) {
+                flatData[i] = chunk.voxels[i].data;
+            }
+            file.write(reinterpret_cast<const char*>(flatData.data()),
                        voxelCount * sizeof(glm::ivec4));
             if (!file) {
                 std::cerr << "Failed to write voxel data" << std::endl;
@@ -212,12 +217,11 @@ std::vector<VoxelChunk> VoxelModelIO::LoadVoxelModel(const std::string& filepath
             return result;
         }
 
-        // Resize voxel data array
-        chunk.voxels.resize(voxelCount);
-
         // Read voxel data array (only the data field)
         if (voxelCount > 0) {
-            file.read(reinterpret_cast<char*>(chunk.voxels.data()),
+            // Read into flat ivec4 array, then unpack into Voxel structs
+            std::vector<glm::ivec4> flatData(voxelCount);
+            file.read(reinterpret_cast<char*>(flatData.data()),
                       voxelCount * sizeof(glm::ivec4));
             if (!file) {
                 std::cerr << "Failed to read voxel data" << std::endl;
@@ -225,9 +229,10 @@ std::vector<VoxelChunk> VoxelModelIO::LoadVoxelModel(const std::string& filepath
                 return result;
             }
 
-            // Set solid flag based on data.x (solid if data.x != 0)
-            for (auto& voxel : chunk.voxels) {
-                voxel.solid = (voxel.data.x != 0);
+            chunk.voxels.resize(voxelCount);
+            for (size_t i = 0; i < voxelCount; i++) {
+                chunk.voxels[i].data = flatData[i];
+                chunk.voxels[i].solid = (flatData[i].x != 0);
             }
         }
 
