@@ -14,7 +14,6 @@ void CreateProject(const std::string& projectName, const std::string& projectPat
             FileRule::Dir("assets")
             .Children({
                 FileRule::Dir("objects"),
-                FileRule::Dir("objectColors"),
                 FileRule::Dir("audio"),
                 FileRule::Dir("scripts")
             }),

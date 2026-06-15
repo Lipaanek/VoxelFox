@@ -7,6 +7,7 @@
 #include <imgui/imgui.h>
 #include <filesystem>
 #include <string>
+#include <tinyfiledialogs/tinyfiledialogs.h>
 
 namespace fs = std::filesystem;
 
@@ -24,6 +25,9 @@ extern float yaw;
 extern float pitch;
 
 std::vector<Vertex> gridVertices;
+
+std::string objFile;
+std::string matFile;
 
 static fs::path g_rootPath;
 static fs::path g_selectedPath;
@@ -192,7 +196,25 @@ void DrawFileNode(const fs::path& path) {
     }
 }
 
-void drawGui() {
+void ImportModel(const std::string& objFile, const std::string& matFile, const std::string& projectPath, MeshManager& meshManager, float voxelSize) {
+    fs::path destDir = fs::path(projectPath) / "assets" / "objects";
+    fs::create_directories(destDir);
+
+    fs::path objSrc(objFile);
+    fs::path objDest = destDir / objSrc.filename();
+    fs::copy(objSrc, objDest, fs::copy_options::overwrite_existing);
+
+    fs::path mtlSrc(matFile);
+    if (fs::exists(mtlSrc)) {
+        fs::path mtlDest = destDir / mtlSrc.filename();
+        fs::copy(mtlSrc, mtlDest, fs::copy_options::overwrite_existing);
+    }
+
+    std::string relativePath = objSrc.filename().string();
+    meshManager.LoadMesh(projectPath, relativePath, voxelSize);
+}
+
+void drawGui(const std::string& projectPath, MeshManager& meshManager, float voxelSize) {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
             ImGui::MenuItem("Open");
@@ -227,7 +249,41 @@ void drawGui() {
     ImGui::End(); // File Explorer
 
     ImGui::Begin("Model Loader");
-    ImGui::Text("Object File");
+    if (ImGui::Button("Select Object File")) {
+        const char* filterPatterns[] = {"*.obj"};
+        const char* path = tinyfd_openFileDialog(
+            "Select .obj File",
+            "",
+            1,
+            filterPatterns,
+            "Object Files",
+            0
+        );
+
+        if (path) {
+            objFile = path;
+        }
+    }
+    if (ImGui::Button("Select Material File")) {
+        const char* filterPatterns[] = {"*.mtl"};
+        const char* path = tinyfd_openFileDialog(
+            "Select .mtl File",
+            "",
+            1,
+            filterPatterns,
+            "Material Files",
+            0
+        );
+
+        if (path) {
+            matFile = path;
+        }
+    }
+    if (ImGui::Button("Import")) {
+        if (!objFile.empty() && !matFile.empty()) {
+            ImportModel(objFile, matFile, projectPath, meshManager, voxelSize);
+        }
+    }
     ImGui::End(); // Model Loader
 }
 
@@ -291,7 +347,7 @@ void MainEditorScreen::Render() {
     }
 
     drawGrid();
-    drawGui();
+    drawGui(projectPath, meshManager, voxelSize);
 
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
