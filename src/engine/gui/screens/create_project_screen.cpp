@@ -76,7 +76,7 @@ void CreateProjectScreen::Render() {
     ImGui::Spacing();
 
     ImGui::TextColored(ImVec4(1, 1, 0, 1), "Project Path");
-    if (ImGui::Button("Browse")) {
+    if (ImGui::Button("Browse Directory")) {
         const char* path = tinyfd_selectFolderDialog(
             "Select Project Folder",
             ""
@@ -102,7 +102,7 @@ void CreateProjectScreen::Render() {
     ImGui::Spacing();
 
     ImGui::TextColored(ImVec4(1, 1, 0, 1), "Open Project");
-    if (ImGui::Button("Browse")) {
+    if (ImGui::Button("Browse For Project")) {
         const char* path = tinyfd_selectFolderDialog(
             "Select Project Folder",
             ""
