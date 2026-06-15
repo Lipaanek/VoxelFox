@@ -46,6 +46,11 @@ class MainEditorScreen : public Screen {
         float voxelSize = 0.1f;
         glm::ivec2 prevTileOrigin = glm::ivec2(0x7fffffff, 0x7fffffff);
 
+        // Selection state
+        bool leftButtonHeld = false;
+        GLuint selectionVAO = 0;
+        GLuint selectionVBO = 0;
+
         // Voxelization state
         bool voxelizing = false;
         bool startVoxelization = false;
@@ -57,5 +62,10 @@ class MainEditorScreen : public Screen {
         void generateGridTiles(glm::ivec2 tileOrigin);
         void drawGrid();
         void voxelizeSelectedMesh();
+        void handleModelClick(double mx, double my);
+        void setupSelectionBox();
+        void drawSelectionBox(const LoadedMesh& mesh);
+        bool rayAABBIntersect(const glm::vec3& origin, const glm::vec3& dir,
+                              const glm::vec3& bmin, const glm::vec3& bmax, float& t) const;
 };
 

@@ -11,6 +11,10 @@ struct LoadedMesh {
     std::vector<VoxelChunk> voxelChunks;
     Mesh renderMesh;
     bool isVoxelized = false;
+    bool selected = false;
+    glm::vec3 translation{0.0f};
+    glm::vec3 bboxMin{0.0f};
+    glm::vec3 bboxMax{0.0f};
     glm::mat4 modelMatrix = glm::mat4(1.0f);
 
     LoadedMesh() = default;

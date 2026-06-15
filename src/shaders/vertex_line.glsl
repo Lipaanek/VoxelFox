@@ -11,7 +11,7 @@ out vec3 FragPos;
 
 void main() {
     VertexColor = aColor;
-    // Grid vertices are in world space
-    FragPos = aPos;
-    gl_Position = projection * view * vec4(aPos, 1.0);
+    vec4 worldPos = model * vec4(aPos, 1.0);
+    FragPos = worldPos.xyz;
+    gl_Position = projection * view * worldPos;
 }

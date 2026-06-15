@@ -141,6 +141,7 @@ void MainEditorScreen::OnEnter() {
     }
 
     setupGridBuffers();
+    setupSelectionBox();
 }
 
 void MainEditorScreen::OnExit() {
@@ -159,6 +160,14 @@ void MainEditorScreen::OnExit() {
     if (gridVBO) {
         glDeleteBuffers(1, &gridVBO);
         gridVBO = 0;
+    }
+    if (selectionVAO) {
+        glDeleteVertexArrays(1, &selectionVAO);
+        selectionVAO = 0;
+    }
+    if (selectionVBO) {
+        glDeleteBuffers(1, &selectionVBO);
+        selectionVBO = 0;
     }
     gridVertexCount = 0;
 }
@@ -285,6 +294,25 @@ void drawGui(const std::string& projectPath, MeshManager& meshManager, float vox
         }
     }
     ImGui::End(); // Model Loader
+
+    ImGui::Begin("Model Properties");
+    bool found = false;
+    for (auto& mesh : meshManager.GetLoadedMeshes()) {
+        if (mesh.selected) {
+            found = true;
+            ImGui::Text("Model: %s", mesh.filePath.c_str());
+            float pos[3] = {mesh.translation.x, mesh.translation.y, mesh.translation.z};
+            if (ImGui::DragFloat3("Position", pos, 0.1f)) {
+                mesh.translation = glm::vec3(pos[0], pos[1], pos[2]);
+                mesh.modelMatrix = glm::translate(glm::mat4(1.0f), mesh.translation);
+            }
+            break;
+        }
+    }
+    if (!found) {
+        ImGui::Text("No model selected");
+    }
+    ImGui::End(); // Model Properties
 }
 
 void MainEditorScreen::Update() {
@@ -302,6 +330,15 @@ void MainEditorScreen::Update() {
     }
     
     f5PressedLastFrame = f5Pressed;
+
+    // Left click to select model (only when not interacting with ImGui)
+    bool leftDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    if (leftDown && !leftButtonHeld && !ImGui::GetIO().WantCaptureMouse) {
+        double mx, my;
+        glfwGetCursorPos(window, &mx, &my);
+        handleModelClick(mx, my);
+    }
+    leftButtonHeld = leftDown;
 
     camera.yaw = yaw;
     camera.pitch = pitch;
@@ -344,6 +381,13 @@ void MainEditorScreen::Render() {
     for (auto& mesh : meshManager.GetLoadedMeshes()) {
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(mesh.modelMatrix));
         mesh.renderMesh.draw();
+    }
+
+    // Draw selection boxes for selected meshes
+    for (auto& mesh : meshManager.GetLoadedMeshes()) {
+        if (mesh.selected) {
+            drawSelectionBox(mesh);
+        }
     }
 
     drawGrid();
@@ -498,6 +542,8 @@ void MainEditorScreen::drawGrid() {
     glm::mat4 projection = camera.getProjectionMatrix(static_cast<float>(fbWidth) / static_cast<float>(fbHeight));
 
     glUseProgram(gridShaderProgram);
+    glm::mat4 identity(1.0f);
+    glUniformMatrix4fv(glGetUniformLocation(gridShaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(identity));
     glUniformMatrix4fv(glGetUniformLocation(gridShaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
     glUniformMatrix4fv(glGetUniformLocation(gridShaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
     glUniform3fv(glGetUniformLocation(gridShaderProgram, "viewPos"), 1, glm::value_ptr(camera.position));
@@ -509,6 +555,134 @@ void MainEditorScreen::drawGrid() {
     glDepthMask(GL_FALSE);
     glBindVertexArray(gridVAO);
     glDrawArrays(GL_LINES, 0, gridVertexCount);
+    glBindVertexArray(0);
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+}
+
+void MainEditorScreen::setupSelectionBox() {
+    // Unit cube centered at origin (-0.5 to 0.5)
+    // 12 edges = 24 vertices, each with position and color
+    const float h = 0.5f;
+    glm::vec3 corners[8] = {
+        {-h, -h, -h}, { h, -h, -h}, { h, -h,  h}, {-h, -h,  h},
+        {-h,  h, -h}, { h,  h, -h}, { h,  h,  h}, {-h,  h,  h}
+    };
+    int edges[24] = {
+        0,1, 1,2, 2,3, 3,0,
+        4,5, 5,6, 6,7, 7,4,
+        0,4, 1,5, 2,6, 3,7
+    };
+
+    glm::vec3 color(1.0f, 1.0f, 0.0f); // yellow
+    std::vector<Vertex> verts;
+    verts.reserve(24);
+    for (int i = 0; i < 24; i++) {
+        verts.emplace_back(corners[edges[i]], glm::vec3(0.0f), glm::vec2(0.0f), color);
+    }
+
+    glGenVertexArrays(1, &selectionVAO);
+    glGenBuffers(1, &selectionVBO);
+
+    glBindVertexArray(selectionVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, selectionVBO);
+    glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(Vertex), verts.data(), GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          reinterpret_cast<void*>(offsetof(Vertex, position)));
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+                          reinterpret_cast<void*>(offsetof(Vertex, color)));
+    glEnableVertexAttribArray(3);
+
+    glBindVertexArray(0);
+}
+
+bool MainEditorScreen::rayAABBIntersect(const glm::vec3& origin, const glm::vec3& dir,
+                                         const glm::vec3& bmin, const glm::vec3& bmax, float& t) const {
+    float tMin = -INFINITY, tMax = INFINITY;
+    for (int i = 0; i < 3; i++) {
+        float invD = 1.0f / dir[i];
+        float t0 = (bmin[i] - origin[i]) * invD;
+        float t1 = (bmax[i] - origin[i]) * invD;
+        if (invD < 0.0f) std::swap(t0, t1);
+        tMin = std::max(tMin, t0);
+        tMax = std::min(tMax, t1);
+    }
+    t = tMin;
+    return tMax >= std::max(tMin, 0.0f);
+}
+
+void MainEditorScreen::handleModelClick(double mx, double my) {
+    int fbW, fbH;
+    glfwGetFramebufferSize(window, &fbW, &fbH);
+
+    float ndcX = static_cast<float>(2.0 * mx / fbW - 1.0);
+    float ndcY = static_cast<float>(1.0 - 2.0 * my / fbH);
+
+    glm::mat4 invProjView = glm::inverse(
+        camera.getProjectionMatrix(static_cast<float>(fbW) / static_cast<float>(fbH)) *
+        camera.getViewMatrix()
+    );
+
+    glm::vec4 nearClip = invProjView * glm::vec4(ndcX, ndcY, -1.0f, 1.0f);
+    glm::vec4 farClip  = invProjView * glm::vec4(ndcX, ndcY,  1.0f, 1.0f);
+    nearClip /= nearClip.w;
+    farClip  /= farClip.w;
+
+    glm::vec3 rayOrigin = camera.position;
+    glm::vec3 rayDir = glm::normalize(glm::vec3(farClip) - glm::vec3(nearClip));
+
+    float closestT = INFINITY;
+    LoadedMesh* hitMesh = nullptr;
+
+    for (auto& mesh : meshManager.GetLoadedMeshes()) {
+        // Transform bbox by model matrix
+        glm::vec3 worldMin = glm::vec3(mesh.modelMatrix * glm::vec4(mesh.bboxMin, 1.0f));
+        glm::vec3 worldMax = glm::vec3(mesh.modelMatrix * glm::vec4(mesh.bboxMax, 1.0f));
+
+        float tHit;
+        if (rayAABBIntersect(rayOrigin, rayDir,
+                             glm::min(worldMin, worldMax),
+                             glm::max(worldMin, worldMax),
+                             tHit) && tHit < closestT) {
+            closestT = tHit;
+            hitMesh = &mesh;
+        }
+    }
+
+    for (auto& mesh : meshManager.GetLoadedMeshes()) {
+        mesh.selected = (&mesh == hitMesh);
+    }
+}
+
+void MainEditorScreen::drawSelectionBox(const LoadedMesh& mesh) {
+    if (!gridShaderProgram || selectionVAO == 0) return;
+
+    glm::vec3 bboxCenter = (mesh.bboxMin + mesh.bboxMax) * 0.5f;
+    glm::vec3 bboxSize   = mesh.bboxMax - mesh.bboxMin;
+
+    glm::mat4 boxModel = glm::translate(glm::mat4(1.0f), bboxCenter + mesh.translation)
+                        * glm::scale(glm::mat4(1.0f), bboxSize);
+
+    glm::mat4 view = camera.getViewMatrix();
+    int fbW, fbH;
+    glfwGetFramebufferSize(window, &fbW, &fbH);
+    glm::mat4 proj = camera.getProjectionMatrix(static_cast<float>(fbW) / static_cast<float>(fbH));
+
+    glUseProgram(gridShaderProgram);
+    glUniformMatrix4fv(glGetUniformLocation(gridShaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(boxModel));
+    glUniformMatrix4fv(glGetUniformLocation(gridShaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
+    glUniformMatrix4fv(glGetUniformLocation(gridShaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
+    glUniform3fv(glGetUniformLocation(gridShaderProgram, "viewPos"), 1, glm::value_ptr(camera.position));
+    glUniform1f(glGetUniformLocation(gridShaderProgram, "fadeNear"), -1.0f);
+    glUniform1f(glGetUniformLocation(gridShaderProgram, "fadeFar"), 1e8f);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDepthMask(GL_FALSE);
+    glBindVertexArray(selectionVAO);
+    glDrawArrays(GL_LINES, 0, 24);
     glBindVertexArray(0);
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);

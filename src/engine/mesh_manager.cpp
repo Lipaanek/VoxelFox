@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <algorithm>
 #include <utility>
+#include <glm/gtc/matrix_transform.hpp>
 
 LoadedMesh* MeshManager::LoadMesh(const std::string& projectPath, const std::string& relativePath, float voxelSize) {
     // Check if mesh is already loaded
@@ -51,13 +52,27 @@ LoadedMesh* MeshManager::LoadMesh(const std::string& projectPath, const std::str
     // Generate render mesh
     VoxelMesh voxelMesh = generateVoxelMesh(voxelChunks, materials);
 
+    // Compute bounding box from generated mesh vertices
+    glm::vec3 bmin(INFINITY), bmax(-INFINITY);
+    for (const auto& v : voxelMesh.vertices) {
+        bmin.x = std::min(bmin.x, v.position.x);
+        bmin.y = std::min(bmin.y, v.position.y);
+        bmin.z = std::min(bmin.z, v.position.z);
+        bmax.x = std::max(bmax.x, v.position.x);
+        bmax.y = std::max(bmax.y, v.position.y);
+        bmax.z = std::max(bmax.z, v.position.z);
+    }
+
     // Create LoadedMesh entry
     LoadedMesh loadedMesh;
     loadedMesh.filePath = relativePath;
     loadedMesh.voxelChunks = std::move(voxelChunks);
     loadedMesh.renderMesh = Mesh(voxelMesh.vertices, voxelMesh.indices);
     loadedMesh.isVoxelized = true;
-    loadedMesh.modelMatrix = glm::mat4(1.0f);
+    loadedMesh.bboxMin = bmin;
+    loadedMesh.bboxMax = bmax;
+    loadedMesh.translation = glm::vec3(0.0f);
+    loadedMesh.modelMatrix = glm::translate(glm::mat4(1.0f), loadedMesh.translation);
 
     loadedMeshes_.push_back(std::move(loadedMesh));
 
