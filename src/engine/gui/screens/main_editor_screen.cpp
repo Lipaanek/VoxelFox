@@ -16,6 +16,8 @@ namespace fs = std::filesystem;
 #include "../../../include/object_loader.hpp"
 #include "../../../include/color_loader.hpp"
 #include "../../../include/voxelizer.hpp"
+#include "../../../include/loaded_mesh.hpp"
+#include "../../../engine/scene_hierarchy/nodes/mesh_instance_3d.hpp"
 #include "../../project_config.hpp"
 
 extern float velocityX;
@@ -33,10 +35,8 @@ static fs::path g_rootPath;
 static fs::path g_selectedPath;
 
 void MainEditorScreen::OnEnter() {
-    // Clear any stale OpenGL errors before starting
     while (glGetError() != GL_NO_ERROR) {}
 
-    // Load project configuration
     if (!projectPath.empty()) {
         ProjectConfig config = ProjectConfigLoader::Load(projectPath);
         g_rootPath = projectPath;
@@ -44,10 +44,9 @@ void MainEditorScreen::OnEnter() {
         printf("Loaded project config: name=%s, voxelSize=%.2f\n", config.projectName.c_str(), voxelSize);
     } else {
         printf("Warning: No project path set in MainEditorScreen\n");
-        voxelSize = 0.1f; // Use default
+        voxelSize = 0.1f;
     }
 
-    // Load and compile shaders
     std::string vertexCode = loadFile("src/shaders/vertex.glsl");
     std::string fragmentCode = loadFile("src/shaders/fragment.glsl");
 
@@ -72,7 +71,6 @@ void MainEditorScreen::OnEnter() {
     glDeleteShader(vertShader);
     glDeleteShader(fragShader);
 
-    // Load and compile line grid shaders
     std::string lineVertCode = loadFile("src/shaders/vertex_line.glsl");
     std::string lineFragCode = loadFile("src/shaders/fragment_line.glsl");
 
@@ -109,7 +107,6 @@ void MainEditorScreen::OnEnter() {
             ? glm::vec3(0.8f, 0.8f, 0.8f)
             : glm::vec3(0.35f, 0.35f, 0.35f);
 
-        // Vertical lines (parallel to Z)
         gridVertices.emplace_back(
             glm::vec3(i * spacing, 0.0f, -gridSize * spacing),
             glm::vec3(0.0f, 1.0f, 0.0f),
@@ -124,7 +121,6 @@ void MainEditorScreen::OnEnter() {
             color
         );
 
-        // Horizontal lines (parallel to X)
         gridVertices.emplace_back(
             glm::vec3(-gridSize * spacing, 0.0f, i * spacing),
             glm::vec3(0.0f, 1.0f, 0.0f),
@@ -170,6 +166,7 @@ void MainEditorScreen::OnExit() {
         selectionVBO = 0;
     }
     gridVertexCount = 0;
+    meshManager.Clear();
 }
 
 void DrawFileNode(const fs::path& path) {
@@ -197,6 +194,15 @@ void DrawFileNode(const fs::path& path) {
     if (ImGui::IsItemClicked())
         g_selectedPath = path;
 
+    if (!isDir && path.extension() == ".voxf") {
+        if (ImGui::BeginDragDropSource()) {
+            std::string absPath = path.string();
+            ImGui::SetDragDropPayload("VOXEL_MODEL", absPath.c_str(), absPath.size() + 1);
+            ImGui::Text("Add %s", path.filename().string().c_str());
+            ImGui::EndDragDropSource();
+        }
+    }
+
     if (isDir && open) {
         for (auto& entry : fs::directory_iterator(path)) {
             DrawFileNode(entry.path());
@@ -205,7 +211,9 @@ void DrawFileNode(const fs::path& path) {
     }
 }
 
-void ImportModel(const std::string& objFile, const std::string& matFile, const std::string& projectPath, MeshManager& meshManager, float voxelSize) {
+void ImportModel(const std::string& objFile, const std::string& matFile, 
+                 const std::string& projectPath, MeshManager& meshManager, 
+                 float voxelSize, Scene& scene) {
     fs::path destDir = fs::path(projectPath) / "assets" / "objects";
     fs::create_directories(destDir);
 
@@ -221,13 +229,22 @@ void ImportModel(const std::string& objFile, const std::string& matFile, const s
 
     std::string relativePath = objSrc.filename().string();
     meshManager.LoadMesh(projectPath, relativePath, voxelSize);
+
+    auto meshNode = std::make_unique<MeshInstance3D>();
+    meshNode->name = relativePath;
+    meshNode->SetMesh(relativePath, meshManager);
+    meshNode->selected = true;
+    scene.GetRoot()->AddChild(std::move(meshNode));
 }
 
-void drawGui(const std::string& projectPath, MeshManager& meshManager, float voxelSize) {
+void drawGui(const std::string& projectPath, MeshManager& meshManager, 
+             float voxelSize, Scene& scene) {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
             ImGui::MenuItem("Open");
-            ImGui::MenuItem("Save");
+            if (ImGui::MenuItem("Save")) {
+                scene.Save((fs::path(projectPath) / "scene.vsf").string());
+            }
             ImGui::EndMenu();
         }
 
@@ -255,7 +272,7 @@ void drawGui(const std::string& projectPath, MeshManager& meshManager, float vox
     ImGui::Separator();
     ImGui::Text("Selected: %s", g_selectedPath.string().c_str());
 
-    ImGui::End(); // File Explorer
+    ImGui::End();
 
     ImGui::Begin("Model Loader");
     if (ImGui::Button("Select Object File")) {
@@ -290,29 +307,39 @@ void drawGui(const std::string& projectPath, MeshManager& meshManager, float vox
     }
     if (ImGui::Button("Import")) {
         if (!objFile.empty() && !matFile.empty()) {
-            ImportModel(objFile, matFile, projectPath, meshManager, voxelSize);
+            ImportModel(objFile, matFile, projectPath, meshManager, voxelSize, scene);
         }
     }
-    ImGui::End(); // Model Loader
+    ImGui::End();
 
     ImGui::Begin("Model Properties");
-    bool found = false;
-    for (auto& mesh : meshManager.GetLoadedMeshes()) {
-        if (mesh.selected) {
-            found = true;
-            ImGui::Text("Model: %s", mesh.filePath.c_str());
-            float pos[3] = {mesh.translation.x, mesh.translation.y, mesh.translation.z};
-            if (ImGui::DragFloat3("Position", pos, 0.1f)) {
-                mesh.translation = glm::vec3(pos[0], pos[1], pos[2]);
-                mesh.modelMatrix = glm::translate(glm::mat4(1.0f), mesh.translation);
-            }
-            break;
-        }
-    }
-    if (!found) {
+    MeshInstance3D* selected = scene.GetSelectedMeshInstance();
+    if (selected) {
+        selected->BuildUI();
+    } else {
         ImGui::Text("No model selected");
     }
-    ImGui::End(); // Model Properties
+    ImGui::End();
+
+    ImGui::Begin("Fast Import");
+    ImGui::Text("Drag and Drop");
+    if (ImGui::BeginDragDropTarget()) {
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("VOXEL_MODEL")) {
+            std::string voxfPath((const char*)payload->Data);
+            fs::path root = fs::path(projectPath) / "assets" / "objects";
+            std::string relPath = fs::relative(voxfPath, root).string();
+
+            meshManager.LoadVoxf(projectPath, relPath);
+
+            auto meshNode = std::make_unique<MeshInstance3D>();
+            meshNode->name = relPath;
+            meshNode->SetMesh(relPath, meshManager);
+            meshNode->selected = true;
+            scene.GetRoot()->AddChild(std::move(meshNode));
+        }
+        ImGui::EndDragDropTarget();
+    }
+    ImGui::End();
 }
 
 void MainEditorScreen::Update() {
@@ -320,7 +347,8 @@ void MainEditorScreen::Update() {
     float dt = static_cast<float>(currentTime - lastFrameTime);
     lastFrameTime = currentTime;
 
-    // Check for F5 to enter playtest mode
+    scene.Update(dt);
+
     static bool f5PressedLastFrame = false;
     bool f5Pressed = glfwGetKey(window, GLFW_KEY_F5) == GLFW_PRESS;
 
@@ -331,7 +359,6 @@ void MainEditorScreen::Update() {
     
     f5PressedLastFrame = f5Pressed;
 
-    // Left click to select model (only when not interacting with ImGui)
     bool leftDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     if (leftDown && !leftButtonHeld && !ImGui::GetIO().WantCaptureMouse) {
         double mx, my;
@@ -347,7 +374,6 @@ void MainEditorScreen::Update() {
 }
 
 void MainEditorScreen::Render() {
-    // Clear stale errors from previous frame
     while (glGetError() != GL_NO_ERROR) {}
 
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -357,7 +383,6 @@ void MainEditorScreen::Render() {
 
     glUseProgram(shaderProgram);
 
-    // Set view and projection matrices
     glm::mat4 view = camera.getViewMatrix();
     int fbWidth, fbHeight;
     glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
@@ -377,51 +402,27 @@ void MainEditorScreen::Render() {
 
     int modelLoc = glGetUniformLocation(shaderProgram, "model");
 
-    // Render all loaded meshes
-    for (auto& mesh : meshManager.GetLoadedMeshes()) {
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(mesh.modelMatrix));
-        mesh.renderMesh.draw();
+    for (auto* meshNode : scene.GetAllMeshInstances()) {
+        LoadedMesh* meshData = meshManager.GetMeshByPath(meshNode->meshAssetPath);
+        if (meshData) {
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(meshNode->GetGlobalTransform()));
+            meshData->renderMesh.draw();
+        }
     }
 
-    // Draw selection boxes for selected meshes
-    for (auto& mesh : meshManager.GetLoadedMeshes()) {
-        if (mesh.selected) {
-            drawSelectionBox(mesh);
+    for (auto* meshNode : scene.GetAllMeshInstances()) {
+        if (meshNode->selected) {
+            drawSelectionBox(meshNode);
         }
     }
 
     drawGrid();
-    drawGui(projectPath, meshManager, voxelSize);
+    drawGui(projectPath, meshManager, voxelSize, scene);
 
     GLenum err = glGetError();
     if (err != GL_NO_ERROR) {
         printf("OpenGL error in MainEditorScreen::Render: 0x%x\n", err);
     }
-}
-
-void MainEditorScreen::setUniforms() {
-    glm::mat4 model = glm::mat4(1.0f);
-    glm::mat4 view = camera.getViewMatrix();
-
-    int fbWidth, fbHeight;
-    glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
-    glm::mat4 projection = camera.getProjectionMatrix(static_cast<float>(fbWidth) / static_cast<float>(fbHeight));
-
-    int modelLoc = glGetUniformLocation(shaderProgram, "model");
-    int viewLoc = glGetUniformLocation(shaderProgram, "view");
-    int projLoc = glGetUniformLocation(shaderProgram, "projection");
-
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-    glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
-
-    int viewPosLoc = glGetUniformLocation(shaderProgram, "viewPos");
-    int lightPosLoc = glGetUniformLocation(shaderProgram, "lightPos");
-    int lightColorLoc = glGetUniformLocation(shaderProgram, "lightColor");
-
-    glUniform3fv(viewPosLoc, 1, glm::value_ptr(camera.position));
-    glUniform3f(lightPosLoc, camera.position.x, camera.position.y, camera.position.z);
-    glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);
 }
 
 void MainEditorScreen::setupGridBuffers() {
@@ -430,7 +431,6 @@ void MainEditorScreen::setupGridBuffers() {
 
     glBindVertexArray(gridVAO);
     glBindBuffer(GL_ARRAY_BUFFER, gridVBO);
-    // DYNAMIC_DRAW because the tile content changes every frame
     glBufferData(GL_ARRAY_BUFFER,
                  gridVertices.size() * sizeof(Vertex),
                  gridVertices.data(),
@@ -457,7 +457,6 @@ void MainEditorScreen::setupGridBuffers() {
     gridVertexCount = static_cast<GLsizei>(gridVertices.size());
 }
 
-// Orientation tile grid
 void MainEditorScreen::generateGridTiles(glm::ivec2 tileOrigin) {
     gridVertices.clear();
 
@@ -472,7 +471,6 @@ void MainEditorScreen::generateGridTiles(glm::ivec2 tileOrigin) {
             float baseZ = tileOrigin.y + tz * tileSize;
 
             for (int i = -halfRange; i <= halfRange; i++) {
-                // Bold line every 10 units
                 bool bold = (i % tileSize == 0);
                 glm::vec3 color = bold
                     ? glm::vec3(0.8f, 0.8f, 0.8f)
@@ -526,7 +524,6 @@ void MainEditorScreen::generateGridTiles(glm::ivec2 tileOrigin) {
 void MainEditorScreen::drawGrid() {
     if (!gridShaderProgram || gridVAO == 0) return;
 
-    // Rebuild tile grid whenever the camera crosses into a new 10 unit cell
     glm::ivec2 tileOrigin(
         static_cast<int>(std::floor(camera.position.x / 10.0f)) * 10,
         static_cast<int>(std::floor(camera.position.z / 10.0f)) * 10
@@ -561,8 +558,6 @@ void MainEditorScreen::drawGrid() {
 }
 
 void MainEditorScreen::setupSelectionBox() {
-    // Unit cube centered at origin (-0.5 to 0.5)
-    // 12 edges = 24 vertices, each with position and color
     const float h = 0.5f;
     glm::vec3 corners[8] = {
         {-h, -h, -h}, { h, -h, -h}, { h, -h,  h}, {-h, -h,  h},
@@ -574,7 +569,7 @@ void MainEditorScreen::setupSelectionBox() {
         0,4, 1,5, 2,6, 3,7
     };
 
-    glm::vec3 color(1.0f, 1.0f, 0.0f); // yellow
+    glm::vec3 color(1.0f, 1.0f, 0.0f);
     std::vector<Vertex> verts;
     verts.reserve(24);
     for (int i = 0; i < 24; i++) {
@@ -634,12 +629,16 @@ void MainEditorScreen::handleModelClick(double mx, double my) {
     glm::vec3 rayDir = glm::normalize(glm::vec3(farClip) - glm::vec3(nearClip));
 
     float closestT = INFINITY;
-    LoadedMesh* hitMesh = nullptr;
+    MeshInstance3D* hitNode = nullptr;
 
-    for (auto& mesh : meshManager.GetLoadedMeshes()) {
-        // Transform bbox by model matrix
-        glm::vec3 worldMin = glm::vec3(mesh.modelMatrix * glm::vec4(mesh.bboxMin, 1.0f));
-        glm::vec3 worldMax = glm::vec3(mesh.modelMatrix * glm::vec4(mesh.bboxMax, 1.0f));
+    for (auto* meshNode : scene.GetAllMeshInstances()) {
+        LoadedMesh* meshData = meshManager.GetMeshByPath(meshNode->meshAssetPath);
+        if (!meshData) continue;
+
+        glm::mat4 globalTransform = meshNode->GetGlobalTransform();
+
+        glm::vec3 worldMin = glm::vec3(globalTransform * glm::vec4(meshData->bboxMin, 1.0f));
+        glm::vec3 worldMax = glm::vec3(globalTransform * glm::vec4(meshData->bboxMax, 1.0f));
 
         float tHit;
         if (rayAABBIntersect(rayOrigin, rayDir,
@@ -647,22 +646,26 @@ void MainEditorScreen::handleModelClick(double mx, double my) {
                              glm::max(worldMin, worldMax),
                              tHit) && tHit < closestT) {
             closestT = tHit;
-            hitMesh = &mesh;
+            hitNode = meshNode;
         }
     }
 
-    for (auto& mesh : meshManager.GetLoadedMeshes()) {
-        mesh.selected = (&mesh == hitMesh);
+    for (auto* meshNode : scene.GetAllMeshInstances()) {
+        meshNode->selected = (meshNode == hitNode);
     }
 }
 
-void MainEditorScreen::drawSelectionBox(const LoadedMesh& mesh) {
+void MainEditorScreen::drawSelectionBox(MeshInstance3D* meshNode) {
     if (!gridShaderProgram || selectionVAO == 0) return;
 
-    glm::vec3 bboxCenter = (mesh.bboxMin + mesh.bboxMax) * 0.5f;
-    glm::vec3 bboxSize   = mesh.bboxMax - mesh.bboxMin;
+    LoadedMesh* meshData = meshManager.GetMeshByPath(meshNode->meshAssetPath);
+    if (!meshData) return;
 
-    glm::mat4 boxModel = glm::translate(glm::mat4(1.0f), bboxCenter + mesh.translation)
+    glm::vec3 bboxCenter = (meshData->bboxMin + meshData->bboxMax) * 0.5f;
+    glm::vec3 bboxSize   = meshData->bboxMax - meshData->bboxMin;
+
+    glm::mat4 boxModel = meshNode->GetGlobalTransform()
+                        * glm::translate(glm::mat4(1.0f), bboxCenter)
                         * glm::scale(glm::mat4(1.0f), bboxSize);
 
     glm::mat4 view = camera.getViewMatrix();

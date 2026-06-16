@@ -8,9 +8,10 @@
 
 #include "playtest_screen.hpp"
 #include "../../../include/shader_loader.hpp"
+#include "../../../include/loaded_mesh.hpp"
+#include "../../../engine/scene_hierarchy/nodes/mesh_instance_3d.hpp"
 #include "../../project_config.hpp"
 
-// Globals in main.cpp
 extern float velocityX;
 extern float velocityY;
 extern float velocityZ;
@@ -23,7 +24,6 @@ void PlaytestScreen::OnEnter() {
         voxelSize = config.voxelSize;
     }
 
-    // Shaders
     std::string vertexCode = loadFile("src/shaders/vertex.glsl");
     std::string fragmentCode = loadFile("src/shaders/fragment.glsl");
 
@@ -51,7 +51,6 @@ void PlaytestScreen::OnEnter() {
     camera.position = glm::vec3(0.0f, 1.0f, 3.0f);
     camera.updateCameraVectors();
 
-    // Initialize mouse for captured mode
     mouseCaptured = true;
     firstMouse = true;
     glfwGetCursorPos(window, &lastMouseX, &lastMouseY);
@@ -71,7 +70,8 @@ void PlaytestScreen::Update() {
     if (lastDt == 0.0f) dt = 0.0f;
     lastDt = currentTime;
 
-    // Mouse look only when captured
+    scene.Update(dt);
+
     if (mouseCaptured) {
         double mouseX, mouseY;
         glfwGetCursorPos(window, &mouseX, &mouseY);
@@ -103,12 +103,10 @@ void PlaytestScreen::Update() {
 
     camera.updateCameraPosition(velocityX, velocityY, velocityZ, dt);
 
-    // Simple ground collision
     if (camera.position.y < 0.5f) {
         camera.position.y = 0.5f;
     }
 
-    // Return to editor with Escape
     static bool escapeWasPressed = false;
     bool escapePressed = glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS;
 
@@ -122,7 +120,7 @@ void PlaytestScreen::Update() {
 }
 
 void PlaytestScreen::Render() {
-    glClearColor(0.5f, 0.7f, 1.0f, 1.0f); // Blue skybox
+    glClearColor(0.5f, 0.7f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (!shaderProgram) return;
@@ -145,11 +143,11 @@ void PlaytestScreen::Render() {
 
     int modelLoc = glGetUniformLocation(shaderProgram, "model");
 
-    // Voxel render
-    for (const auto& mesh : meshManager.GetLoadedMeshes()) {
-        if (mesh.isVoxelized) {
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(mesh.modelMatrix));
-            mesh.renderMesh.draw();
+    for (auto* meshNode : scene.GetAllMeshInstances()) {
+        LoadedMesh* meshData = meshManager.GetMeshByPath(meshNode->meshAssetPath);
+        if (meshData) {
+            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(meshNode->GetGlobalTransform()));
+            meshData->renderMesh.draw();
         }
     }
 }

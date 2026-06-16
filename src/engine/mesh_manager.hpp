@@ -10,6 +10,7 @@ public:
     ~MeshManager() = default;
 
     LoadedMesh* LoadMesh(const std::string& projectPath, const std::string& relativePath, float voxelSize);
+    LoadedMesh* LoadVoxf(const std::string& projectPath, const std::string& relativePath);
     LoadedMesh* LoadMesh(Mesh&& mesh, const std::string& identifier);
 
     std::vector<LoadedMesh>& GetLoadedMeshes() {

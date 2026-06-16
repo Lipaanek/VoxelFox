@@ -94,6 +94,61 @@ LoadedMesh* MeshManager::LoadMesh(const std::string& projectPath, const std::str
     return &loadedMeshes_.back();
 }
 
+LoadedMesh* MeshManager::LoadVoxf(const std::string& projectPath, const std::string& relativePath) {
+    namespace fs = std::filesystem;
+
+    fs::path voxfPath = fs::path(projectPath) / "assets" / "objects" / relativePath;
+    if (!fs::exists(voxfPath)) {
+        printf("Voxf file not found: %s\n", voxfPath.string().c_str());
+        return nullptr;
+    }
+
+    std::vector<VoxelChunk> voxelChunks = VoxelModelIO::LoadVoxelModel(voxfPath.string());
+    if (voxelChunks.empty()) {
+        printf("Failed to load voxf file: %s\n", voxfPath.string().c_str());
+        return nullptr;
+    }
+
+    // Load materials from corresponding .mtl
+    std::vector<Material> materials;
+    fs::path mtlPath = voxfPath;
+    mtlPath.replace_extension(".mtl");
+    materials = loadColorFile(mtlPath.string());
+    if (materials.empty()) {
+        printf("Warning: No materials for %s, using default\n", relativePath.c_str());
+        materials.push_back(Material{Color{1.0f, 1.0f, 1.0f}, "default"});
+    }
+
+    // Generate render mesh from chunks + materials
+    VoxelMesh voxelMesh = generateVoxelMesh(voxelChunks, materials);
+
+    // Compute bounding box
+    glm::vec3 bmin(INFINITY), bmax(-INFINITY);
+    for (const auto& v : voxelMesh.vertices) {
+        bmin.x = std::min(bmin.x, v.position.x);
+        bmin.y = std::min(bmin.y, v.position.y);
+        bmin.z = std::min(bmin.z, v.position.z);
+        bmax.x = std::max(bmax.x, v.position.x);
+        bmax.y = std::max(bmax.y, v.position.y);
+        bmax.z = std::max(bmax.z, v.position.z);
+    }
+
+    // Create new LoadedMesh entry
+    LoadedMesh loadedMesh;
+    loadedMesh.filePath = relativePath;
+    loadedMesh.voxelChunks = std::move(voxelChunks);
+    loadedMesh.renderMesh = Mesh(voxelMesh.vertices, voxelMesh.indices);
+    loadedMesh.isVoxelized = true;
+    loadedMesh.bboxMin = bmin;
+    loadedMesh.bboxMax = bmax;
+    loadedMesh.translation = glm::vec3(0.0f);
+    loadedMesh.modelMatrix = glm::translate(glm::mat4(1.0f), loadedMesh.translation);
+
+    loadedMeshes_.push_back(std::move(loadedMesh));
+    printf("Loaded instance from voxf: %s\n", relativePath.c_str());
+    return &loadedMeshes_.back();
+}
+
 LoadedMesh* MeshManager::LoadMesh(Mesh&& mesh, const std::string& identifier) {
     LoadedMesh loadedMesh(identifier, std::move(mesh));
     loadedMeshes_.push_back(std::move(loadedMesh));

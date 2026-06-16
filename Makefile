@@ -1,6 +1,7 @@
-# Compiler
-CXX = g++
-CC  = gcc
+# Compiler (MinGW cross-compiler for Windows)
+CXX = x86_64-w64-mingw32-g++
+CC  = x86_64-w64-mingw32-gcc
+WINDRES = x86_64-w64-mingw32-windres
 
 # Directories
 BIN_DIR = bin
@@ -9,10 +10,9 @@ BIN_DIR = bin
 TARGET = $(BIN_DIR)/voxelfox.exe
 
 # Flags
-CXXFLAGS = -std=c++20 -Wall -fmodules-ts -Isrc/include -Isrc/thirdparty -Isrc/thirdparty/imgui
+CXXFLAGS = -std=c++20 -Wall -Isrc/include -Isrc/thirdparty -Isrc/thirdparty/imgui
 CFLAGS   = -Wall -Isrc/include -Isrc/thirdparty -Isrc/thirdparty/imgui
 
-# --- FIX: Added -lole32 and -lcomdlg32 to support tinyfiledialogs ---
 LDFLAGS = -Llib -lglfw3dll -lopengl32 -lgdi32 -lole32 -lcomdlg32
 
 # --- Safe Source Gathering ---
@@ -33,21 +33,22 @@ OBJS := $(patsubst %.cpp,$(BIN_DIR)/%.o,$(CPP_SRCS)) \
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	@if not exist "$(BIN_DIR)" mkdir "$(BIN_DIR)"
+	@mkdir -p "$(BIN_DIR)"
 	$(CXX) $(OBJS) $(LDFLAGS) -o $@
+	cp glfw3.dll "$(BIN_DIR)/glfw3.dll"
 
 # Compile C++ files
 $(BIN_DIR)/%.o: %.cpp
-	@if not exist "$(subst /,\,$(dir $@))" mkdir "$(subst /,\,$(dir $@))"
+	@mkdir -p "$(dir $@)"
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Compile C files
 $(BIN_DIR)/%.o: %.c
-	@if not exist "$(subst /,\,$(dir $@))" mkdir "$(subst /,\,$(dir $@))"
+	@mkdir -p "$(dir $@)"
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Clean up
 clean:
-	@if exist "$(BIN_DIR)" rmdir /s /q "$(BIN_DIR)"
+	@rm -rf "$(BIN_DIR)"
 
 .PHONY: all clean

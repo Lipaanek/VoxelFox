@@ -11,6 +11,7 @@
 #include "engine/gui/screens/create_project_screen.hpp"
 #include "engine/gui/screens/main_editor_screen.hpp"
 #include "engine/gui/screens/playtest_screen.hpp"
+#include "engine/scene_hierarchy/scene.hpp"
 
 // Camera globals (set by GLFW callbacks, consumed by MainEditorScreen)
 float velocityX = 0.0f;
@@ -70,7 +71,7 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
         if (current) {
             PlaytestScreen* playtest = dynamic_cast<PlaytestScreen*>(current);
             if (playtest && playtest->IsMouseCaptured()) {
-                return; // Playtest handles its own mouse look
+                return;
             }
         }
     }
@@ -105,7 +106,6 @@ void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
     prevMouseY = ypos;
 }
 
-// Editor input
 void input_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (ImGui::GetIO().WantCaptureKeyboard)                   return;
     if (key == GLFW_KEY_A && action == GLFW_PRESS)            velocityX = -speed;
@@ -128,7 +128,6 @@ void initImGui(GLFWwindow* window) {
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = NULL;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
     ImGui::StyleColorsDark();
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -171,15 +170,15 @@ int main() {
 
     initImGui(window);
 
-    // Screen state machine
     ScreenManager screenManager;
     CreateProjectScreen createScreen;
     glfwSetWindowUserPointer(window, &screenManager);
-    MeshManager meshMgr;
-    PlaytestScreen playtestScreen(window, "", meshMgr);
-    MainEditorScreen editorScreen(window, meshMgr);
 
-    // Wire up playtest screen to return to editor
+    MeshManager meshMgr;
+    Scene scene;
+    PlaytestScreen playtestScreen(window, "", scene, meshMgr);
+    MainEditorScreen editorScreen(window, scene, meshMgr);
+
     playtestScreen.SetReturnCallback([&]() {
         editorRmbHeld = false;
         screenManager.SwitchTo(&editorScreen);
@@ -193,7 +192,6 @@ int main() {
     };
 
     createScreen.OnProjectCreated = [&]() {
-        // Pass the project path to the editor screen
         editorScreen.SetProjectPath(createScreen.GetProjectPath());
         
         glfwMaximizeWindow(window);

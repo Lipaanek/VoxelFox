@@ -2,6 +2,7 @@
 
 #include "../screen.hpp"
 #include "../../../engine/mesh_manager.hpp"
+#include "../../../engine/scene_hierarchy/scene.hpp"
 #include "../../../include/camera.hpp"
 
 #include <functional>
@@ -12,8 +13,8 @@ struct GLFWwindow;
 
 class PlaytestScreen : public Screen {
     public:
-        PlaytestScreen(GLFWwindow* win, const std::string& projPath, MeshManager& meshMgr) 
-            : window(win), projectPath(projPath), meshManager(meshMgr) {}
+        PlaytestScreen(GLFWwindow* win, const std::string& projPath, Scene& scn, MeshManager& meshMgr) 
+            : window(win), projectPath(projPath), scene(scn), meshManager(meshMgr) {}
         
         void OnEnter() override;
         void OnExit() override;
@@ -45,6 +46,7 @@ class PlaytestScreen : public Screen {
      private:
         GLFWwindow* window;
         std::string projectPath;
+        Scene& scene;
         MeshManager& meshManager;
 
         // Game state

@@ -4,6 +4,7 @@
 #include "../../../include/camera.hpp"
 #include "../../../include/mesh.hpp"
 #include "../../../engine/mesh_manager.hpp"
+#include "../../../engine/scene_hierarchy/scene.hpp"
 #include <string>
 #include <vector>
 
@@ -11,8 +12,8 @@ struct GLFWwindow;
 
 class MainEditorScreen : public Screen {
     public:
-        MainEditorScreen(GLFWwindow* win, MeshManager& meshMgr, const std::string& projPath = "") 
-            : window(win), meshManager(meshMgr), projectPath(projPath) {}
+        MainEditorScreen(GLFWwindow* win, Scene& scn, MeshManager& meshMgr, const std::string& projPath = "") 
+            : window(win), scene(scn), meshManager(meshMgr), projectPath(projPath) {}
         
         void OnEnter() override;
         void OnExit() override;
@@ -31,6 +32,7 @@ class MainEditorScreen : public Screen {
 
      private:
         GLFWwindow* window;
+        Scene& scene;
         MeshManager& meshManager;
         std::string projectPath;
 
@@ -57,15 +59,13 @@ class MainEditorScreen : public Screen {
         std::string g_selectedFileInfo;
         std::string voxelizeError;
 
-        void setUniforms();
         void setupGridBuffers();
         void generateGridTiles(glm::ivec2 tileOrigin);
         void drawGrid();
         void voxelizeSelectedMesh();
         void handleModelClick(double mx, double my);
         void setupSelectionBox();
-        void drawSelectionBox(const LoadedMesh& mesh);
+        void drawSelectionBox(MeshInstance3D* meshNode);
         bool rayAABBIntersect(const glm::vec3& origin, const glm::vec3& dir,
                               const glm::vec3& bmin, const glm::vec3& bmax, float& t) const;
 };
-
