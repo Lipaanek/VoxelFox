@@ -13,7 +13,7 @@ TARGET = $(BIN_DIR)/voxelfox.exe
 CXXFLAGS = -std=c++20 -Wall -Isrc/include -Isrc/thirdparty -Isrc/thirdparty/imgui
 CFLAGS   = -Wall -Isrc/include -Isrc/thirdparty -Isrc/thirdparty/imgui
 
-LDFLAGS = -Llib -lglfw3dll -lopengl32 -lgdi32 -lole32 -lcomdlg32
+LDFLAGS = -static-libstdc++ -static-libgcc -Llib -lglfw3dll -lopengl32 -lgdi32 -lole32 -lcomdlg32
 
 # --- Safe Source Gathering ---
 ALL_CPP := $(wildcard src/*.cpp) $(wildcard src/**/*.cpp) $(wildcard src/**/**/*.cpp) $(wildcard src/**/**/**/*.cpp)
@@ -36,6 +36,7 @@ $(TARGET): $(OBJS)
 	@mkdir -p "$(BIN_DIR)"
 	$(CXX) $(OBJS) $(LDFLAGS) -o $@
 	cp glfw3.dll "$(BIN_DIR)/glfw3.dll"
+	cp -r src/shaders "$(BIN_DIR)/src/shaders"
 
 # Compile C++ files
 $(BIN_DIR)/%.o: %.cpp
