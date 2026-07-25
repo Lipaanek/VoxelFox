@@ -21,6 +21,8 @@ SRCS = \
 	src/scene/basic_screen.cpp \
 	src/scene/screen_manager.cpp \
 	src/core/window.cpp \
+	src/renderer/shader.cpp \
+	src/util/util.cpp \
 
 OBJS = $(SRCS:src/%.cpp=$(OBJDIR)/%.o)
 
