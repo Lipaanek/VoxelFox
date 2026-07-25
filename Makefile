@@ -12,6 +12,8 @@ TARGET     = $(BUILDDIR)/voxelfox.exe
 TESTTARGET = $(BUILDDIR)/voxelfox_tests.exe
 TINYFD_SRC = thirdparty/tinyfiledialogs/tinyfiledialogs.c
 TINYFD_OBJ = $(OBJDIR)/tinyfiledialogs.o
+GLAD_SRC  = thirdparty/glad/glad.c
+GLAD_OBJ  = $(OBJDIR)/glad.o
 
 RUNNER     ?=
 
@@ -45,7 +47,7 @@ $(shell $(call MKDIR,$(DIRS)))
 
 all: $(TARGET)
 
-$(TARGET): $(OBJS) $(TINYFD_OBJ)
+$(TARGET): $(OBJS) $(TINYFD_OBJ) $(GLAD_OBJ)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS) $(LDLIBS)
 
 $(OBJDIR)/%.o: src/%.cpp
@@ -54,9 +56,12 @@ $(OBJDIR)/%.o: src/%.cpp
 $(TINYFD_OBJ): $(TINYFD_SRC)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
+$(GLAD_OBJ): $(GLAD_SRC)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
 test: $(TESTTARGET)
 
-$(TESTTARGET): $(TEST_OBJS) $(filter-out %/main.o,$(OBJS)) $(TINYFD_OBJ)
+$(TESTTARGET): $(TEST_OBJS) $(filter-out %/main.o,$(OBJS)) $(TINYFD_OBJ) $(GLAD_OBJ)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS) $(LDLIBS)
 
 $(OBJDIR)/%.o: tests/%.cpp
