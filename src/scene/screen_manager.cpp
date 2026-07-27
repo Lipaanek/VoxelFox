@@ -7,6 +7,7 @@ ScreenManager::ScreenManager(Window& window)
 
 void ScreenManager::setScreen(std::unique_ptr<Screen> screen) {
     currentScreen = std::move(screen);
+    currentScreen->onReady();
 }
 
 void ScreenManager::update() {

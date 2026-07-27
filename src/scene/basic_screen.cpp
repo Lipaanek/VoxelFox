@@ -1,16 +1,19 @@
-#include "screen.hpp"
+#include "basic_screen.hpp"
 
-#include <glad/glad.h>
+void BasicScreen::render() {
+        mesh.draw(this->programID);
+}
 
-class BasicScreen : public Screen {
-private:
-    GLuint programID;
+void BasicScreen::onReady() {
+    std::vector<Vertex> verts = {
+            {{ -0.5f, -0.5f, 0.0f }},
+            {{ 0.5f, -0.5f, 0.0f }},
+            {{ 0.0f, 0.5f, 0.0f }}
+        };
 
-public:
-    BasicScreen(GLuint programID) : programID(programID) {}
+    std::vector<GLuint> idxs = { 0, 1, 2 };
 
-    void render() override {
-        glUseProgram(this->programID);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-    }
-};
+    mesh.setVertices(verts);
+    mesh.setIndices(idxs);
+    mesh.setup();
+}

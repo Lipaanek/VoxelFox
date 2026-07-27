@@ -2,7 +2,7 @@
 
 #include "core/window.hpp"
 #include "scene/screen_manager.hpp"
-#include "scene/basic_screen.cpp"
+#include "scene/basic_screen.hpp"
 #include "renderer/shader_program.hpp"
 
 int main() {

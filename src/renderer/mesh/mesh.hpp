@@ -12,8 +12,6 @@ private:
     GLuint ebo = 0; // Element Buffer Object
     GLsizei indexCount = 0;
 
-    void setup();
-
 public:
     std::vector<Vertex> vertices;
     std::vector<GLuint> indices;
@@ -24,5 +22,6 @@ public:
     void setVertices(std::vector<Vertex> vertices);
     void setIndices(std::vector<GLuint> indices);
 
-    void draw(Shader &shader);
+    void draw(GLuint programID);
+    void setup();
 };

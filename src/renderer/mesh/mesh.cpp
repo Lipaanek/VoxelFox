@@ -32,6 +32,10 @@ void Mesh::setup() {
     glEnableVertexAttribArray(0);	
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
 
+    // Vertex color
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, color));
+
     glBindVertexArray(0);
 }
 
@@ -40,9 +44,13 @@ void Mesh::setVertices(std::vector<Vertex> vertices) {
 }
 
 void Mesh::setIndices(std::vector<GLuint> indices) {
-    this->vertices = vertices;
+    this->indices = indices;
 }
 
-void Mesh::draw(Shader &shader) {
+void Mesh::draw(GLuint programID) {
+    glUseProgram(programID);
 
+    // draw mesh
+    glBindVertexArray(this->vao);
+    glDrawElements(GL_TRIANGLES, this->indices.size(), GL_UNSIGNED_INT, 0);
 }
