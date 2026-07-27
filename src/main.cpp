@@ -31,8 +31,10 @@ int main() {
         window.update();
         screenManager.update();
 
-        // Render
+        // Clear screen from previous frame
         glClear(GL_COLOR_BUFFER_BIT);
+
+        // Render
         screenManager.render();
 
         window.present();
