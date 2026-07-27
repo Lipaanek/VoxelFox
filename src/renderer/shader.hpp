@@ -20,7 +20,7 @@ class Shader {
 private:
     std::string path;
     ShaderType shaderType;
-    GLuint id;
+    GLuint id = 0;
 
 public:
     Shader(const std::string& path, ShaderType shaderType);
@@ -30,4 +30,8 @@ public:
     }
 
     unsigned int compile();
+
+    [[nodiscard]] GLuint getID() const {
+        return id;
+    }
 };

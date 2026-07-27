@@ -12,14 +12,14 @@ Shader::Shader(const std::string& path, ShaderType shaderType)
 GLuint Shader::compile() {
     std::string src = Util::File::read(this->path);
     if (src.empty()) {
-        printf("Shader source is empty\n");
+        Util::Log::error("Source code of shader is empty.");
         return 0;
     }
 
     // Create shader object
     GLuint shader = glCreateShader(toGL(this->shaderType));
     if (shader == 0) {
-        printf("Failed to create shader\n");
+        Util::Log::error("Failed to create shader.");
         return 0;
     }
 
@@ -36,7 +36,7 @@ GLuint Shader::compile() {
         // Log error
         char infoLog[512];
         glGetShaderInfoLog(shader, 512, nullptr, infoLog);
-        printf("Shader compile error: %s \n", infoLog);
+        Util::Log::error(std::string("Shader compile error: ") + infoLog);
 
         // Need to delete shader to avoid leak
         glDeleteShader(shader);
