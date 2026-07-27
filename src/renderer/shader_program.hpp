@@ -1,7 +1,6 @@
 #pragma once
 
 #include "shader.hpp"
-#include <glad/glad.h>
 #include <vector>
 
 class ShaderProgram {

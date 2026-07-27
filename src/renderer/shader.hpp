@@ -29,7 +29,7 @@ public:
             glDeleteShader(id);
     }
 
-    unsigned int compile();
+    GLuint compile();
 
     [[nodiscard]] GLuint getID() const {
         return id;

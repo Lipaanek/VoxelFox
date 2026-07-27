@@ -14,6 +14,9 @@ Window::Window(const char* title, int width, int height) {
     }
 
     glfwMakeContextCurrent(handle);
+
+    if (!gladLoadGL())
+        throw std::runtime_error("Failed to init glad");
 }
 
 Window::~Window() {
