@@ -17,4 +17,8 @@ public:
 
     void attach(const Shader& shader);
     void link();
+
+    [[nodiscard]] GLuint getID() const {
+        return id;
+    }
 };

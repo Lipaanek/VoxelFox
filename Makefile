@@ -25,6 +25,8 @@ SRCS = \
 	src/core/window.cpp \
 	src/renderer/shader.cpp \
 	src/renderer/shader_program.cpp \
+	src/renderer/mesh/vertex_array.cpp \
+	src/renderer/mesh/vertex_buffer.cpp \
 	src/util/util.cpp \
 
 OBJS = $(SRCS:src/%.cpp=$(OBJDIR)/%.o)

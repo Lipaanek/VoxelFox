@@ -8,12 +8,11 @@
 int main() {
     Window window("VoxelFox", 800, 600);
 
+    // Make screen manager
     ScreenManager screenManager(window);
 
-    screenManager.setScreen(std::make_unique<BasicScreen>());
-
+    // Shader program and shader creation
     ShaderProgram program;
-
     Shader frag("assets/shaders/test_frag.glsl", ShaderType::Fragment);
     Shader vert("assets/shaders/test_vert.glsl", ShaderType::Vertex);
 
@@ -21,9 +20,12 @@ int main() {
     frag.compile();
     vert.compile();
 
+    // Attach and link programs
     program.attach(vert);
     program.attach(frag);
     program.link();
+
+    screenManager.setScreen(std::make_unique<BasicScreen>(program.getID()));
 
     while (!window.shouldClose()) {
         window.update();
