@@ -14,8 +14,8 @@ int main() {
 
     // Shader program and shader creation
     ShaderProgram program;
-    Shader frag("assets/shaders/test_frag.glsl", ShaderType::Fragment);
-    Shader vert("assets/shaders/test_vert.glsl", ShaderType::Vertex);
+    Shader frag("assets/shaders/3d_scene_frag.glsl", ShaderType::Fragment);
+    Shader vert("assets/shaders/3d_scene_vert.glsl", ShaderType::Vertex);
 
     // Need to compile the shaders before linking
     frag.compile();
