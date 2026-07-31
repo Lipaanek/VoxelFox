@@ -29,4 +29,4 @@ For further compilation details, go into [releases](https://github.com/Lipaanek/
 <img width="1920" height="1080" alt="Snímek obrazovky (462)" src="https://github.com/user-attachments/assets/aed881b0-52dd-42a1-bc1e-bb58d2c06ec8" />
 
 > [!NOTE]
-> The `make` build copies `glfw3.dll` and `libglfw3dll.a` into the build folder automatically. Current state of the project doesn't reflect the provided images
+> Current state of the project doesn't reflect the provided images
