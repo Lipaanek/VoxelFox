@@ -18,6 +18,11 @@ void Mesh::setup() {
     }
 }
 
+void Mesh::setData(const MeshData& data) {
+    this->vertices = data.vertices;
+    this->indices = data.indices;
+}
+
 void Mesh::setVertices(std::vector<Vertex> vertices) {
     this->vertices = vertices;
 }

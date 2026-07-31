@@ -13,6 +13,21 @@ Buffer::~Buffer() {
         glDeleteBuffers(1, &this->id);
 }
 
+Buffer::Buffer(Buffer&& other) noexcept : target(other.target), id(other.id) {
+    other.id = 0;
+}
+
+Buffer& Buffer::operator=(Buffer&& other) noexcept {
+    if (this != &other) {
+        if (id)
+            glDeleteBuffers(1, &this->id);
+        target = other.target;
+        id = other.id;
+        other.id = 0;
+    }
+    return *this;
+}
+
 void Buffer::bind() const {
     glBindBuffer(this->target, this->id);
 }

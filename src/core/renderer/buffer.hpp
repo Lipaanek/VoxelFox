@@ -14,6 +14,9 @@ public:
     Buffer(const Buffer&) = delete;
     Buffer& operator=(const Buffer&) = delete;
 
+    Buffer(Buffer&& other) noexcept;
+    Buffer& operator=(Buffer&& other) noexcept;
+
     void bind() const;
     void upload(const void* data, GLsizeiptr size, GLenum usage = GL_STATIC_DRAW) const;
 

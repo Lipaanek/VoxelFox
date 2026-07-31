@@ -4,10 +4,12 @@
 #include "../core/renderer/mesh/mesh.hpp"
 #include "../core/camera/camera.hpp"
 #include "../core/window/window.hpp"
+#include "../core/renderer/light.hpp"
 
 class BasicScreen : public Screen {
 private:
     ShaderProgram& program;
+    SceneLights lights;
     Window& window;
     Mesh mesh;
     Camera camera;

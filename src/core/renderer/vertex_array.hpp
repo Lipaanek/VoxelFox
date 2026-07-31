@@ -7,11 +7,14 @@ private:
     GLuint id = 0;
 
 public:
-    VertexArray();
+    VertexArray(); // glGenVertexArrays
     ~VertexArray();
 
     VertexArray(const VertexArray&) = delete;
     VertexArray& operator=(const VertexArray&) = delete;
+
+    VertexArray(VertexArray&& other) noexcept;
+    VertexArray& operator=(VertexArray&& other) noexcept;
 
     void bind() const;
     void unbind() const;

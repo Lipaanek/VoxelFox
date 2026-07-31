@@ -28,17 +28,20 @@ SRCS = \
 	src/core/window/window.cpp \
 	src/core/renderer/shader.cpp \
 	src/core/renderer/shader_program.cpp \
+	src/core/renderer/light.cpp \
 	src/core/renderer/buffer.cpp \
 	src/core/renderer/vertex_array.cpp \
 	src/core/renderer/mesh/mesh.cpp \
 	src/core/camera/camera.cpp \
 	src/core/util/util.cpp \
+	src/core/model_loading/obj_loader.cpp \
 
 OBJS = $(SRCS:src/%.cpp=$(OBJDIR)/%.o)
 
 TEST_SRCS = \
 	tests/test_util.cpp \
 	tests/test_camera.cpp \
+	tests/test_obj_loader.cpp \
 
 
 TEST_OBJS = $(TEST_SRCS:tests/%.cpp=$(OBJDIR)/%.o)

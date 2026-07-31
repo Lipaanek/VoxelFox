@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vertex.hpp"
+#include "mesh_data.hpp"
 #include "../buffer.hpp"
 #include "../vertex_array.hpp"
 #include <vector>
@@ -22,7 +23,9 @@ private:
 
     std::vector<VertexAttribute> layout = {
         { 0, 3, GL_FLOAT, offsetof(Vertex, position) },
-        { 1, 3, GL_FLOAT, offsetof(Vertex, color) },
+        { 1, 3, GL_FLOAT, offsetof(Vertex, normal) },
+        { 2, 2, GL_FLOAT, offsetof(Vertex, texCoord) },
+        { 3, 3, GL_FLOAT, offsetof(Vertex, color) },
     };
 
 public:
@@ -30,6 +33,7 @@ public:
     std::vector<GLuint> indices;
 
     Mesh() {}
+    void setData(const MeshData& data);
     void setVertices(std::vector<Vertex> vertices);
     void setIndices(std::vector<GLuint> indices);
 
