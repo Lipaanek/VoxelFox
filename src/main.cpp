@@ -31,7 +31,7 @@ int main() {
     program.attach(frag);
     program.link();
 
-    screenManager.setScreen(std::make_unique<BasicScreen>(program));
+    screenManager.setScreen(std::make_unique<BasicScreen>(program, window));
 
     while (!window.shouldClose()) {
         window.update();

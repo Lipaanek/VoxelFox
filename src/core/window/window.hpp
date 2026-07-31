@@ -16,4 +16,8 @@ public:
     bool shouldClose() const;
     void update();
     void present();
+
+    int getWidth() const;
+    int getHeight() const;
+    float getAspect() const;
 };

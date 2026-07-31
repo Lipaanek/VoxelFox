@@ -1,16 +1,20 @@
 #pragma once
 
 #include "../core/screen/screen.hpp"
-#include <glad/glad.h>
 #include "../core/renderer/mesh/mesh.hpp"
+#include "../core/camera/camera.hpp"
+#include "../core/window/window.hpp"
 
 class BasicScreen : public Screen {
 private:
     ShaderProgram& program;
+    Window& window;
     Mesh mesh;
+    Camera camera;
+    glm::mat4 model { 1.0f };
 
 public:
-    BasicScreen(ShaderProgram& program) : program(program) {}
+    BasicScreen(ShaderProgram& program, Window& window) : program(program), window(window) {}
 
     void render() override;
     void onReady() override;

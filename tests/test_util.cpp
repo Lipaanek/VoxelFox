@@ -1,5 +1,5 @@
 #include "catch_amalgamated.hpp"
-#include "util/util.hpp"
+#include "core/util/util.hpp"
 
 TEST_CASE("Util::File::read returns contents for an existing file") {
     REQUIRE_FALSE(Util::File::read("README.md").empty());

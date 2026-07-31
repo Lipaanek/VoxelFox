@@ -31,12 +31,14 @@ SRCS = \
 	src/core/renderer/buffer.cpp \
 	src/core/renderer/vertex_array.cpp \
 	src/core/renderer/mesh/mesh.cpp \
+	src/core/camera/camera.cpp \
 	src/core/util/util.cpp \
 
 OBJS = $(SRCS:src/%.cpp=$(OBJDIR)/%.o)
 
 TEST_SRCS = \
 	tests/test_util.cpp \
+	tests/test_camera.cpp \
 
 
 TEST_OBJS = $(TEST_SRCS:tests/%.cpp=$(OBJDIR)/%.o)
