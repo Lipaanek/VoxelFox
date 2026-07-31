@@ -6,11 +6,11 @@
 
 class BasicScreen : public Screen {
 private:
-    GLuint programID;
+    ShaderProgram& program;
     Mesh mesh;
 
 public:
-    BasicScreen(GLuint programID) : programID(programID) {}
+    BasicScreen(ShaderProgram& program) : program(program) {}
 
     void render() override;
     void onReady() override;

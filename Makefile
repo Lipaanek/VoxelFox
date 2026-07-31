@@ -1,7 +1,8 @@
 CXX        = x86_64-w64-mingw32-g++
 CC         = x86_64-w64-mingw32-gcc
-CXXFLAGS   = -std=c++20 -Wall -Wextra -Wpedantic
-CFLAGS     = -std=c11 -Wall -Wextra -Wpedantic
+CXXFLAGS   = -std=c++20 -Wall -Wextra -Wpedantic -MMD -MP
+CFLAGS     = -std=c11 -Wall -Wextra -Wpedantic -MMD -MP
+THIRDPARTY_CFLAGS = -std=c11 -MMD -MP
 INCLUDES   = -Ithirdparty -Ithirdparty/glad -Ithirdparty/GLFW -Ithirdparty/glm -Ithirdparty/tinyfiledialogs
 LDFLAGS    = -Lthirdparty
 LDLIBS     = -lglfw3dll -lopengl32 -lgdi32 -lole32 -lcomdlg32
@@ -27,6 +28,8 @@ SRCS = \
 	src/core/window.cpp \
 	src/renderer/shader.cpp \
 	src/renderer/shader_program.cpp \
+	src/renderer/buffer.cpp \
+	src/renderer/vertex_array.cpp \
 	src/renderer/mesh/mesh.cpp \
 	src/util/util.cpp \
 
@@ -53,6 +56,12 @@ endif
 DIRS = $(sort $(dir $(OBJS) $(TINYFD_OBJ)))
 $(shell $(call MKDIR,$(DIRS)))
 
+-include $(OBJS:.o=.d)
+-include $(TEST_OBJS:.o=.d)
+-include $(TINYFD_OBJ:.o=.d)
+-include $(GLAD_OBJ:.o=.d)
+-include $(CATCH2_OBJ:.o=.d)
+
 GLFW_COPIES = $(BUILDDIR)/glfw3.dll $(BUILDDIR)/libglfw3dll.a
 
 $(BUILDDIR)/glfw3.dll: thirdparty/glfw3.dll
@@ -74,10 +83,10 @@ $(OBJDIR)/%.o: src/%.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 $(TINYFD_OBJ): $(TINYFD_SRC)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(THIRDPARTY_CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(GLAD_OBJ): $(GLAD_SRC)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+	$(CC) $(THIRDPARTY_CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(CATCH2_OBJ): thirdparty/catch2/catch_amalgamated.cpp
 	$(CXX) -std=c++20 $(CATCH2_INCLUDES) -c $< -o $@

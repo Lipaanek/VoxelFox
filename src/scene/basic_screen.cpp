@@ -1,7 +1,7 @@
 #include "basic_screen.hpp"
 
 void BasicScreen::render() {
-    mesh.draw(this->programID);
+    mesh.draw(this->program);
 }
 
 void BasicScreen::onReady() {
