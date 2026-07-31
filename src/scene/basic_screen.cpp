@@ -7,9 +7,10 @@ void BasicScreen::render() {
 void BasicScreen::onReady() {
     // Basic triangle setup
     std::vector<Vertex> verts = {
-            {{ -0.5f, -0.5f, 0.0f }},
-            {{ 0.5f, -0.5f, 0.0f }},
-            {{ 0.0f, 0.5f, 0.0f }}
+            //  XYZ | RGB
+            {{ -0.5f, -0.5f, 0.0f}, {1.0f, 0.5f, 1.0f }},
+            {{ 0.5f, -0.5f, 0.0f}, {0.5f, 1.0f, 1.0f }},
+            {{ 0.0f, 0.5f, 0.0f}, {0.5f, 1.0f, 0.5f }}
         };
 
     std::vector<GLuint> idxs = { 0, 1, 2 };

@@ -1,18 +1,25 @@
 #include "mesh.hpp"
+#include "../../util/util.hpp"
 
 Mesh::~Mesh() {
-    if (vao) {
-        glDeleteVertexArrays(1, &vao);
-    }
-    if (vao) {
-        glDeleteBuffers(1, &vbo);
-    }
-    if (vao) {
-        glDeleteBuffers(1, &ebo);
-    }
+    if (vao) glDeleteVertexArrays(1, &vao);
+    if (vbo) glDeleteBuffers(1, &vbo);
+    if (ebo) glDeleteBuffers(1, &ebo);
 }
 
 void Mesh::setup() {
+    if (this->vertices.empty() || this->indices.empty()) {
+        Util::Log::error("Mesh::setup() called without vertices or indices");
+        return;
+    }
+
+    // Free previous buffers before regenerating
+    if (vao && vbo && ebo) {
+        glDeleteVertexArrays(1, &vao);
+        glDeleteBuffers(1, &vbo);
+        glDeleteBuffers(1, &ebo);
+    }
+
     // Generate all the buffers
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);

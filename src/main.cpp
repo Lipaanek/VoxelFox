@@ -4,6 +4,7 @@
 #include "scene/screen_manager.hpp"
 #include "scene/basic_screen.hpp"
 #include "renderer/shader_program.hpp"
+#include "util/util.hpp"
 
 int main() {
     Window window("VoxelFox", 800, 600);
@@ -20,6 +21,11 @@ int main() {
     frag.compile();
     vert.compile();
 
+    if (frag.getID() == 0 || vert.getID() == 0) {
+        Util::Log::error("Failed to compile shaders");
+        return 1;
+    }
+        
     // Attach and link programs
     program.attach(vert);
     program.attach(frag);
