@@ -2,7 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <stdexcept>
 
-Window::Window(const char* title, int width, int height) {
+Window::Window(const char* title, int width, int height) : width(width), height(height) {
     if (!glfwInit())
         throw std::runtime_error("Failed to initialize GLFW");
 
@@ -17,6 +17,8 @@ Window::Window(const char* title, int width, int height) {
 
     if (!gladLoadGL())
         throw std::runtime_error("Failed to init glad");
+
+    glEnable(GL_DEPTH_TEST);
 }
 
 Window::~Window() {

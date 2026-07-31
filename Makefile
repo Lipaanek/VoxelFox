@@ -24,14 +24,14 @@ RUNNER     ?=
 SRCS = \
 	src/main.cpp \
 	src/scene/basic_screen.cpp \
-	src/scene/screen_manager.cpp \
-	src/core/window.cpp \
-	src/renderer/shader.cpp \
-	src/renderer/shader_program.cpp \
-	src/renderer/buffer.cpp \
-	src/renderer/vertex_array.cpp \
-	src/renderer/mesh/mesh.cpp \
-	src/util/util.cpp \
+	src/core/screen/screen_manager.cpp \
+	src/core/window/window.cpp \
+	src/core/renderer/shader.cpp \
+	src/core/renderer/shader_program.cpp \
+	src/core/renderer/buffer.cpp \
+	src/core/renderer/vertex_array.cpp \
+	src/core/renderer/mesh/mesh.cpp \
+	src/core/util/util.cpp \
 
 OBJS = $(SRCS:src/%.cpp=$(OBJDIR)/%.o)
 

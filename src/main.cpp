@@ -1,10 +1,10 @@
 #include <memory>
 
-#include "core/window.hpp"
-#include "scene/screen_manager.hpp"
+#include "core/window/window.hpp"
+#include "core/screen/screen_manager.hpp"
 #include "scene/basic_screen.hpp"
-#include "renderer/shader_program.hpp"
-#include "util/util.hpp"
+#include "core/renderer/shader_program.hpp"
+#include "core/util/util.hpp"
 
 int main() {
     Window window("VoxelFox", 800, 600);
@@ -38,7 +38,7 @@ int main() {
         screenManager.update();
 
         // Clear screen from previous frame
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Render
         screenManager.render();

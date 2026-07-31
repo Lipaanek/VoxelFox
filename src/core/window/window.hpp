@@ -6,6 +6,8 @@
 class Window {
 private:
     GLFWwindow* handle = nullptr;
+    int width;
+    int height;
 
 public:
     Window(const char* title, int width, int height);

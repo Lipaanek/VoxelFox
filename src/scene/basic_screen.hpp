@@ -1,8 +1,8 @@
 #pragma once
 
-#include "screen.hpp"
+#include "../core/screen/screen.hpp"
 #include <glad/glad.h>
-#include "../renderer/mesh/mesh.hpp"
+#include "../core/renderer/mesh/mesh.hpp"
 
 class BasicScreen : public Screen {
 private:

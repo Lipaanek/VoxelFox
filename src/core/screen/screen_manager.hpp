@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../core/window.hpp"
+#include "../window/window.hpp"
 #include <GLFW/glfw3.h>
 #include <memory>
 #include "screen.hpp"
