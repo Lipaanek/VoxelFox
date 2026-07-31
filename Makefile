@@ -14,6 +14,8 @@ TINYFD_SRC = thirdparty/tinyfiledialogs/tinyfiledialogs.c
 TINYFD_OBJ = $(OBJDIR)/tinyfiledialogs.o
 GLAD_SRC  = thirdparty/glad/glad.c
 GLAD_OBJ  = $(OBJDIR)/glad.o
+CATCH2_INCLUDES = -Ithirdparty/catch2
+CATCH2_OBJ = $(OBJDIR)/catch_amalgamated.o
 
 RUNNER     ?=
 
@@ -30,24 +32,40 @@ SRCS = \
 
 OBJS = $(SRCS:src/%.cpp=$(OBJDIR)/%.o)
 
-TEST_SRCS =
+TEST_SRCS = \
+	tests/test_util.cpp \
+
 
 TEST_OBJS = $(TEST_SRCS:tests/%.cpp=$(OBJDIR)/%.o)
 
 ifeq ($(OS),Windows_NT)
   MKDIR = mkdir $(subst /,\,$(1)) 2>nul
   RMDIR = rmdir /s /q $(subst /,\,$(1)) 2>nul
+  COPY = copy /Y
+  WINPATH = $(subst /,\,$(1))
 else
   MKDIR = mkdir -p $(1)
   RMDIR = rm -rf $(1)
+  COPY = cp
+  WINPATH = $(1)
 endif
 
 DIRS = $(sort $(dir $(OBJS) $(TINYFD_OBJ)))
 $(shell $(call MKDIR,$(DIRS)))
 
+GLFW_COPIES = $(BUILDDIR)/glfw3.dll $(BUILDDIR)/libglfw3dll.a
+
+$(BUILDDIR)/glfw3.dll: thirdparty/glfw3.dll
+	-$(call MKDIR,$(BUILDDIR))
+	$(COPY) $(call WINPATH,$<) $(call WINPATH,$@)
+
+$(BUILDDIR)/libglfw3dll.a: thirdparty/libglfw3dll.a
+	-$(call MKDIR,$(BUILDDIR))
+	$(COPY) $(call WINPATH,$<) $(call WINPATH,$@)
+
 .PHONY: all clean help run test
 
-all: $(TARGET)
+all: $(TARGET) $(GLFW_COPIES)
 
 $(TARGET): $(OBJS) $(TINYFD_OBJ) $(GLAD_OBJ)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS) $(LDLIBS)
@@ -61,15 +79,20 @@ $(TINYFD_OBJ): $(TINYFD_SRC)
 $(GLAD_OBJ): $(GLAD_SRC)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-test: $(TESTTARGET)
+$(CATCH2_OBJ): thirdparty/catch2/catch_amalgamated.cpp
+	$(CXX) -std=c++20 $(CATCH2_INCLUDES) -c $< -o $@
 
-$(TESTTARGET): $(TEST_OBJS) $(filter-out %/main.o,$(OBJS)) $(TINYFD_OBJ) $(GLAD_OBJ)
+test: $(TESTTARGET) $(GLFW_COPIES)
+	@echo "=== Running tests ==="
+	$(RUNNER) $(TESTTARGET)
+
+$(TESTTARGET): $(TEST_OBJS) $(CATCH2_OBJ) $(filter-out %/main.o,$(OBJS)) $(TINYFD_OBJ) $(GLAD_OBJ)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS) $(LDLIBS)
 
 $(OBJDIR)/%.o: tests/%.cpp
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(CATCH2_INCLUDES) -Isrc -c $< -o $@
 
-run: $(TARGET)
+run: $(TARGET) $(GLFW_COPIES)
 	$(RUNNER) $(TARGET)
 
 clean:
