@@ -1,4 +1,5 @@
 #include <memory>
+#include <cmath>
 
 #include "core/window/window.hpp"
 #include "core/screen/screen_manager.hpp"
@@ -30,6 +31,45 @@ int main() {
     program.attach(vert);
     program.attach(frag);
     program.link();
+
+    Shader comp("assets/shaders/square.comp", ShaderType::Compute);
+    comp.compile();
+
+    ShaderProgram numSquareProg;
+    numSquareProg.attach(comp);
+    numSquareProg.link();
+
+    constexpr int COUNT = 1'000'000;
+    std::vector<float> numbers(COUNT);
+    for (int i = 0; i < COUNT; i++)
+        numbers[i] = static_cast<float>(i + 1);
+
+    // Input buffer, numbers go inside the comp shader
+    Buffer inBuf(GL_SHADER_STORAGE_BUFFER);
+    inBuf.upload(numbers.data(), COUNT * sizeof(float), GL_DYNAMIC_COPY);
+
+    Buffer outBuf(GL_SHADER_STORAGE_BUFFER);
+    outBuf.upload(nullptr, COUNT * sizeof(float), GL_DYNAMIC_READ); // nullptr - alloc, no data
+
+    numSquareProg.setUniform("count", COUNT);
+    numSquareProg.setStorageBuffer(0, inBuf);  // bind 0 -> input
+    numSquareProg.setStorageBuffer(1, outBuf); // bind 1 -> output
+
+    constexpr int LOCAL = 64; // size of threads, matches local_size_x
+    numSquareProg.dispatch((COUNT + LOCAL - 1) / LOCAL, 1, 1); // ceil div
+
+    std::vector<float> squaredNums;
+    outBuf.read(squaredNums);
+
+    if (squaredNums.size() == COUNT) {
+        Util::Log::log("All numbers are squared");
+    }
+
+    for (float square : squaredNums) {
+        if (std::fmod(square, 10000000.0f) == 0.0f) {
+            Util::Log::log(std::to_string(square));
+        }
+    }
 
     screenManager.setScreen(std::make_unique<BasicScreen>(program, window));
 

@@ -38,6 +38,12 @@ void Buffer::upload(const void* data, GLsizeiptr size, GLenum usage) const {
     glBufferData(this->target, size, data, usage);
 }
 
+void Buffer::download(void* out, GLsizeiptr size) const {
+    this->bind();
+
+    glGetBufferSubData(this->target, 0, size, out);
+}
+
 GLuint Buffer::getID() const {
     return this->id;
 }

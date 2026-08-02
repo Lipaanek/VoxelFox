@@ -53,6 +53,16 @@ void ShaderProgram::use() const {
         glUseProgram(id);
 }
 
+void ShaderProgram::setStorageBuffer(unsigned int binding, const Buffer& buffer) {
+    use();
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding, buffer.getID());
+}
+
+void ShaderProgram::dispatch(unsigned int x, unsigned int y, unsigned int z) {
+    use();
+    glDispatchCompute(x, y, z);
+}
+
 GLint ShaderProgram::getUniformLocation(const std::string& name) {
     auto it = this->uniformLocations.find(name);
     if (it != this->uniformLocations.end())

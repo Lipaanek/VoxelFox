@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shader.hpp"
+#include "buffer.hpp"
 #include <glm/glm.hpp>
 #include <string>
 #include <unordered_map>
@@ -27,6 +28,9 @@ public:
     void attach(const Shader& shader);
     void link();
     void use() const;
+
+    void setStorageBuffer(unsigned int binding, const Buffer& buffer);
+    void dispatch(unsigned int x, unsigned int y = 1, unsigned int z = 1);
 
     [[nodiscard]] GLuint getID() const {
         return id;
