@@ -9,8 +9,8 @@ void BasicScreen::render() {
 
     // Per-object transform: animate a translation on the second voxel.
     // Baking alone can't move an object without rebuilding its vertices.
-    meshManager.setTransform(this->voxel2UID,
-        glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, std::sin(time), 0.0f)));
+    /* meshManager.setTransform(this->voxel2UID,
+        glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, std::sin(time), 0.0f))); */
 
     // View/projection and lighting setup
     this->program.setUniform("u_view", this->camera.getViewMatrix());
@@ -40,7 +40,7 @@ void BasicScreen::onReady() {
 
     meshManager.add(voxel1.buildMeshData());
 
-    Voxel voxel2 { { 0.0f, 0.0f, 0.0f }, 0.5f, { 1.0f, 1.0f, 1.0f } };
+    Voxel voxel2 { { 0.0f, -7.0f, -5.0f }, 10.0f, { 1.0f, 1.0f, 1.0f } };
 
     this->voxel2UID = meshManager.add(voxel2.buildMeshData());
 
@@ -55,13 +55,13 @@ void BasicScreen::onReady() {
     this->sunIndex = this->lights.addLight(sun);
 
     // * Point light example
-    /* Light point;
+    Light point;
     point.type = LightType::Point;
-    point.position = glm::vec3(0.0f, 0.0f, 4.0f);
+    point.position = glm::vec3(0.0f, 2.0f, 0.0f);
     point.color = glm::vec3(1.0f, 0.0f, 0.0f);
-    point.intensity = 2.0f;
-    point.attenuation = glm::vec3(0.5f, 0.1f, 0.2f); */
+    point.intensity = 10.0f;
+    point.attenuation = glm::vec3(1.0f, 0.0f, 0.1f);
 
     // Register light to the scene
-    //this->pointIndex = this->lights.addLight(point);
+    this->pointIndex = this->lights.addLight(point);
 }
