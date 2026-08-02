@@ -33,7 +33,8 @@ int main() {
     program.link();
 
     // Compute shader example block
-    {
+    /* {
+        // Load shader
         Shader comp("assets/shaders/square.comp", ShaderType::Compute);
         comp.compile();
 
@@ -41,6 +42,7 @@ int main() {
         numSquareProg.attach(comp);
         numSquareProg.link();
 
+        // Fill numbers array
         constexpr int COUNT = 1'000'000;
         std::vector<float> numbers(COUNT);
         for (int i = 0; i < COUNT; i++)
@@ -53,6 +55,7 @@ int main() {
         Buffer outBuf(GL_SHADER_STORAGE_BUFFER);
         outBuf.upload(nullptr, COUNT * sizeof(float), GL_DYNAMIC_READ); // nullptr - alloc, no data
 
+        // Set buffers
         numSquareProg.setUniform("count", COUNT);
         numSquareProg.setStorageBuffer(0, inBuf);  // bind 0 -> input
         numSquareProg.setStorageBuffer(1, outBuf); // bind 1 -> output
@@ -71,7 +74,7 @@ int main() {
                 Util::Log::log(std::to_string(square));
             }
         }
-    }
+    } */
 
     screenManager.setScreen(std::make_unique<BasicScreen>(program, window));
 

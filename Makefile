@@ -35,6 +35,7 @@ SRCS = \
 	src/core/camera/camera.cpp \
 	src/core/util/util.cpp \
 	src/core/model_loading/obj_loader.cpp \
+	src/nodes/voxel.cpp \
 
 OBJS = $(SRCS:src/%.cpp=$(OBJDIR)/%.o)
 
