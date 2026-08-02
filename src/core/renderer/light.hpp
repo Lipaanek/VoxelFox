@@ -22,7 +22,8 @@ public:
     SceneLights() {}
     ~SceneLights() = default;
 
-    void addLight(const Light& light);
+    size_t addLight(const Light& light);
     void clear();
     void uploadLights(ShaderProgram& program);
+    Light& getLight(size_t index);
 };

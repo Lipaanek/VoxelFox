@@ -32,6 +32,7 @@ SRCS = \
 	src/core/renderer/buffer.cpp \
 	src/core/renderer/vertex_array.cpp \
 	src/core/renderer/mesh/mesh.cpp \
+	src/core/renderer/mesh/scene_mesh_manager.cpp \
 	src/core/camera/camera.cpp \
 	src/core/util/util.cpp \
 	src/core/model_loading/obj_loader.cpp \

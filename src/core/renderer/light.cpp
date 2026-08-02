@@ -2,12 +2,13 @@
 #include <vector>
 #include "../util/util.hpp"
 
-void SceneLights::addLight(const Light& light) {
+size_t SceneLights::addLight(const Light& light) {
     if (this->sceneLights.size() >= kMaxLights) {
         Util::Log::error("SceneLights: maximum lights reached.");
-        return;
+        return this->sceneLights.size() - 1;
     }
     this->sceneLights.push_back(light);
+    return this->sceneLights.size() - 1;
 }
 
 void SceneLights::clear() {
@@ -36,4 +37,8 @@ void SceneLights::uploadLights(ShaderProgram& program) {
     program.setUniform("u_lightColors", colors);
     program.setUniform("u_lightAttenuations", attenuations);
     program.setUniform("u_lightIntensities", intensities);
+}
+
+Light& SceneLights::getLight(size_t index) {
+    return this->sceneLights.at(index);
 }
