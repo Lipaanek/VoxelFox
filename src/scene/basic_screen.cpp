@@ -28,7 +28,12 @@ void BasicScreen::onReady() {
     //);
 
     // * Single voxel example
-    Voxel voxel{ { 0.0f, 0.0f, 0.0f }, 0.5f, { 1.0f, 1.0f, 1.0f } };
+    Voxel voxel{ 
+        { 0.0f, 0.0f, 0.0f },   // XYZ
+          0.5f,                 // Size
+        { 1.0f, 1.0f, 1.0f }    // Color
+    };
+    
     MeshData meshData = voxel.buildMeshData();
 
     // * Point light example
