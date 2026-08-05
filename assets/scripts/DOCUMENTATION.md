@@ -17,6 +17,7 @@ end
 # Input functions
 - `Input.is_active(action_name)` checks if the action name is active
     Example:
+
     ```lua
     if Input.is_active("move_forward") then
         print("Pressed forward!")
@@ -24,6 +25,7 @@ end
     ```
 - `Input.is_pressed(action_name)` checks if the action name is being pressed
     Example:
+
     ```lua
     if Input.is_pressed("move_forward") then
         print("Moving forward!")
@@ -31,6 +33,7 @@ end
     ```
 - `Input.is_released(action_name)` checks if the action name is released
     Example:
+
     ```lua
     if Input.is_released("move_forward") then
         print("Not moving forward anymore!")
@@ -41,6 +44,7 @@ end
     - "look_x" and "look_y" are default mouse-axis actions
     - "zoom" is scroll
     Example:
+
     ```lua
     local dx = Input.axis("look_x")
     local dy = Input.axis("look_y")
@@ -58,6 +62,7 @@ end
     - true -> cursor captured, raw mouse movement (mouse-look mode)
     - false -> cursor visible and free (for example used for UI)
     Example:
+    
     ```lua
     -- Enter mouse-look mode
     Input.capture_mouse(true)
