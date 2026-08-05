@@ -17,7 +17,7 @@ void BasicScreen::render() {
     this->program.setUniform("u_projection", this->camera.getProjectionMatrix(this->window.getAspect()));
     this->program.setUniform("u_cameraPos", this->camera.getPosition());
 
-    this->lights.uploadLights(this->program);
+    this->lighting.upload(this->program);
 
     // Drawing
     meshManager.render(this->program);
@@ -55,16 +55,16 @@ void BasicScreen::onReady() {
     sun.energy = 1.0f;
 
     // Register light to the scene
-    this->sunIndex = this->lights.addLight(sun);
+    this->sunIndex = this->lighting.lights.addLight(sun);
 
     // * Point light example
-    /* Light point;
+    Light point;
     point.type = LightType::Point;
     point.position = glm::vec3(0.0f, 2.0f, 0.0f);
     point.color = glm::vec3(1.0f, 0.0f, 0.0f);
-    point.energy = 100.0f;
-    point.range = 3.0f; */
+    point.energy = 50.0f;
+    point.range = 3.0f;
 
     // Register light to the scene
-    //this->pointIndex = this->lights.addLight(point);
+    this->pointIndex = this->lighting.lights.addLight(point);
 }

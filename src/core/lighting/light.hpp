@@ -1,7 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
-#include "shader_program.hpp"
+#include "../renderer/shader_program.hpp"
 
 enum class LightType { Directional, Point };
 

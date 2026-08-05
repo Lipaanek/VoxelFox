@@ -21,6 +21,7 @@ private:
     Buffer vbo { GL_ARRAY_BUFFER }; // Vertex Buffer Object (describes how to organize data)
     Buffer ebo { GL_ELEMENT_ARRAY_BUFFER }; // Element Buffer Object
 
+    // Layout of how to upload the layout to the shader
     std::vector<VertexAttribute> layout = {
         { 0, 3, GL_FLOAT, offsetof(Vertex, position) },
         { 1, 3, GL_FLOAT, offsetof(Vertex, normal) },

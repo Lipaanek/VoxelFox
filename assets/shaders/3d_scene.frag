@@ -17,12 +17,9 @@ uniform float u_lightRanges[MAX_LIGHTS];
 
 uniform vec3 u_cameraPos;
 
-// Cheap bounced-light fake: upward faces pick up cool sky light,
-// downward faces fall to a warm-dark ground tone.
-const vec3 SKY_COLOR = vec3(0.30f, 0.35f, 0.45f);
-const vec3 GROUND_COLOR = vec3(0.08f, 0.08f, 0.10f);
-
-const float SHININESS = 32.0f;
+uniform float u_shininess;
+uniform vec3 u_skyColor;
+uniform vec3 u_groundColor;
 
 void main()
 {
@@ -58,11 +55,11 @@ void main()
 
         // Blinn-Phong specular highlight
         vec3 halfDir = normalize(lightDir + viewDir);
-        float spec = pow(max(dot(normal, halfDir), 0.0), SHININESS);
+        float spec = pow(max(dot(normal, halfDir), 0.0), u_shininess);
         specular += u_lightColors[i] * lightPower * spec;
     }
 
-    vec3 ambient = mix(GROUND_COLOR, SKY_COLOR, normal.y * 0.5f + 0.5f);
+    vec3 ambient = mix(u_groundColor, u_skyColor, normal.y * 0.5f + 0.5f);
 
     vec3 color = vColor * (ambient + diffuse + specular);
 

@@ -12,6 +12,7 @@ void Mesh::setup() {
     this->vbo.upload(this->vertices.data(), this->vertices.size() * sizeof(Vertex));
     this->ebo.upload(this->indices.data(), this->indices.size() * sizeof(GLuint));
 
+    // Upload the vertex attributes based on the layout
     for (const VertexAttribute& a : this->layout) {
         glEnableVertexAttribArray(a.location);
         glVertexAttribPointer(a.location, a.size, a.type, GL_FALSE, sizeof(Vertex), (void*)a.offset);

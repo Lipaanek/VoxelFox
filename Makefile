@@ -28,13 +28,14 @@ SRCS = \
 	src/core/window/window.cpp \
 	src/core/renderer/shader.cpp \
 	src/core/renderer/shader_program.cpp \
-	src/core/renderer/light.cpp \
 	src/core/renderer/buffer.cpp \
 	src/core/renderer/vertex_array.cpp \
 	src/core/renderer/mesh/mesh.cpp \
 	src/core/renderer/mesh/scene_mesh_manager.cpp \
 	src/core/camera/camera.cpp \
 	src/core/util/util.cpp \
+	src/core/lighting/light.cpp \
+	src/core/lighting/lighting.cpp \
 	src/core/model_loading/obj_loader.cpp \
 	src/nodes/voxel.cpp \
 
