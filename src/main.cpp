@@ -90,7 +90,7 @@ int main() {
     screenManager.setScreen(std::make_unique<BasicScreen>(program, window));
 
     // Runs on_ready function
-    lua.runOnready();
+    lua.runOnReady();
 
     double lastTime = glfwGetTime();
     while (!window.shouldClose()) {
