@@ -12,8 +12,8 @@ uniform int u_lightTypes[MAX_LIGHTS];
 uniform vec3 u_lightPositions[MAX_LIGHTS];
 uniform vec3 u_lightDirections[MAX_LIGHTS];
 uniform vec3 u_lightColors[MAX_LIGHTS];
-uniform float u_lightIntensities[MAX_LIGHTS];
-uniform vec3 u_lightAttenuations[MAX_LIGHTS];
+uniform float u_lightEnergy[MAX_LIGHTS];
+uniform float u_lightRanges[MAX_LIGHTS];
 
 uniform vec3 u_cameraPos;
 
@@ -34,29 +34,32 @@ void main()
 
     for (int i = 0; i < u_lightCount; i++) {
         vec3 lightDir;
-        float attenuation = 1.0;
+        float lightPower;
 
         if (u_lightTypes[i] == 0) {
             lightDir = normalize(-u_lightDirections[i]); // directional light
+            lightPower = u_lightEnergy[i];
         } else {
             vec3 toLight = u_lightPositions[i] - vWorldPos;
             float dist = length(toLight);
-            lightDir = normalize(toLight);
+            lightDir = toLight / dist;
 
-            attenuation = 1.0 / (
-                    u_lightAttenuations[i].x
-                +   u_lightAttenuations[i].y * dist
-                +   u_lightAttenuations[i].z * dist * dist
-            );
+            // Inverse-square falloff, clamped near the light
+            lightPower = u_lightEnergy[i] / max(dist * dist, 0.01);
+
+            // Smooth range cutoff: 1 at d=0, 0 at d=range
+            float falloff = max(1.0 - pow(dist / u_lightRanges[i], 4.0), 0.0);
+            falloff *= falloff;
+            lightPower *= falloff;
         }
 
         float nDotL = max(dot(normal, lightDir), 0.0);
-        diffuse += u_lightColors[i] * u_lightIntensities[i] * nDotL * attenuation;
+        diffuse += u_lightColors[i] * lightPower * nDotL;
 
         // Blinn-Phong specular highlight
         vec3 halfDir = normalize(lightDir + viewDir);
         float spec = pow(max(dot(normal, halfDir), 0.0), SHININESS);
-        specular += u_lightColors[i] * u_lightIntensities[i] * spec * attenuation;
+        specular += u_lightColors[i] * lightPower * spec;
     }
 
     vec3 ambient = mix(GROUND_COLOR, SKY_COLOR, normal.y * 0.5f + 0.5f);

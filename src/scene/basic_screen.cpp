@@ -25,43 +25,46 @@ void BasicScreen::render() {
 
 void BasicScreen::onReady() {
     // * Object loading example
-    //ObjLoader loader;
-    //MeshData meshData = loader.Load(
-    //    "C:\\Users\\lipov\\Downloads\\nl9ixa6iwyrk-WoodenLarry\\WoodenLarry.obj",
-    //    "C:\\Users\\lipov\\Downloads\\nl9ixa6iwyrk-WoodenLarry\\WoodenLarry.mtl"
-    //);
+    ObjLoader loader;
+    MeshData meshData = loader.Load(
+        "C:\\Users\\lipov\\Downloads\\nl9ixa6iwyrk-WoodenLarry\\WoodenLarry.obj",
+        "C:\\Users\\lipov\\Downloads\\nl9ixa6iwyrk-WoodenLarry\\WoodenLarry.mtl"
+    );
 
     // * Single voxel example
-    Voxel voxel1 { 
+    /* Voxel voxel1 { 
         { 2.0f, 0.0f, 0.0f },   // XYZ
           0.5f,                 // Size
         { 1.0f, 1.0f, 1.0f }    // Color
-    };
+    }; */
 
-    meshManager.add(voxel1.buildMeshData());
+    //meshManager.add(voxel1.buildMeshData());
 
-    Voxel voxel2 { { 0.0f, -7.0f, -5.0f }, 10.0f, { 1.0f, 1.0f, 1.0f } };
+    //Voxel voxel2 { { 0.0f, -7.0f, -5.0f }, 10.0f, { 1.0f, 1.0f, 1.0f } };
 
-    this->voxel2UID = meshManager.add(voxel2.buildMeshData());
+    //this->voxel2UID = meshManager.add(voxel2.buildMeshData());
+
+    this->voxel2UID = meshManager.add(meshData, 
+        glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.75f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.3f)));
 
     // * Directional sun example
     Light sun;
     sun.type = LightType::Directional;
     sun.direction = glm::normalize(glm::vec3(-0.3f, -1.0f, -0.5f));
     sun.color = glm::vec3(1.0f, 1.0f, 1.0f);
-    sun.intensity = 1.0f;
+    sun.energy = 1.0f;
 
     // Register light to the scene
     this->sunIndex = this->lights.addLight(sun);
 
     // * Point light example
-    Light point;
+    /* Light point;
     point.type = LightType::Point;
     point.position = glm::vec3(0.0f, 2.0f, 0.0f);
     point.color = glm::vec3(1.0f, 0.0f, 0.0f);
-    point.intensity = 10.0f;
-    point.attenuation = glm::vec3(1.0f, 0.0f, 0.1f);
+    point.energy = 100.0f;
+    point.range = 3.0f; */
 
     // Register light to the scene
-    this->pointIndex = this->lights.addLight(point);
+    //this->pointIndex = this->lights.addLight(point);
 }
