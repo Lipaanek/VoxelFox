@@ -3,7 +3,7 @@ CC         = x86_64-w64-mingw32-gcc
 CXXFLAGS   = -std=c++20 -Wall -Wextra -Wpedantic -MMD -MP
 CFLAGS     = -std=c11 -Wall -Wextra -Wpedantic -MMD -MP
 THIRDPARTY_CFLAGS = -std=c11 -MMD -MP
-INCLUDES   = -Ithirdparty -Ithirdparty/glad -Ithirdparty/GLFW -Ithirdparty/glm -Ithirdparty/tinyfiledialogs
+INCLUDES   = -Ithirdparty -Ithirdparty/glad -Ithirdparty/GLFW -Ithirdparty/glm -Ithirdparty/tinyfiledialogs -Ithirdparty/lua
 LDFLAGS    = -Lthirdparty
 LDLIBS     = -lglfw3dll -lopengl32 -lgdi32 -lole32 -lcomdlg32
 
@@ -15,6 +15,8 @@ TINYFD_SRC = thirdparty/tinyfiledialogs/tinyfiledialogs.c
 TINYFD_OBJ = $(OBJDIR)/tinyfiledialogs.o
 GLAD_SRC  = thirdparty/glad/glad.c
 GLAD_OBJ  = $(OBJDIR)/glad.o
+LUA_SRCS = $(wildcard thirdparty/lua/*.c)
+LUA_OBJS = $(LUA_SRCS:thirdparty/lua/%.c=$(OBJDIR)/lua/%.o)
 CATCH2_INCLUDES = -Ithirdparty/catch2
 CATCH2_OBJ = $(OBJDIR)/catch_amalgamated.o
 
@@ -33,6 +35,10 @@ SRCS = \
 	src/core/renderer/mesh/mesh.cpp \
 	src/core/renderer/mesh/scene_mesh_manager.cpp \
 	src/core/camera/camera.cpp \
+	src/core/input/action_map.cpp \
+	src/core/input/input_system.cpp \
+	src/core/scripting/lua_engine.cpp \
+	src/core/scripting/lua_input_bindings.cpp \
 	src/core/util/util.cpp \
 	src/core/lighting/light.cpp \
 	src/core/lighting/lighting.cpp \
@@ -45,6 +51,7 @@ TEST_SRCS = \
 	tests/test_util.cpp \
 	tests/test_camera.cpp \
 	tests/test_obj_loader.cpp \
+	tests/test_action_map.cpp \
 
 
 TEST_OBJS = $(TEST_SRCS:tests/%.cpp=$(OBJDIR)/%.o)
@@ -61,13 +68,14 @@ else
   WINPATH = $(1)
 endif
 
-DIRS = $(sort $(dir $(OBJS) $(TINYFD_OBJ)))
+DIRS = $(sort $(dir $(OBJS) $(TINYFD_OBJ) $(LUA_OBJS)))
 $(shell $(call MKDIR,$(DIRS)))
 
 -include $(OBJS:.o=.d)
 -include $(TEST_OBJS:.o=.d)
 -include $(TINYFD_OBJ:.o=.d)
 -include $(GLAD_OBJ:.o=.d)
+-include $(LUA_OBJS:.o=.d)
 -include $(CATCH2_OBJ:.o=.d)
 
 GLFW_COPIES = $(BUILDDIR)/glfw3.dll $(BUILDDIR)/libglfw3dll.a
@@ -84,7 +92,7 @@ $(BUILDDIR)/libglfw3dll.a: thirdparty/libglfw3dll.a
 
 all: $(TARGET) $(GLFW_COPIES)
 
-$(TARGET): $(OBJS) $(TINYFD_OBJ) $(GLAD_OBJ)
+$(TARGET): $(OBJS) $(TINYFD_OBJ) $(GLAD_OBJ) $(LUA_OBJS)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS) $(LDLIBS)
 
 $(OBJDIR)/%.o: src/%.cpp
@@ -96,6 +104,9 @@ $(TINYFD_OBJ): $(TINYFD_SRC)
 $(GLAD_OBJ): $(GLAD_SRC)
 	$(CC) $(THIRDPARTY_CFLAGS) $(INCLUDES) -c $< -o $@
 
+$(OBJDIR)/lua/%.o: thirdparty/lua/%.c
+	$(CC) $(THIRDPARTY_CFLAGS) $(INCLUDES) -c $< -o $@
+
 $(CATCH2_OBJ): thirdparty/catch2/catch_amalgamated.cpp
 	$(CXX) -std=c++20 $(CATCH2_INCLUDES) -c $< -o $@
 
@@ -103,7 +114,7 @@ test: $(TESTTARGET) $(GLFW_COPIES)
 	@echo "=== Running tests ==="
 	$(RUNNER) $(TESTTARGET)
 
-$(TESTTARGET): $(TEST_OBJS) $(CATCH2_OBJ) $(filter-out %/main.o,$(OBJS)) $(TINYFD_OBJ) $(GLAD_OBJ)
+$(TESTTARGET): $(TEST_OBJS) $(CATCH2_OBJ) $(filter-out %/main.o,$(OBJS)) $(TINYFD_OBJ) $(GLAD_OBJ) $(LUA_OBJS)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS) $(LDLIBS)
 
 $(OBJDIR)/%.o: tests/%.cpp

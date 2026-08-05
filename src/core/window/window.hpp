@@ -17,6 +17,7 @@ public:
     void update();
     void present();
 
+    GLFWwindow* getHandle() const;
     int getWidth() const;
     int getHeight() const;
     float getAspect() const;

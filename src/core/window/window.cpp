@@ -46,6 +46,10 @@ bool Window::shouldClose() const {
     return glfwWindowShouldClose(handle);
 }
 
+GLFWwindow* Window::getHandle() const {
+    return this->handle;
+}
+
 int Window::getWidth() const {
     return this->width;
 }

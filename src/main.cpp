@@ -6,9 +6,20 @@
 #include "scene/basic_screen.hpp"
 #include "core/renderer/shader_program.hpp"
 #include "core/util/util.hpp"
+#include "core/input/input_system.hpp"
+#include "core/scripting/lua_engine.hpp"
+#include "core/scripting/lua_input_bindings.hpp"
 
 int main() {
     Window window("VoxelFox", 800, 600);
+
+    // Input system and Lua link
+    InputSystem input(window.getHandle());
+    input.setDefaultBindings();
+
+    LuaEngine lua;
+    LuaInputBindings::registerInput(lua.state(), &input);
+    lua.loadScript("assets/scripts/test_input.lua");
 
     // Make screen manager
     ScreenManager screenManager(window);
@@ -78,8 +89,19 @@ int main() {
 
     screenManager.setScreen(std::make_unique<BasicScreen>(program, window));
 
+    // Runs on_ready function
+    lua.runOnready();
+
+    double lastTime = glfwGetTime();
     while (!window.shouldClose()) {
+        input.beginInput();
         window.update();
+
+        double now = glfwGetTime();
+        float dt = static_cast<float>(now - lastTime);
+        lastTime = now;
+
+        lua.runUpdate(dt);
         screenManager.update();
 
         // Clear screen from previous frame
