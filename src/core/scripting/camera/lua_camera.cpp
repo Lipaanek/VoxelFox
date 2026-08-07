@@ -2,6 +2,8 @@
 
 #include <lua.hpp>
 
+#include "../vector/lua_vector3.hpp"
+
 namespace {
 
 constexpr const char* CAMERA_REGISTRY_KEY = "voxelfox_camera";
@@ -17,12 +19,17 @@ Camera* getCamera(lua_State* L) {
 }
 
 int cameraSetPosition(lua_State* L) {
-    LuaCamera cam(getCamera(L));
+    luaL_checktype(L, 1, LUA_TTABLE);
+    lua_getfield(L, 1, "x");
+    lua_getfield(L, 1, "y");
+    lua_getfield(L, 1, "z");
     glm::vec3 pos {
-        static_cast<float>(luaL_checknumber(L, 1)),
-        static_cast<float>(luaL_checknumber(L, 2)),
-        static_cast<float>(luaL_checknumber(L, 3))
+        static_cast<float>(luaL_checknumber(L, -3)),
+        static_cast<float>(luaL_checknumber(L, -2)),
+        static_cast<float>(luaL_checknumber(L, -1))
     };
+    lua_pop(L, 3);
+    LuaCamera cam(getCamera(L));
     cam.setPosition(pos);
     return 0;
 }
@@ -30,10 +37,8 @@ int cameraSetPosition(lua_State* L) {
 int cameraGetPosition(lua_State* L) {
     LuaCamera cam(getCamera(L));
     glm::vec3 pos = cam.getPosition();
-    lua_pushnumber(L, pos.x);
-    lua_pushnumber(L, pos.y);
-    lua_pushnumber(L, pos.z);
-    return 3;
+    LuaVector3Bindings::pushVector3(L, pos.x, pos.y, pos.z);
+    return 1;
 }
 
 int cameraSetYaw(lua_State* L) {

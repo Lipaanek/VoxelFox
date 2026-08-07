@@ -6,15 +6,26 @@ function on_ready() end
 ---@param dt number
 function update(dt) end
 
----@class Camera
-Camera = {}
+---@class Vector3
+---@field x number
+---@field y number
+---@field z number
+Vector3 = {}
 
+---@constructor
 ---@param x number
 ---@param y number
 ---@param z number
-function Camera.set_position(x, y, z) end
+---@return Vector3
+function Vector3.new(x, y, z) end
 
----@return number, number, number
+---@class Camera
+Camera = {}
+
+---@param pos Vector3
+function Camera.set_position(pos) end
+
+---@return Vector3
 function Camera.get_position() end
 
 ---@param yaw number
