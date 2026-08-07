@@ -38,6 +38,7 @@ SRCS = \
 	src/core/input/action_map.cpp \
 	src/core/input/input_system.cpp \
 	src/core/scripting/lua_engine.cpp \
+	src/core/scripting/lua_flags.cpp \
 	src/core/scripting/lua_input_bindings.cpp \
 	src/core/util/util.cpp \
 	src/core/lighting/light.cpp \

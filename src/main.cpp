@@ -19,7 +19,7 @@ int main() {
 
     LuaEngine lua;
     LuaInputBindings::registerInput(lua.state(), &input);
-    lua.loadScript("assets/scripts/test_input.lua");
+    bool success = lua.loadScript("assets/scripts/test_input.lua", { "editor" });
 
     // Make screen manager
     ScreenManager screenManager(window);

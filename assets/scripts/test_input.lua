@@ -1,4 +1,4 @@
--- Test file
+--!editor
 
 function on_ready()
     print("Ready function called!")
