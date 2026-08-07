@@ -53,6 +53,8 @@ void InputSystem::setDefaultBindings() {
     this->addBinding("move_down", { ActionType::Bool, InputSource::Key, GLFW_KEY_LEFT_SHIFT });
     this->addBinding("boost", { ActionType::Bool, InputSource::Key, GLFW_KEY_LEFT_CONTROL });
 
+    this->addBinding("rotate_focus", { ActionType::Bool, InputSource::MouseButton, 0, GLFW_MOUSE_BUTTON_RIGHT });
+
     this->addBinding("look_x", { ActionType::Axis, InputSource::MouseAxis, 0, 0, 0 });
     this->addBinding("look_y", { ActionType::Axis, InputSource::MouseAxis, 0, 0, 1 });
     this->addBinding("zoom", { ActionType::Axis, InputSource::ScrollAxis, 0, 0, 1 });
@@ -101,7 +103,7 @@ void InputSystem::keyCallback(GLFWwindow* window, int key, int, int action, int)
     }
 }
 
-void InputSystem::mouseButtonCallback(GLFWwindow* window, int button, int, int action) {
+void InputSystem::mouseButtonCallback(GLFWwindow* window, int button, int action, int) {
     InputSystem* self = static_cast<InputSystem*>(glfwGetWindowUserPointer(window));
     if (!self)
         return;

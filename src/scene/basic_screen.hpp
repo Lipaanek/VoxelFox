@@ -17,11 +17,11 @@ private:
     size_t sunIndex = 0;
     size_t pointIndex = 0;
     Window& window;
-    Camera camera;
+    Camera& camera;
     glm::mat4 model { 1.0f };
 
 public:
-    BasicScreen(ShaderProgram& program, Window& window) : program(program), window(window) {}
+    BasicScreen(ShaderProgram& program, Window& window, Camera& camera) : program(program), window(window), camera(camera) {}
 
     void render() override;
     void onReady() override;

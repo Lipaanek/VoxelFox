@@ -71,7 +71,47 @@ end
     Input.capture_mouse(false)
     ```
 
-All the default actions are the following: `look_x`, `look_y`, `zoom`, `move_forward`, `move_back`, `move_left`, `move_right`, `move_up`, `move_down` and `boost`
+All the default actions are the following: `look_x`, `look_y`, `zoom`, `rotate_focus`, `move_forward`, `move_back`, `move_left`, `move_right`, `move_up`, `move_down` and `boost`
 
 > [!NOTE]
 > `is_pressed` and `is_released` fire on the frame of the transition, not continuously
+
+# Camera functions
+The `Camera` table controls the editor camera, which is not the scene camera. It is only available to editor scripts.
+- `Camera.set_position(x, y, z)` moves the editor camera to the given position
+    Example:
+
+    ```lua
+    Camera.set_position(10.0, 5.0, 0.0)
+    ```
+- `Camera.get_position()` returns the current editor camera position
+    Example:
+
+    ```lua
+    local x, y, z = Camera.get_position()
+    print("Camera at: " .. x .. ", " .. y .. ", " .. z)
+    ```
+- `Camera.set_yaw(yaw)` sets the camera rotation around the vertical axis (degrees)
+- `Camera.get_yaw()` returns the current yaw (degrees)
+- `Camera.set_pitch(pitch)` sets the camera vertical rotation (degrees)
+- `Camera.get_pitch()` returns the current pitch (degrees)
+
+`rotate_focus` is the right mouse button. While held, the cursor is captured and you can
+rotate the camera by reading `look_x`/`look_y`. Example free-look:
+
+```lua
+function update(dt)
+    if Input.is_pressed("rotate_focus") then
+        Input.capture_mouse(true)
+    elseif Input.is_released("rotate_focus") then
+        Input.capture_mouse(false)
+    end
+
+    if Input.is_active("rotate_focus") then
+        local dx = Input.axis("look_x")
+        local dy = Input.axis("look_y")
+        Camera.set_yaw(Camera.get_yaw() + dx * 0.1)
+        Camera.set_pitch(math.max(-89.0, math.min(89.0, Camera.get_pitch() - dy * 0.1)))
+    end
+end
+```

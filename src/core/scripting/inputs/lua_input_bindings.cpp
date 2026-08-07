@@ -2,7 +2,7 @@
 
 #include <lua.hpp>
 
-#include "../input/input_system.hpp"
+#include "../../input/input_system.hpp"
 
 namespace {
 

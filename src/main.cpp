@@ -8,7 +8,8 @@
 #include "core/util/util.hpp"
 #include "core/input/input_system.hpp"
 #include "core/scripting/lua_engine.hpp"
-#include "core/scripting/lua_input_bindings.hpp"
+#include "core/scripting/inputs/lua_input_bindings.hpp"
+#include "core/scripting/camera/lua_camera.hpp"
 
 int main() {
     Window window("VoxelFox", 800, 600);
@@ -19,7 +20,13 @@ int main() {
 
     LuaEngine lua;
     LuaInputBindings::registerInput(lua.state(), &input);
-    auto success = lua.loadScript("assets/scripts/test_input.lua", { "editor" });
+
+    // Editor camera, movable from editor scripts
+    Camera editorCam;
+    LuaCameraBindings::registerCamera(lua.state(), &editorCam);
+
+    // Load cam input script
+    auto success = lua.loadScript("assets/scripts/camera_inputs.lua", { "editor" });
     Util::Log::scriptLoadLog(success);
 
     // Make screen manager
@@ -88,7 +95,7 @@ int main() {
         }
     } */
 
-    screenManager.setScreen(std::make_unique<BasicScreen>(program, window));
+    screenManager.setScreen(std::make_unique<BasicScreen>(program, window, editorCam));
 
     // Runs on_ready function
     lua.runOnReady();

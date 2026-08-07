@@ -19,6 +19,10 @@ struct LoadScriptResult {
 };
 
 class LuaEngine {
+private:
+    lua_State* L;
+    LuaFlags flags_;
+
 public:
     LuaEngine();
     ~LuaEngine();
@@ -33,8 +37,4 @@ public:
     void runUpdate(float dt);
     void runOnReady();
     bool hasFlag(const std::string& flag) const;
-
-private:
-    lua_State* L;
-    LuaFlags flags_;
 };
