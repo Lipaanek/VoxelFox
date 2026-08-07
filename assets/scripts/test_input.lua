@@ -1,5 +1,4 @@
 --!editor
-
 function on_ready()
     print("Ready function called!")
 end

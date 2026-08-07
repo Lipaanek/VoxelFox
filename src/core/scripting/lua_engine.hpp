@@ -7,6 +7,17 @@
 
 struct lua_State;
 
+enum class LoadResult {
+    Success,
+    Skipped,
+    Failed
+};
+
+struct LoadScriptResult {
+    LoadResult result;
+    std::string message;
+};
+
 class LuaEngine {
 public:
     LuaEngine();
@@ -16,7 +27,9 @@ public:
     LuaEngine& operator=(const LuaEngine&) = delete;
 
     lua_State* state();
-    bool loadScript(const char* path, const std::vector<std::string>& flags);
+
+    // Error message on fail, nullopt for success
+    LoadScriptResult loadScript(const char* path, const std::vector<std::string>& flags);
     void runUpdate(float dt);
     void runOnReady();
     bool hasFlag(const std::string& flag) const;
