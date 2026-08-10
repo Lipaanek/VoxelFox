@@ -3,7 +3,7 @@ local kSpeed = 4.0
 local kSens = 0.5
 
 function on_ready()
-    Camera.set_position(Vector3.new(0.0, 0.0, 3.0))
+    Camera.set_position(Vector3.new(0.0, 0.0, 10.0))
 end
 
 function update(dt)

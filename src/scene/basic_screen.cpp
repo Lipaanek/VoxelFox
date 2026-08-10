@@ -1,17 +1,13 @@
 #include "basic_screen.hpp"
 #include <glm/gtc/matrix_transform.hpp>
+#include <chrono>
 #include <cmath>
 #include "../core/model_loading/obj_loader.hpp"
+#include "../core/util/util.hpp"
 #include "../nodes/voxel.hpp"
+#include "../core/renderer/voxelizer.hpp"
 
 void BasicScreen::render() {
-    float time = static_cast<float>(glfwGetTime());
-
-    // Per-object transform: animate a translation on the second voxel.
-    // Baking alone can't move an object without rebuilding its vertices.
-    /* meshManager.setTransform(this->voxel2UID,
-        glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, std::sin(time), 0.0f))); */
-
     // View/projection and lighting setup
     this->program.setUniform("u_view", this->camera.getViewMatrix());
     this->program.setUniform("u_projection", this->camera.getProjectionMatrix(this->window.getAspect()));
@@ -25,27 +21,25 @@ void BasicScreen::render() {
 
 void BasicScreen::onReady() {
     // * Object loading example
+    // Object to voxelize
     ObjLoader loader;
     MeshData meshData = loader.Load(
-        "C:\\Users\\lipov\\Downloads\\nl9ixa6iwyrk-WoodenLarry\\WoodenLarry.obj",
-        "C:\\Users\\lipov\\Downloads\\nl9ixa6iwyrk-WoodenLarry\\WoodenLarry.mtl"
+        "C:\\Users\\lipov\\Downloads\\Studanka2\\Studanka2.obj",
+        "C:\\Users\\lipov\\Downloads\\Studanka2\\Studanka2.mtl"
     );
 
-    // * Single voxel example
-    /* Voxel voxel1 { 
-        { 2.0f, 0.0f, 0.0f },   // XYZ
-          0.5f,                 // Size
-        { 1.0f, 1.0f, 1.0f }    // Color
-    }; */
+    Voxelizer voxelizer;
+    auto voxels = voxelizer.voxelize(meshData, 0.1f);
 
-    //meshManager.add(voxel1.buildMeshData());
+    for (auto voxelGPU : voxels) {
+        Voxel voxel {
+            voxelGPU.position,
+            voxelGPU.size,
+            voxelGPU.color
+        };
 
-    //Voxel voxel2 { { 0.0f, -7.0f, -5.0f }, 10.0f, { 1.0f, 1.0f, 1.0f } };
-
-    //this->voxel2UID = meshManager.add(voxel2.buildMeshData());
-
-    this->voxel2UID = meshManager.add(meshData, 
-        glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -0.75f, 0.0f)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.3f)));
+        this->meshManager.add(voxel.buildMeshData());
+    }
 
     // * Directional sun example
     Light sun;
@@ -55,7 +49,7 @@ void BasicScreen::onReady() {
     sun.energy = 1.0f;
 
     // Register light to the scene
-    this->sunIndex = this->lighting.lights.addLight(sun);
+    this->lighting.lights.addLight(sun);
 
     // * Point light example
     Light point;
@@ -66,5 +60,5 @@ void BasicScreen::onReady() {
     point.range = 3.0f;
 
     // Register light to the scene
-    this->pointIndex = this->lighting.lights.addLight(point);
+    this->lighting.lights.addLight(point);
 }

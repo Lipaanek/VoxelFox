@@ -49,17 +49,18 @@ namespace Log {
 
 namespace String {
 
-    std::vector<std::string> split(std::string s, const std::string& delimiter) {
+    std::vector<std::string> split(const std::string& s, const std::string& delimiter) {
         std::vector<std::string> tokens;
-        size_t pos = 0;
-        std::string token;
-        while ((pos = s.find(delimiter)) != std::string::npos) {
-            token = s.substr(0, pos);
-            tokens.push_back(token);
-            s.erase(0, pos + delimiter.length());
+        size_t start = 0;
+        while (true) {
+            size_t pos = s.find(delimiter, start);
+            if (pos == std::string::npos) {
+                tokens.push_back(s.substr(start));
+                break;
+            }
+            tokens.push_back(s.substr(start, pos - start));
+            start = pos + delimiter.length();
         }
-        tokens.push_back(s);
-
         return tokens;
     }
 

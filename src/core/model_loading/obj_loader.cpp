@@ -2,13 +2,33 @@
 #include "../util/util.hpp"
 
 #include <glm/glm.hpp>
+#include <functional>
 #include <map>
 #include <optional>
-#include <tuple>
+#include <unordered_map>
 
 namespace {
 
     using MaterialColors = std::map<std::string, glm::vec3>;
+
+    // Unique (position, texCoord, normal) reference used to deduplicate
+    // corners shared between faces.
+    struct VertexKey {
+        int pos;
+        int uv;
+        int norm;
+
+        bool operator==(const VertexKey&) const = default;
+    };
+
+    struct VertexKeyHash {
+        size_t operator()(const VertexKey& key) const noexcept {
+            size_t h = std::hash<int>{}(key.pos);
+            h ^= std::hash<int>{}(key.uv) + 0x9e3779b9u + (h << 6) + (h >> 2);
+            h ^= std::hash<int>{}(key.norm) + 0x9e3779b9u + (h << 6) + (h >> 2);
+            return h;
+        }
+    };
 
     std::string directoryOf(const std::string& path) {
         size_t slash = path.find_last_of("/\\");
@@ -118,7 +138,7 @@ MeshData ObjLoader::Load(const std::string& filePath, const std::string& mtlPath
 
     // Maps a unique (position, texCoord, normal) tuple to a vertex index
     // so that corners shared between faces are not duplicated.
-    std::map<std::tuple<int, int, int>, GLuint> vertexLookup;
+    std::unordered_map<VertexKey, GLuint, VertexKeyHash> vertexLookup;
 
     for (const std::string& rawLine : Util::String::split(contents, "\n")) {
         std::vector<std::string> tokens = Util::String::splitWhitespace(rawLine);
@@ -188,7 +208,7 @@ MeshData ObjLoader::Load(const std::string& filePath, const std::string& mtlPath
                     auto uvIdx = resolveIndexChecked(cornerUv[c], texCoords.size());
                     auto normIdx = resolveIndexChecked(cornerNorm[c], normals.size());
 
-                    auto key = std::make_tuple(posIdx, uvIdx.value_or(-1), normIdx.value_or(-1));
+                    auto key = VertexKey{ posIdx, uvIdx.value_or(-1), normIdx.value_or(-1) };
                     auto it = vertexLookup.find(key);
                     if (it != vertexLookup.end()) {
                         data.indices.push_back(it->second);

@@ -22,6 +22,10 @@ CATCH2_OBJ = $(OBJDIR)/catch_amalgamated.o
 
 RUNNER     ?=
 
+# Default goal must be set before the first rule; -include of .d files
+# above would otherwise make an up-to-date .o file the default target.
+.DEFAULT_GOAL := all
+
 # --- Add new source files to SRCS below ---
 SRCS = \
 	src/main.cpp \
@@ -31,6 +35,7 @@ SRCS = \
 	src/core/renderer/shader.cpp \
 	src/core/renderer/shader_program.cpp \
 	src/core/renderer/buffer.cpp \
+	src/core/renderer/voxelizer.cpp \
 	src/core/renderer/vertex_array.cpp \
 	src/core/renderer/mesh/mesh.cpp \
 	src/core/renderer/mesh/scene_mesh_manager.cpp \

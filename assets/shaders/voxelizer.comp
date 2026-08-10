@@ -1,0 +1,164 @@
+#version 430
+
+layout(local_size_x = 256) in;
+
+struct VoxelData {
+    vec3 position;
+    float size;
+    vec3 color;
+    float padding;
+};
+
+struct TriData {
+    vec4 p0;
+    vec4 p1;
+    vec4 p2;
+    vec4 color;
+};
+
+layout(std430, binding = 0) buffer Voxels {
+    VoxelData voxels[];
+};
+
+layout(std430, binding = 1) readonly buffer Tris {
+    TriData tris[];
+};
+
+layout(std430, binding = 2) buffer Counter {
+    uint count;
+};
+
+layout(std430, binding = 3) buffer Occupied {
+    uint occupied[];
+};
+
+uniform vec3 gridOrigin;
+uniform vec3 gridDims;
+uniform float gridSize;
+uniform uint triCount;
+uniform uint cellLimit;
+
+bool planeBoxOverlap(vec3 normal, float vert, vec3 halfSize) {
+    vec3 vmin;
+    vec3 vmax;
+    for (int q = 0; q < 3; q++) {
+        if (normal[q] > 0.0) {
+            vmin[q] = -halfSize[q] - vert;
+            vmax[q] =  halfSize[q] - vert;
+        } else {
+            vmin[q] =  halfSize[q] - vert;
+            vmax[q] = -halfSize[q] - vert;
+        }
+    }
+    if (dot(normal, vmin) > 0.0) return false;
+    if (dot(normal, vmax) >= 0.0) return true;
+    return false;
+}
+
+bool testAxisX(float a, float b, vec3 va, vec3 vb, vec3 halfSize, float fa, float fb) {
+    const float pa = a * va.y - b * va.z;
+    const float pb = a * vb.y - b * vb.z;
+    const float mn = min(pa, pb);
+    const float mx = max(pa, pb);
+    const float rad = fa * halfSize.y + fb * halfSize.z;
+    return !(mn > rad || mx < -rad);
+}
+
+bool testAxisY(float a, float b, vec3 va, vec3 vb, vec3 halfSize, float fa, float fb) {
+    const float pa = -a * va.x + b * va.z;
+    const float pb = -a * vb.x + b * vb.z;
+    const float mn = min(pa, pb);
+    const float mx = max(pa, pb);
+    const float rad = fa * halfSize.x + fb * halfSize.z;
+    return !(mn > rad || mx < -rad);
+}
+
+bool testAxisZ(float a, float b, vec3 va, vec3 vb, vec3 halfSize, float fa, float fb) {
+    const float pa = a * va.x - b * va.y;
+    const float pb = a * vb.x - b * vb.y;
+    const float mn = min(pa, pb);
+    const float mx = max(pa, pb);
+    const float rad = fa * halfSize.x + fb * halfSize.y;
+    return !(mn > rad || mx < -rad);
+}
+
+bool triBoxOverlap(vec3 center, vec3 halfSize, vec3 v0, vec3 v1, vec3 v2) {
+    v0 -= center;
+    v1 -= center;
+    v2 -= center;
+
+    const vec3 e0 = v1 - v0;
+    const vec3 e1 = v2 - v1;
+    const vec3 e2 = v0 - v2;
+
+    float fex = abs(e0.x);
+    float fey = abs(e0.y);
+    float fez = abs(e0.z);
+    if (!testAxisX(e0.z, e0.y, v0, v2, halfSize, fez, fey)) return false;
+    if (!testAxisY(e0.z, e0.x, v0, v2, halfSize, fez, fex)) return false;
+    if (!testAxisZ(e0.y, e0.x, v1, v2, halfSize, fey, fex)) return false;
+
+    fex = abs(e1.x);
+    fey = abs(e1.y);
+    fez = abs(e1.z);
+    if (!testAxisX(e1.z, e1.y, v0, v1, halfSize, fez, fey)) return false;
+    if (!testAxisY(e1.z, e1.x, v0, v1, halfSize, fez, fex)) return false;
+    if (!testAxisZ(e1.y, e1.x, v0, v1, halfSize, fey, fex)) return false;
+
+    fex = abs(e2.x);
+    fey = abs(e2.y);
+    fez = abs(e2.z);
+    if (!testAxisX(e2.z, e2.y, v0, v2, halfSize, fez, fey)) return false;
+    if (!testAxisY(e2.z, e2.x, v0, v2, halfSize, fez, fex)) return false;
+    if (!testAxisZ(e2.y, e2.x, v1, v2, halfSize, fey, fex)) return false;
+
+    const vec3 normal = cross(e0, e1);
+    if (!planeBoxOverlap(normal, -dot(normal, v0), halfSize)) return false;
+
+    return true;
+}
+
+void main() {
+    const uvec3 dims = uvec3(gridDims);
+    const uint stride = gl_NumWorkGroups.x * gl_WorkGroupSize.x;
+    const vec3 halfSize = vec3(gridSize) * 0.5;
+    const vec3 gridMin = gridOrigin;
+    const vec3 gridMax = gridOrigin + vec3(dims) * gridSize;
+
+    for (uint t = gl_GlobalInvocationID.x; t < triCount; t += stride) {
+        const TriData tri = tris[t];
+        const vec3 v0 = tri.p0.xyz;
+        const vec3 v1 = tri.p1.xyz;
+        const vec3 v2 = tri.p2.xyz;
+
+        const vec3 normal = cross(v1 - v0, v2 - v0);
+        if (dot(normal, normal) < 1e-20) continue;
+
+        const vec3 bmin = clamp(min(min(v0, v1), v2), gridMin, gridMax);
+        const vec3 bmax = clamp(max(max(v0, v1), v2), gridMin, gridMax);
+
+        const ivec3 minCell = max(ivec3(0), ivec3(floor((bmin - gridOrigin) / gridSize)));
+        const ivec3 maxCell = min(ivec3(dims) - 1, ivec3(floor((bmax - gridOrigin) / gridSize)));
+
+        for (int z = minCell.z; z <= maxCell.z; z++) {
+            for (int y = minCell.y; y <= maxCell.y; y++) {
+                for (int x = minCell.x; x <= maxCell.x; x++) {
+                    const vec3 center = gridOrigin + (vec3(float(x), float(y), float(z)) + 0.5) * gridSize;
+                    if (!triBoxOverlap(center, halfSize, v0, v1, v2)) continue;
+
+                    const uint cellIdx = (uint(z) * dims.y + uint(y)) * dims.x + uint(x);
+                    if (cellIdx >= cellLimit) continue;
+                    if (atomicExchange(occupied[cellIdx], 1u) == 0u) {
+                        const uint outIdx = atomicAdd(count, 1u);
+                        if (outIdx < cellLimit) {
+                            voxels[outIdx].position = center;
+                            voxels[outIdx].size = gridSize;
+                            voxels[outIdx].color = tri.color.rgb;
+                            voxels[outIdx].padding = 0.0;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

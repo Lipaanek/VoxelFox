@@ -13,9 +13,6 @@ private:
     Lighting lighting;
     SceneMeshManager meshManager;
 
-    unsigned int voxel2UID = 0;
-    size_t sunIndex = 0;
-    size_t pointIndex = 0;
     Window& window;
     Camera& camera;
     glm::mat4 model { 1.0f };
