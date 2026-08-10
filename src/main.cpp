@@ -13,7 +13,7 @@
 #include "core/scripting/vector/lua_vector3.hpp"
 
 int main() {
-    Window window("VoxelFox", 800, 600);
+    Window window("VoxelFox", 1920, 1080);
 
     // Input system and Lua link
     InputSystem input(window.getHandle());

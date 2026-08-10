@@ -1,15 +1,21 @@
 #include "window.hpp"
 #include <GLFW/glfw3.h>
+#include <cstdio>
 #include <stdexcept>
 
 Window::Window(const char* title, int width, int height) : width(width), height(height) {
-    if (this->width <= 0)
-        this->width = 1;
-    if (this->height <= 0)
-        this->height = 1;
-
     if (!glfwInit())
         throw std::runtime_error("Failed to initialize GLFW");
+
+    if (this->width <= 0 || this->height <= 0) {
+        const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+        this->width = mode->width;
+        this->height = mode->height;
+    }
+
+    glfwSetErrorCallback([](int code, const char* desc) {
+        fprintf(stderr, "GLFW error %d: %s\n", code, desc);
+    });
 
     this->handle = glfwCreateWindow(width, height, title, nullptr, nullptr);
 
