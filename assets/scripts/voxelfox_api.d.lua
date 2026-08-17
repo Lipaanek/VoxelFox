@@ -1,6 +1,6 @@
 ---@meta
 ---Engine entry point, called once after the script is loaded
-function on_ready() end
+function ready() end
 
 ---Engine entry point, called every frame with delta time
 ---@param dt number

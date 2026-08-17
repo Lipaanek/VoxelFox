@@ -2,7 +2,7 @@
 local kSpeed = 4.0
 local kSens = 0.5
 
-function on_ready()
+function ready()
     Camera.set_position(Vector3.new(0.0, 0.0, 10.0))
 end
 

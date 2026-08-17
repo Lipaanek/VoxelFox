@@ -19,7 +19,7 @@ private:
     std::vector<Light> sceneLights;
     static constexpr int kMaxLights = 8;
 public:
-    SceneLights() {}
+    SceneLights() = default;
     ~SceneLights() = default;
 
     size_t addLight(const Light& light);

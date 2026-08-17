@@ -2,37 +2,29 @@
 #include <cmath>
 
 #include "core/window/window.hpp"
-#include "core/screen/screen_manager.hpp"
-#include "scene/basic_screen.hpp"
+#include "core/scene/scene_manager.hpp"
+#include "core/scene/editor.hpp"
+#include "scene/basic_scene.hpp"
 #include "core/renderer/shader_program.hpp"
 #include "core/util/util.hpp"
 #include "core/input/input_system.hpp"
+#include "core/model_loading/obj_loader.hpp"
 #include "core/scripting/lua_engine.hpp"
 #include "core/scripting/inputs/lua_input_bindings.hpp"
 #include "core/scripting/camera/lua_camera.hpp"
 #include "core/scripting/vector/lua_vector3.hpp"
+#include "nodes/mesh_instance_3d.hpp"
+#include "nodes/node3d.hpp"
 
 int main() {
     Window window("VoxelFox", 1920, 1080);
 
-    // Input system and Lua link
-    InputSystem input(window.getHandle());
-    input.setDefaultBindings();
+    MeshManager meshManager;
+    MeshRenderer meshRenderer(meshManager);
 
-    LuaEngine lua;
-    LuaInputBindings::registerInput(lua.state(), &input);
-    LuaVector3Bindings::registerVector3(lua.state());
-
-    // Editor camera, movable from editor scripts
-    Camera editorCam;
-    LuaCameraBindings::registerCamera(lua.state(), &editorCam);
-
-    // Load cam input script
-    auto success = lua.loadScript("assets/scripts/camera_inputs.lua", { "editor" });
-    Util::Log::scriptLoadLog(success);
-
-    // Make screen manager
-    ScreenManager screenManager(window);
+    // Make screen manager and editor (owns the camera)
+    SceneManager sceneManager(window, meshRenderer);
+    Editor editor(&sceneManager, window);
 
     // Shader program and shader creation
     ShaderProgram program;
@@ -97,10 +89,43 @@ int main() {
         }
     } */
 
-    screenManager.setScreen(std::make_unique<BasicScreen>(program, window, editorCam));
+    auto scene = std::make_unique<BasicScene>();
+
+    auto root = std::make_unique<Node3D>();
+    auto mesh = std::make_unique<MeshInstance3D>();
+
+    ObjLoader loader;
+    MeshData meshData = loader.Load(
+        R"(C:\Users\lipov\Downloads\Studanka2\Studanka2.obj)",
+        R"(C:\Users\lipov\Downloads\Studanka2\Studanka2.mtl)"
+    );
+
+    MeshID id = meshManager.add(meshData);
+
+    mesh->setMesh(id);
+    root->addChild(std::move(mesh).get());
+
+    scene->setRoot(std::move(root));
+
+    sceneManager.setScreen(std::move(scene));
+
+    // Input system and Lua link
+    InputSystem input(window.getHandle());
+    input.setDefaultBindings();
+
+    LuaEngine lua;
+    LuaInputBindings::registerInput(lua.state(), &input);
+    LuaVector3Bindings::registerVector3(lua.state());
+
+    // Editor camera, movable from editor scripts
+    LuaCameraBindings::registerCamera(lua.state(), &editor.getCamera());
+
+    // Load cam input script
+    auto success = lua.loadScript("assets/scripts/camera_inputs.lua", { "editor" });
+    Util::Log::scriptLoadLog(success);
 
     // Runs on_ready function
-    lua.runOnReady();
+    lua.runReady();
 
     double lastTime = glfwGetTime();
     while (!window.shouldClose()) {
@@ -108,17 +133,22 @@ int main() {
         window.update();
 
         double now = glfwGetTime();
-        float dt = static_cast<float>(now - lastTime);
+        auto dt = static_cast<float>(now - lastTime);
         lastTime = now;
 
         lua.runUpdate(dt);
-        screenManager.update();
+        editor.update(dt);
 
         // Clear screen from previous frame
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Render
-        screenManager.render();
+        RenderContext ctx {
+            .program = program,
+            .camera = editor.getCamera(),
+            .window = window
+        };
+        editor.render(ctx);
 
         window.present();
     }

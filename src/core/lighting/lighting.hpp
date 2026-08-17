@@ -9,7 +9,7 @@ private:
     glm::vec3 skyColor { 0.3f, 0.35f, 0.45f };
     glm::vec3 groundColor { 0.08f, 0.08f, 0.10f };
 public:
-    Lighting() {}
+    Lighting() = default;
     ~Lighting() = default;
 
     void setShininess(float shininess);
@@ -17,9 +17,9 @@ public:
     void setGroundColor(glm::vec3 color);
     void upload(ShaderProgram& program);
 
-    float getShininess() const;
-    glm::vec3 getSkyColor() const;
-    glm::vec3 getGroundColor() const;
+    [[nodiscard]] float getShininess() const;
+    [[nodiscard]] glm::vec3 getSkyColor() const;
+    [[nodiscard]] glm::vec3 getGroundColor() const;
 
     SceneLights lights;
 };

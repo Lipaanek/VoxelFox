@@ -19,7 +19,7 @@ LuaEngine::~LuaEngine() {
         lua_close(this->L);
 }
 
-lua_State* LuaEngine::state() {
+lua_State* LuaEngine::state() const {
     return this->L;
 }
 
@@ -30,12 +30,10 @@ LoadScriptResult LuaEngine::loadScript(const char* path, const std::vector<std::
 
     for (const auto& flag : flags) {
         if (!this->flags_.has(flag)) {
-            /* Util::Log::error(
-                "Script '%s' is missing required flag '%s'",
-                path,
-                flag.c_str()
-            ); */
-            return {LoadResult::Skipped, std::format("Missing required flag: {}, skipping script", flag.c_str())};
+            return {
+                .result = LoadResult::Skipped,
+                .message = std::format("Missing required flag: {}, skipping script", flag)
+            };
         }
     }
 
@@ -44,7 +42,10 @@ LoadScriptResult LuaEngine::loadScript(const char* path, const std::vector<std::
         Util::Log::error(lua_tostring(this->L, -1));
         lua_pop(this->L, 1);
 
-        return {LoadResult::Failed, lua_tostring(L, -1)};
+        return {
+            .result = LoadResult::Failed,
+            .message = lua_tostring(L, -1)
+        };
     }
 
     return {};
@@ -54,7 +55,7 @@ bool LuaEngine::hasFlag(const std::string& flag) const {
     return this->flags_.has(flag);
 }
 
-void LuaEngine::runUpdate(float dt) {
+void LuaEngine::runUpdate(const float dt) const {
     lua_getglobal(this->L, "update");
     if (lua_type(this->L, -1) != LUA_TFUNCTION) {
         lua_pop(this->L, 1);
@@ -68,8 +69,8 @@ void LuaEngine::runUpdate(float dt) {
     }
 }
 
-void LuaEngine::runOnReady() {
-    lua_getglobal(this->L, "on_ready");
+void LuaEngine::runReady() const {
+    lua_getglobal(this->L, "ready");
     if (lua_type(this->L, -1) != LUA_TFUNCTION) {
         lua_pop(this->L, 1);
         return;

@@ -3,7 +3,7 @@ CC         = x86_64-w64-mingw32-gcc
 CXXFLAGS   = -std=c++20 -Wall -Wextra -Wpedantic -MMD -MP
 CFLAGS     = -std=c11 -Wall -Wextra -Wpedantic -MMD -MP
 THIRDPARTY_CFLAGS = -std=c11 -MMD -MP
-INCLUDES   = -Ithirdparty -Ithirdparty/glad -Ithirdparty/GLFW -Ithirdparty/glm -Ithirdparty/tinyfiledialogs -Ithirdparty/lua
+INCLUDES   = -Isrc -Ithirdparty -Ithirdparty/glad -Ithirdparty/GLFW -Ithirdparty/glm -Ithirdparty/tinyfiledialogs -Ithirdparty/lua
 LDFLAGS    = -Lthirdparty
 LDLIBS     = -lglfw3dll -lopengl32 -lgdi32 -lole32 -lcomdlg32
 
@@ -29,8 +29,10 @@ RUNNER     ?=
 # --- Add new source files to SRCS below ---
 SRCS = \
 	src/main.cpp \
-	src/scene/basic_screen.cpp \
-	src/core/screen/screen_manager.cpp \
+	src/scene/basic_scene.cpp \
+	src/core/scene/scene_manager.cpp \
+	src/core/scene/editor.cpp \
+	src/core/scene/playtest.cpp \
 	src/core/window/window.cpp \
 	src/core/renderer/shader.cpp \
 	src/core/renderer/shader_program.cpp \
@@ -38,7 +40,8 @@ SRCS = \
 	src/core/renderer/voxelizer.cpp \
 	src/core/renderer/vertex_array.cpp \
 	src/core/renderer/mesh/mesh.cpp \
-	src/core/renderer/mesh/scene_mesh_manager.cpp \
+	src/core/renderer/mesh/mesh_manager.cpp \
+	src/core/renderer/mesh/mesh_renderer.cpp \
 	src/core/camera/camera.cpp \
 	src/core/input/action_map.cpp \
 	src/core/input/input_system.cpp \
@@ -52,6 +55,8 @@ SRCS = \
 	src/core/lighting/lighting.cpp \
 	src/core/model_loading/obj_loader.cpp \
 	src/nodes/voxel.cpp \
+	src/nodes/mesh_instance_3d.cpp \
+	src/nodes/node3d.cpp \
 
 OBJS = $(SRCS:src/%.cpp=$(OBJDIR)/%.o)
 

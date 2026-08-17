@@ -2,7 +2,7 @@
 #include "../../util/util.hpp"
 #include "../shader_program.hpp"
 
-void Mesh::setup() {
+void Mesh::setup() const {
     if (this->vertices.empty() || this->indices.empty()) {
         Util::Log::error("Mesh::setup() called without vertices or indices");
         return;
@@ -32,11 +32,11 @@ void Mesh::setIndices(std::vector<GLuint> indices) {
     this->indices = indices;
 }
 
-void Mesh::draw(const ShaderProgram& program) {
+void Mesh::draw(const ShaderProgram& program) const {
     program.use();
 
     vao.bind();
 
     // draw mesh
-    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->indices.size()), GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->indices.size()), GL_UNSIGNED_INT, nullptr);
 }

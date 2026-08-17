@@ -4,11 +4,11 @@ void Lighting::setShininess(float shininess) {
     this->shininess = shininess;
 }
 
-void Lighting::setSkyColor(glm::vec3 color) {
+void Lighting::setSkyColor(const glm::vec3 color) {
     this->skyColor = color;
 }
 
-void Lighting::setGroundColor(glm::vec3 color) {
+void Lighting::setGroundColor(const glm::vec3 color) {
     this->groundColor = color;
 }
 

@@ -38,6 +38,6 @@ public:
     void setVertices(std::vector<Vertex> vertices);
     void setIndices(std::vector<GLuint> indices);
 
-    void draw(const ShaderProgram& program);
-    void setup();
+    void draw(const ShaderProgram& program) const;
+    void setup() const;
 };
