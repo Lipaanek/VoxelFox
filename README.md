@@ -2,31 +2,44 @@
 
 <p align="center">
   <a href="https://github.com/Lipaanek/VoxelFox/releases">
-    <img width="750" alt="banner" src="https://github.com/user-attachments/assets/950bd84a-a679-4879-8f1a-a31513f6bef9" />
+    <img width=100% alt="VoxelFox banner" src="https://github.com/user-attachments/assets/950bd84a-a679-4879-8f1a-a31513f6bef9" />
   </a>
 </p>
 
-## Open-source 3D voxel game engine
-VoxelFox is an open-source voxel game engine built with C++ and OpenGL.  
-It provides unified systems and tools for game development, allowing developers to focus on creating games instead of rebuilding core engine features.
+## Open-Source 3D Voxel Game Engine
 
-## 100% Free
-VoxelFox is open sourced and developed by [Lipaanek](https://github.com/Lipaanek). VoxelFox is under the [MIT license](https://github.com/Lipaanek/VoxelFox/blob/main/LICENSE) and doesn't apply any fees. Community members may contribute to this project, letting users shape and develop the engine to match their expectations.
+**VoxelFox** is an open-source 3D voxel game engine built with **C++** and **OpenGL**.
 
-## How to download VoxelFox?
+It provides a collection of unified systems and tools for game development, allowing developers to focus on building their games instead of reinventing core engine functionality.
 
-To compile VoxelFox, run this command in the root directory:
+VoxelFox also includes a **voxelizer** tool that makes it easy to convert 3D models into voxel representations while preserving their original colors and shape.
+
+## Open Source & Free to Use
+
+VoxelFox is open source and developed by [Lipaanek](https://github.com/Lipaanek). The project is released under the [MIT License](https://github.com/Lipaanek/VoxelFox/blob/main/LICENSE).
+
+There are **no royalties, licensing fees, or strings attached**. You are free to use VoxelFox in your own projects, including commercial games.
+
+The project is also open to community contributions. Whether you're interested in improving the engine, adding new features, or fixing bugs, contributions help shape VoxelFox and its future.
+
+If you use VoxelFox in your game, **a credit is always appreciated**. Feel free to mention VoxelFox in your game's credits, description, or other project information.
+
+## How to Download VoxelFox
+
+To build VoxelFox from source, run the following command from the project root:
+
 ```bash
 make
 ```
-For further compilation details, go into [releases](https://github.com/Lipaanek/VoxelFox/releases).
+
+For additional build information and downloadable releases, visit the [Releases](https://github.com/Lipaanek/VoxelFox/releases) page.
 
 > [!NOTE]
-> Note that the precompiled `exe` file is not yet released and will be shipped with the next release.
+> A precompiled `.exe` is not currently available. Precompiled binaries are planned for a future release.
 
 ![GitHub tag](https://img.shields.io/github/v/tag/Lipaanek/VoxelFox)
 
-<img width="1920" height="1080" alt="Snímek obrazovky (462)" src="https://github.com/user-attachments/assets/aed881b0-52dd-42a1-bc1e-bb58d2c06ec8" />
+<img width="1920" alt="VoxelFox engine preview" src="https://github.com/user-attachments/assets/aed881b0-52dd-42a1-bc1e-bb58d2c06ec8" />
 
 > [!NOTE]
-> Current state of the project doesn't reflect the provided images
+> The current state of the project may differ significantly from what is shown in the images above. The screenshots represent an earlier stage of development.
