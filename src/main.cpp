@@ -1,5 +1,4 @@
 #include <memory>
-#include <cmath>
 
 #include "core/window/window.hpp"
 #include "core/scene/scene_manager.hpp"
@@ -10,11 +9,10 @@
 #include "core/input/input_system.hpp"
 #include "core/model_loading/obj_loader.hpp"
 #include "core/scripting/lua_engine.hpp"
-#include "core/scripting/inputs/lua_input_bindings.hpp"
-#include "core/scripting/camera/lua_camera.hpp"
-#include "core/scripting/vector/lua_vector3.hpp"
 #include "nodes/mesh_instance_3d.hpp"
 #include "nodes/node3d.hpp"
+
+std::unique_ptr<Environment> currentEnvironment;
 
 int main() {
     Window window("VoxelFox", 1920, 1080);
@@ -25,7 +23,11 @@ int main() {
     // Setup editor
     SceneManager sceneManager(window, meshRenderer);
     InputSystem input(window.getHandle());
-    Editor editor(sceneManager, window, input);
+    currentEnvironment = std::make_unique<Editor>(
+        sceneManager,
+        window,
+        input
+    );
 
     // Shader program and shader creation
     ShaderProgram program;
@@ -123,7 +125,7 @@ int main() {
         );
     }
 
-    editor.setScene(std::move(scene));
+    currentEnvironment->setScene(std::move(scene));
 
     double lastTime = glfwGetTime();
     while (!window.shouldClose()) {
@@ -134,7 +136,7 @@ int main() {
         auto dt = static_cast<float>(now - lastTime);
         lastTime = now;
 
-        editor.update(dt);
+        currentEnvironment->update(dt);
 
         // Clear screen from previous frame
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -142,10 +144,10 @@ int main() {
         // Render
         RenderContext ctx {
             .program = program,
-            .camera = editor.getCamera(),
+            .camera = currentEnvironment->getCamera(),
             .window = window
         };
-        editor.render(ctx);
+        currentEnvironment->render(ctx);
 
         window.present();
     }

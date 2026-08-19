@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mesh/mesh_data.hpp"
+#include "../renderer/mesh/mesh_data.hpp"
 #include <glm/glm.hpp>
 #include <vector>
 

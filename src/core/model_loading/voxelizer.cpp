@@ -1,8 +1,8 @@
 #include "voxelizer.hpp"
 
-#include "buffer.hpp"
-#include "shader.hpp"
-#include "shader_program.hpp"
+#include "../renderer/buffer.hpp"
+#include "../renderer/shader.hpp"
+#include "../renderer/shader_program.hpp"
 #include "../util/util.hpp"
 
 #include <glad/glad.h>
@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -34,7 +33,7 @@ unsigned int ceilDiv(unsigned int numerator, unsigned int denominator) {
 ShaderProgram& computeProgram() {
     static ShaderProgram* program = nullptr;
     if (program == nullptr) {
-        Shader* comp = new Shader(kComputeShaderPath, ShaderType::Compute);
+        auto* comp = new Shader(kComputeShaderPath, ShaderType::Compute);
         program = new ShaderProgram;
         if (comp->compile() == 0) {
             Util::Log::error("Voxelizer: failed to compile compute shader");
@@ -112,7 +111,7 @@ std::vector<GPUVoxel> Voxelizer::voxelize(const MeshData& mesh, float gridSize) 
     triBuf.upload(tris.data(), tris.size() * sizeof(TriData), GL_STATIC_DRAW);
 
     Buffer counterBuf(GL_SHADER_STORAGE_BUFFER);
-    const GLuint zeroCount = 0;
+    constexpr GLuint zeroCount = 0;
     counterBuf.upload(&zeroCount, sizeof(GLuint), GL_DYNAMIC_READ);
 
     Buffer occupiedBuf(GL_SHADER_STORAGE_BUFFER);

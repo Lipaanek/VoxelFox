@@ -1,26 +1,25 @@
 #pragma once
 
-#include "scene_manager.hpp"
-#include "../camera/camera.hpp"
-#include "../input/input_system.hpp"
-#include "../scripting/lua_engine.hpp"
-#include "../window/window.hpp"
+#include "Environment.hpp"
 
-class Editor {
+#include <memory>
+#include <vector>
+
+class LuaScript;
+class LuaEngine;
+
+class Editor : public Environment {
 private:
-    SceneManager& sceneManager;
-    Window& window;
-    Camera camera;
     LuaEngine editorLuaEngine;
-    InputSystem inputSystem;
-    std::vector<std::unique_ptr<LuaScript>> editorScripts_;
+    std::vector<std::unique_ptr<LuaScript>> editorScripts;
 
 public:
-    Editor(SceneManager& sceneManager, Window& window, InputSystem& inputSystem);
+    Editor(
+        SceneManager& sceneManager,
+        Window& window,
+        InputSystem& inputSystem
+    );
 
-    Camera &getCamera();
-
-    void update(float dt) const;
-    void render(const RenderContext& ctx) const;
-    void setScene(std::unique_ptr<Scene> screen) const;
+    void update(float dt) override;
+    void render(const RenderContext& ctx) override;
 };

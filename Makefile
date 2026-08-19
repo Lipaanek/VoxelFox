@@ -32,12 +32,11 @@ SRCS = \
 	src/scene/basic_scene.cpp \
 	src/core/scene/scene_manager.cpp \
 	src/core/scene/editor.cpp \
-	src/core/scene/playtest.cpp \
+	src/core/scene/environment.cpp \
 	src/core/window/window.cpp \
 	src/core/renderer/shader.cpp \
 	src/core/renderer/shader_program.cpp \
 	src/core/renderer/buffer.cpp \
-	src/core/renderer/voxelizer.cpp \
 	src/core/renderer/vertex_array.cpp \
 	src/core/renderer/mesh/mesh.cpp \
 	src/core/renderer/mesh/mesh_manager.cpp \
@@ -55,6 +54,7 @@ SRCS = \
 	src/core/lighting/light.cpp \
 	src/core/lighting/lighting.cpp \
 	src/core/model_loading/obj_loader.cpp \
+	src/core/model_loading/voxelizer.cpp \
 	src/nodes/voxel.cpp \
 	src/nodes/mesh_instance_3d.cpp \
 	src/nodes/node3d.cpp \
