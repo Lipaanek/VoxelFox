@@ -16,7 +16,7 @@ void MeshRenderer::render(const RenderContext& ctx, Scene& scene) const {
 
     ctx.program.setUniform("u_cameraPos", ctx.camera.getPosition());
 
-    this->renderNode(ctx, scene.getRoot());
+    this->renderNode(ctx, *scene.getRoot());
 }
 
 void MeshRenderer::renderNode(const RenderContext& ctx, const Node& node) const
@@ -38,7 +38,7 @@ void MeshRenderer::renderNode(const RenderContext& ctx, const Node& node) const
         }
     }
 
-    for (const Node* child : node.getChildren()) {
+    for (const auto& child : node.getChildren()) {
         this->renderNode(ctx, *child);
     }
 }

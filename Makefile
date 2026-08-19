@@ -47,6 +47,7 @@ SRCS = \
 	src/core/input/input_system.cpp \
 	src/core/scripting/lua_engine.cpp \
 	src/core/scripting/lua_flags.cpp \
+	src/core/scripting/lua_script.cpp \
 	src/core/scripting/inputs/lua_input_bindings.cpp \
 	src/core/scripting/camera/lua_camera.cpp \
 	src/core/scripting/vector/lua_vector3.cpp \
@@ -57,6 +58,7 @@ SRCS = \
 	src/nodes/voxel.cpp \
 	src/nodes/mesh_instance_3d.cpp \
 	src/nodes/node3d.cpp \
+	src/nodes/node.cpp \
 
 OBJS = $(SRCS:src/%.cpp=$(OBJDIR)/%.o)
 

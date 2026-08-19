@@ -22,9 +22,10 @@ int main() {
     MeshManager meshManager;
     MeshRenderer meshRenderer(meshManager);
 
-    // Make screen manager and editor (owns the camera)
+    // Setup editor
     SceneManager sceneManager(window, meshRenderer);
-    Editor editor(&sceneManager, window);
+    InputSystem input(window.getHandle());
+    Editor editor(sceneManager, window, input);
 
     // Shader program and shader creation
     ShaderProgram program;
@@ -89,43 +90,40 @@ int main() {
         }
     } */
 
+    // Init scene
     auto scene = std::make_unique<BasicScene>();
 
+    // Make nodes
     auto root = std::make_unique<Node3D>();
     auto mesh = std::make_unique<MeshInstance3D>();
+    mesh->setName("studanka");
 
+    // Load mesh
     ObjLoader loader;
     MeshData meshData = loader.Load(
         R"(C:\Users\lipov\Downloads\Studanka2\Studanka2.obj)",
         R"(C:\Users\lipov\Downloads\Studanka2\Studanka2.mtl)"
     );
 
+    // Register mesh (better for sharing the same meshes)
     MeshID id = meshManager.add(meshData);
 
+    // Setup mesh and add node to tree
     mesh->setMesh(id);
-    root->addChild(std::move(mesh).get());
+    root->addChild(std::move(mesh));
 
+    // Set the tree root
     scene->setRoot(std::move(root));
 
+    // Test script attachment
+    if (auto* wellMesh = scene->getRoot()->getChild("studanka")) {
+        wellMesh->setScript(
+            "assets/scripts/test_node_script.lua",
+            {}
+        );
+    }
+
     sceneManager.setScreen(std::move(scene));
-
-    // Input system and Lua link
-    InputSystem input(window.getHandle());
-    input.setDefaultBindings();
-
-    LuaEngine lua;
-    LuaInputBindings::registerInput(lua.state(), &input);
-    LuaVector3Bindings::registerVector3(lua.state());
-
-    // Editor camera, movable from editor scripts
-    LuaCameraBindings::registerCamera(lua.state(), &editor.getCamera());
-
-    // Load cam input script
-    auto success = lua.loadScript("assets/scripts/camera_inputs.lua", { "editor" });
-    Util::Log::scriptLoadLog(success);
-
-    // Runs on_ready function
-    lua.runReady();
 
     double lastTime = glfwGetTime();
     while (!window.shouldClose()) {
@@ -136,7 +134,6 @@ int main() {
         auto dt = static_cast<float>(now - lastTime);
         lastTime = now;
 
-        lua.runUpdate(dt);
         editor.update(dt);
 
         // Clear screen from previous frame

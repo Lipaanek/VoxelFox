@@ -1,3 +1,4 @@
-# Assets
+# Assets/Shaders
 
-There are all the assets the engine will use during runtime.
+There are all the shader assets the engine will use during runtime.
+> 3D Rendering, Voxelization, etc.

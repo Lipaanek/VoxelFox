@@ -12,9 +12,9 @@ int vector3New(lua_State* L) {
     return 1;
 }
 
-const luaL_Reg vector3Functions[] = {
-    { "new", vector3New },
-    { nullptr, nullptr }
+constexpr luaL_Reg vector3Functions[] = {
+    { .name = "new", .func = vector3New },
+    { .name = nullptr, .func = nullptr }
 };
 
 } // namespace

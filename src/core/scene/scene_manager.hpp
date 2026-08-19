@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../window/window.hpp"
-#include <GLFW/glfw3.h>
 #include <memory>
 #include "scene.hpp"
 #include "../renderer/mesh/mesh_renderer.hpp"

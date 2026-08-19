@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "lua_flags.hpp"
+#include "lua_script.hpp"
 
 struct lua_State;
 
@@ -30,11 +31,10 @@ public:
     LuaEngine(const LuaEngine&) = delete;
     LuaEngine& operator=(const LuaEngine&) = delete;
 
-    lua_State* state() const;
+    [[nodiscard]] lua_State* state() const;
 
     // Error message on fail, nullopt for success
     LoadScriptResult loadScript(const char* path, const std::vector<std::string>& flags);
     void runUpdate(float dt) const;
     void runReady() const;
-    bool hasFlag(const std::string& flag) const;
 };

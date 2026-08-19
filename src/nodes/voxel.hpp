@@ -17,7 +17,7 @@ public:
     Voxel(glm::vec3 position, float size, glm::vec3 color);
     ~Voxel() = default;
 
-    MeshData buildMeshData() const;
+    [[nodiscard]] MeshData buildMeshData() const;
     void setup();
     void draw(const ShaderProgram&);
 

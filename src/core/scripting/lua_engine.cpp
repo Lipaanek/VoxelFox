@@ -51,9 +51,9 @@ LoadScriptResult LuaEngine::loadScript(const char* path, const std::vector<std::
     return {};
 }
 
-bool LuaEngine::hasFlag(const std::string& flag) const {
-    return this->flags_.has(flag);
-}
+// bool LuaEngine::hasFlag(const std::string& flag) const {
+//     return this->flags_.has(flag);
+// }
 
 void LuaEngine::runUpdate(const float dt) const {
     lua_getglobal(this->L, "update");
