@@ -75,17 +75,7 @@ public:
     }
 
     void setScene(Scene* newScene) {
-        std::cout
-        << "Node::setScene() this=" << this
-        << " name=" << name
-        << " scene=" << scene
-        << std::endl;
         this->scene = newScene;
-
-        std::cout
-        << "Node scene after assignment=" << this->scene
-        << std::endl;
-
         this->onTreeEnter(newScene);
 
         for (const auto& child : this->children) {

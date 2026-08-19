@@ -59,18 +59,20 @@ LoadScriptResult LuaScript::setScript(const char* path, const std::vector<std::s
     if (!lua_istable(L, -1)) {
         lua_pop(L, 1);
 
+        instanceRef_ = LUA_NOREF;
+
         return {
-            .result = LoadResult::Failed,
-            .message = std::format(
-                "Script '{}' must return a table",
-                path
-            )
+            .result = LoadResult::Success,
+            .message = {}
         };
     }
 
     instanceRef_ = luaL_ref(L, LUA_REGISTRYINDEX);
 
-    return {};
+    return {
+        .result = LoadResult::Success,
+        .message = {}
+    };
 }
 
 LoadScriptResult LuaScript::load(const char* path) const {
@@ -90,9 +92,35 @@ LoadScriptResult LuaScript::load(const char* path) const {
 }
 
 void LuaScript::ready() const {
-    this->engine_.runReady();
+    lua_State* L = this->engine_.state();
+
+    lua_getglobal(L, "ready");
+    if (lua_type(L, -1) != LUA_TFUNCTION) {
+        Util::Log::log("Function ready() was not found in a script");
+        lua_pop(L, 1);
+        return;
+    }
+
+    if (lua_pcall(L, 0, 0, 0) != LUA_OK) {
+        Util::Log::error(lua_tostring(L, -1));
+        lua_pop(L, 1);
+    }
 }
 
 void LuaScript::update(const float dt) const {
-    this->engine_.runUpdate(dt);
+    Util::Log::log("Called update(dt) method");
+    lua_State* L = this->engine_.state();
+
+    lua_getglobal(L, "update");
+    if (lua_type(L, -1) != LUA_TFUNCTION) {
+        Util::Log::log("Function update(dt) was not found in a script");
+        lua_pop(L, 1);
+        return;
+    }
+
+    lua_pushnumber(L, dt);
+    if (lua_pcall(L, 1, 0, 0) != LUA_OK) {
+        Util::Log::error(lua_tostring(L, -1));
+        lua_pop(L, 1);
+    }
 }

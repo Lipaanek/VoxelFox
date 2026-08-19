@@ -3,7 +3,9 @@
 #include <stdexcept>
 #include <lua.hpp>
 #include <format>
+#include <iostream>
 
+#include "lua_script.hpp"
 #include "../util/util.hpp"
 
 LuaEngine::LuaEngine() {
@@ -55,28 +57,18 @@ LoadScriptResult LuaEngine::loadScript(const char* path, const std::vector<std::
 //     return this->flags_.has(flag);
 // }
 
-void LuaEngine::runUpdate(const float dt) const {
-    lua_getglobal(this->L, "update");
-    if (lua_type(this->L, -1) != LUA_TFUNCTION) {
-        lua_pop(this->L, 1);
-        return;
-    }
+void LuaEngine::addScript(LuaScript* script) {
+    this->scripts_.push_back(script);
+}
 
-    lua_pushnumber(this->L, dt);
-    if (lua_pcall(this->L, 1, 0, 0) != LUA_OK) {
-        Util::Log::error(lua_tostring(this->L, -1));
-        lua_pop(this->L, 1);
+void LuaEngine::runUpdate(const float dt) const {
+    for (const auto& script : this->scripts_) {
+        script->update(dt);
     }
 }
 
 void LuaEngine::runReady() const {
-    lua_getglobal(this->L, "ready");
-    if (lua_type(this->L, -1) != LUA_TFUNCTION) {
-        lua_pop(this->L, 1);
-        return;
-    }
-
-    if (lua_pcall(this->L, 0, 0, 0) != LUA_OK) {
-        Util::Log::error(lua_tostring(this->L, -1));
+    for (const auto& script : this->scripts_) {
+        script->ready();
     }
 }

@@ -15,7 +15,10 @@ LoadScriptResult Node::setScript(const char* path, const std::vector<std::string
 
     auto result = script_->setScript(path, flags);
 
-    if (result.result != LoadResult::Success) {
+    if (result.result == LoadResult::Success) {
+        scene->lua().addScript(script_.get());
+    } else {
+        Util::Log::error(result.message);
         script_.reset();
     }
 

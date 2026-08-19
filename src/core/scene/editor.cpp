@@ -16,8 +16,6 @@ Editor::Editor(SceneManager& sceneManager, Window& window, InputSystem& inputSys
     LuaInputBindings::registerInput(this->editorLuaEngine.state(), &this->inputSystem);
     LuaVector3Bindings::registerVector3(this->editorLuaEngine.state());
     LuaCameraBindings::registerCamera(this->editorLuaEngine.state(), &this->getCamera());
-
-    this->editorLuaEngine.runReady();
 }
 
 Camera &Editor::getCamera() {
@@ -31,4 +29,8 @@ void Editor::update(const float dt) const {
 
 void Editor::render(const RenderContext& ctx) const {
     this->sceneManager.render(ctx);
+}
+
+void Editor::setScene(std::unique_ptr<Scene> scene) const {
+    this->sceneManager.setScene(std::move(scene));
 }

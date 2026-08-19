@@ -24,11 +24,11 @@ namespace File {
 namespace Log {
 
     void error(const std::string& message) {
-        std::cerr << "[ERROR] " << message << "\n";
+        std::cerr << "[ERROR] " << message << "\n" << std::flush;
     }
 
     void log(const std::string& message) {
-        std::cout << "[LOG] " << message << "\n";
+        std::cout << "[LOG] " << message << "\n" << std::flush;
     }
 
     void scriptLoadLog(const LoadScriptResult& result) {

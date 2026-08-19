@@ -8,14 +8,15 @@
 class SceneManager {
 private:
     Window& window;
-    std::unique_ptr<Scene> currentScreen = nullptr;
+    std::unique_ptr<Scene> currentScene = nullptr;
     MeshRenderer& renderer;
+    bool firstSceneRun = false;
 
 public:
     explicit SceneManager(Window& window, MeshRenderer& renderer);
     ~SceneManager() = default;
 
-    void setScreen(std::unique_ptr<Scene> screen);
-    void update(float dt) const;
+    void setScene(std::unique_ptr<Scene> scene);
+    void update(float dt);
     void render(const RenderContext& ctx) const;
 };

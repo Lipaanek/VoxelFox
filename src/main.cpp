@@ -91,7 +91,7 @@ int main() {
     } */
 
     // Init scene
-    auto scene = std::make_unique<BasicScene>();
+    std::unique_ptr<Scene> scene = std::make_unique<BasicScene>();
 
     // Make nodes
     auto root = std::make_unique<Node3D>();
@@ -117,13 +117,13 @@ int main() {
 
     // Test script attachment
     if (auto* wellMesh = scene->getRoot()->getChild("studanka")) {
-        wellMesh->setScript(
+        auto res = wellMesh->setScript(
             "assets/scripts/test_node_script.lua",
             {}
         );
     }
 
-    sceneManager.setScreen(std::move(scene));
+    editor.setScene(std::move(scene));
 
     double lastTime = glfwGetTime();
     while (!window.shouldClose()) {

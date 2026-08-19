@@ -21,4 +21,5 @@ public:
 
     void update(float dt) const;
     void render(const RenderContext& ctx) const;
+    void setScene(std::unique_ptr<Scene> screen) const;
 };
