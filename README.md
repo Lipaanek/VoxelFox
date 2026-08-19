@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://github.com/Lipaanek/VoxelFox/releases">
-    <img width=100% alt="VoxelFox banner" src="https://github.com/user-attachments/assets/950bd84a-a679-4879-8f1a-a31513f6bef9" />
+    <img width=100% alt="VoxelFox Banner" src="https://github.com/user-attachments/assets/950bd84a-a679-4879-8f1a-a31513f6bef9" />
   </a>
 </p>
 
@@ -39,7 +39,7 @@ For additional build information and downloadable releases, visit the [Releases]
 
 ![GitHub tag](https://img.shields.io/github/v/tag/Lipaanek/VoxelFox)
 
-<img width="1920" alt="VoxelFox engine preview" src="https://github.com/user-attachments/assets/aed881b0-52dd-42a1-bc1e-bb58d2c06ec8" />
+<img width=100% alt="3D Render of a well" src="https://github.com/user-attachments/assets/7116ef54-5507-429d-846f-8bba72a02cc1" />
 
 > [!NOTE]
 > The current state of the project may differ significantly from what is shown in the images above. The screenshots represent an earlier stage of development.
