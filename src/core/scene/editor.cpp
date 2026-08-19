@@ -8,9 +8,14 @@
 Editor::Editor(SceneManager& sceneManager, Window& window, InputSystem& inputSystem)
     : sceneManager(sceneManager), window(window), inputSystem(inputSystem)
 {
-    const auto success = this->editorLuaEngine.loadScript("assets/scripts/camera_inputs.lua", { "editor" });
+    this->editorScripts_.emplace_back(std::make_unique<LuaScript>(this->editorLuaEngine));
+    auto& script = *this->editorScripts_.back();
+
+    const auto success = script.setScript("assets/scripts/camera_inputs.lua", { "editor" });
     Util::Log::scriptLoadLog(success);
 
+    this->editorLuaEngine.addScript(&script);
+    
     this->inputSystem.setDefaultBindings();
 
     LuaInputBindings::registerInput(this->editorLuaEngine.state(), &this->inputSystem);

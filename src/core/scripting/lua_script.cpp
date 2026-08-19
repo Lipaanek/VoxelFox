@@ -96,7 +96,6 @@ void LuaScript::ready() const {
 
     lua_getglobal(L, "ready");
     if (lua_type(L, -1) != LUA_TFUNCTION) {
-        Util::Log::log("Function ready() was not found in a script");
         lua_pop(L, 1);
         return;
     }
@@ -108,12 +107,10 @@ void LuaScript::ready() const {
 }
 
 void LuaScript::update(const float dt) const {
-    Util::Log::log("Called update(dt) method");
     lua_State* L = this->engine_.state();
 
     lua_getglobal(L, "update");
     if (lua_type(L, -1) != LUA_TFUNCTION) {
-        Util::Log::log("Function update(dt) was not found in a script");
         lua_pop(L, 1);
         return;
     }

@@ -26,7 +26,7 @@ lua_State* LuaEngine::state() const {
 }
 
 LoadScriptResult LuaEngine::loadScript(const char* path, const std::vector<std::string>& flags) {
-    std::string source = Util::File::read(path);
+    const std::string source = Util::File::read(path);
     this->flags_.clear();
     this->flags_.parse(source);
 
@@ -52,10 +52,6 @@ LoadScriptResult LuaEngine::loadScript(const char* path, const std::vector<std::
 
     return {};
 }
-
-// bool LuaEngine::hasFlag(const std::string& flag) const {
-//     return this->flags_.has(flag);
-// }
 
 void LuaEngine::addScript(LuaScript* script) {
     this->scripts_.push_back(script);

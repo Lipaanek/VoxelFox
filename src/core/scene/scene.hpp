@@ -13,7 +13,6 @@ private:
     Lighting lighting;
     MeshManager meshManager;
     LuaEngine lua_;
-    bool firstRun = true;
 
 public:
     virtual ~Scene() = default;
@@ -31,6 +30,7 @@ public:
     LuaEngine& lua() { return lua_; }
 
     virtual void update(float dt) {
+        onUpdate(dt);
         lua_.runUpdate(dt);
     }
 
@@ -48,4 +48,5 @@ public:
 
 protected:
     virtual void onReady() {}
+    virtual void onUpdate(float dt) {}
 };

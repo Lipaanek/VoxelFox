@@ -13,6 +13,7 @@ private:
     Camera camera;
     LuaEngine editorLuaEngine;
     InputSystem inputSystem;
+    std::vector<std::unique_ptr<LuaScript>> editorScripts_;
 
 public:
     Editor(SceneManager& sceneManager, Window& window, InputSystem& inputSystem);

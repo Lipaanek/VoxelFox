@@ -13,6 +13,6 @@ void BasicScene::onReady() {
 
 }
 
-void BasicScene::update(float dt) {
+void BasicScene::onUpdate(float dt) {
 
 }

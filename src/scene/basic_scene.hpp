@@ -7,8 +7,7 @@ class BasicScene : public Scene {
 public:
     ~BasicScene() override;
 
-    void update(float dt) override;
-
 protected:
     void onReady() override;
+    void onUpdate(float dt) override;
 };

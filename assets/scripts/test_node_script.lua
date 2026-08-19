@@ -1,7 +1,7 @@
 function ready()
-    print("hello world")
+    print("Hello world!")
 end
 
 function update(dt)
-    print("upd")
+    print("Called update() method", dt)
 end
