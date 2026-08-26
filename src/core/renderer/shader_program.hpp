@@ -29,8 +29,8 @@ public:
     void link();
     void use() const;
 
-    void setStorageBuffer(unsigned int binding, const Buffer& buffer);
-    void dispatch(unsigned int x, unsigned int y = 1, unsigned int z = 1);
+    void setStorageBuffer(unsigned int binding, const Buffer& buffer) const;
+    void dispatch(unsigned int x, unsigned int y = 1, unsigned int z = 1) const;
 
     [[nodiscard]] GLuint getID() const {
         return id;

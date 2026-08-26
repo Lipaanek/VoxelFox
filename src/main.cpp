@@ -31,8 +31,8 @@ int main() {
 
     // Shader program and shader creation
     ShaderProgram program;
-    Shader frag("assets/shaders/3d_scene.frag", ShaderType::Fragment);
-    Shader vert("assets/shaders/3d_scene.vert", ShaderType::Vertex);
+    Shader frag {"assets/shaders/3d_scene.frag", ShaderType::Fragment};
+    Shader vert{"assets/shaders/3d_scene.vert", ShaderType::Vertex};
 
     // Need to compile the shaders before linking
     frag.compile();

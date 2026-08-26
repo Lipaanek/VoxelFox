@@ -72,7 +72,7 @@ void Voxel::setup() {
 }
 
 void Voxel::draw(const ShaderProgram& program) {
-    mesh.draw(program);
+    mesh.render(program);
 }
 
 void Voxel::setPosition(glm::vec3 position) { this->position = position; }

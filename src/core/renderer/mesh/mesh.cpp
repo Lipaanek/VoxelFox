@@ -32,7 +32,7 @@ void Mesh::setIndices(std::vector<GLuint> indices) {
     this->indices = indices;
 }
 
-void Mesh::draw(const ShaderProgram& program) const {
+void Mesh::render(const ShaderProgram& program) const {
     program.use();
 
     vao.bind();
