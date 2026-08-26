@@ -4,7 +4,7 @@
 #include <format>
 
 ShaderProgram::ShaderProgram() {
-    GLuint program = glCreateProgram();
+    const GLuint program = glCreateProgram();
     if (!program) {
         Util::Log::error("Failed to create shader program");
         return;
@@ -53,12 +53,12 @@ void ShaderProgram::use() const {
         glUseProgram(id);
 }
 
-void ShaderProgram::setStorageBuffer(unsigned int binding, const Buffer& buffer) {
+void ShaderProgram::setStorageBuffer(const unsigned int binding, const Buffer& buffer) const {
     use();
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding, buffer.getID());
 }
 
-void ShaderProgram::dispatch(unsigned int x, unsigned int y, unsigned int z) {
+void ShaderProgram::dispatch(unsigned int x, unsigned int y, unsigned int z) const {
     use();
     glDispatchCompute(x, y, z);
 }

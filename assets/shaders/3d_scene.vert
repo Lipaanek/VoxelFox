@@ -13,8 +13,7 @@ out vec3 vColor;
 out vec3 vWorldPos;
 out vec3 vNormal;
 
-void main()
-{
+void main() {
     vec4 worldPos = u_model * vec4(aPos, 1.0);
     gl_Position = u_projection * u_view * worldPos;
     

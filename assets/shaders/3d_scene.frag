@@ -21,8 +21,7 @@ uniform float u_shininess;
 uniform vec3 u_skyColor;
 uniform vec3 u_groundColor;
 
-void main()
-{
+void main() {
     vec3 normal = normalize(vNormal);
     vec3 viewDir = normalize(u_cameraPos - vWorldPos);
 

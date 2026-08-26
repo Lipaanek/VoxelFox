@@ -34,7 +34,7 @@ void MeshRenderer::renderNode(const RenderContext& ctx, const Node& node) const
                 meshInstance->getGlobalMatrix()
             );
 
-            mesh.draw(ctx.program);
+            mesh.render(ctx.program);
         }
     }
 
