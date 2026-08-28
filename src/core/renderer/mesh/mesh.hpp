@@ -5,15 +5,8 @@
 #include "../buffer.hpp"
 #include "../vertex_array.hpp"
 #include <vector>
-#include <glad/glad.h>
 #include "../shader_program.hpp"
-
-struct VertexAttribute {
-    GLuint location;
-    GLint size;
-    GLenum type;
-    size_t offset;
-};
+#include "core/renderer/layout.hpp"
 
 class Mesh {
 private:
@@ -22,11 +15,13 @@ private:
     Buffer ebo { GL_ELEMENT_ARRAY_BUFFER }; // Element Buffer Object
 
     // Layout of how to upload the layout to the shader
-    std::vector<VertexAttribute> layout = {
-        { 0, 3, GL_FLOAT, offsetof(Vertex, position) },
-        { 1, 3, GL_FLOAT, offsetof(Vertex, normal) },
-        { 2, 2, GL_FLOAT, offsetof(Vertex, texCoord) },
-        { 3, 3, GL_FLOAT, offsetof(Vertex, color) },
+    Layout layout3D = {
+        {
+            { 0, 3, GL_FLOAT, offsetof(Vertex, position) },
+            { 1, 3, GL_FLOAT, offsetof(Vertex, normal) },
+            { 2, 2, GL_FLOAT, offsetof(Vertex, texCoord) },
+            { 3, 3, GL_FLOAT, offsetof(Vertex, color) },
+        }, sizeof(Vertex)
     };
 
 public:
