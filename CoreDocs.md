@@ -19,8 +19,17 @@ layout (location = 1) in vec3 aNormal; // -> { location: 1, size: 3, type: GL_GL
 layout (location = 2) in vec2 aTexCoord; // -> { location: 2, size: 2, type: GL_GLOAT, offset: offsetof(Vertex, texCoord) }
 layout (location = 3) in vec3 aColor; // -> { location: 3, size: 3, type: GL_GLOAT, offset: offsetof(Vertex, color) }
 ```
-Image for demonstration:
-<img width=75% alt="VoxelFox banner" src="images/layout_explanation.png" />
+(Source: `mesh.hpp`)
+```cpp
+Layout layout3D = {
+    {
+        { .location = 0, .size = 3, .type = GL_FLOAT, .offset = offsetof(Vertex, position)},
+        { .location = 1, .size = 3, .type = GL_FLOAT, .offset = offsetof(Vertex, normal)},
+        { .location = 2, .size = 2, .type = GL_FLOAT, .offset = offsetof(Vertex, texCoord)},
+        { .location = 3, .size = 3, .type = GL_FLOAT, .offset = offsetof(Vertex, color)},
+    }, sizeof(Vertex)
+};
+```
 
 ## Pipeline
 
