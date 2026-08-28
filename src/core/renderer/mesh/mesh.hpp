@@ -17,10 +17,10 @@ private:
     // Layout of how to upload the layout to the shader
     Layout layout3D = {
         {
-            { 0, 3, GL_FLOAT, offsetof(Vertex, position) },
-            { 1, 3, GL_FLOAT, offsetof(Vertex, normal) },
-            { 2, 2, GL_FLOAT, offsetof(Vertex, texCoord) },
-            { 3, 3, GL_FLOAT, offsetof(Vertex, color) },
+            { .location = 0, .size = 3, .type = GL_FLOAT, .offset = offsetof(Vertex, position)},
+            { .location = 1, .size = 3, .type = GL_FLOAT, .offset = offsetof(Vertex, normal)},
+            { .location = 2, .size = 2, .type = GL_FLOAT, .offset = offsetof(Vertex, texCoord)},
+            { .location = 3, .size = 3, .type = GL_FLOAT, .offset = offsetof(Vertex, color)},
         }, sizeof(Vertex)
     };
 

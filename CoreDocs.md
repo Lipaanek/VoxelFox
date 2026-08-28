@@ -19,6 +19,8 @@ layout (location = 1) in vec3 aNormal; // -> { location: 1, size: 3, type: GL_GL
 layout (location = 2) in vec2 aTexCoord; // -> { location: 2, size: 2, type: GL_GLOAT, offset: offsetof(Vertex, texCoord) }
 layout (location = 3) in vec3 aColor; // -> { location: 3, size: 3, type: GL_GLOAT, offset: offsetof(Vertex, color) }
 ```
+Image for demonstration:
+<img width=75% alt="VoxelFox banner" src="images/layout_explanation.png" />
 
 ## Pipeline
 
