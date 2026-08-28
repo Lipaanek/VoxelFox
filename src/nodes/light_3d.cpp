@@ -2,6 +2,10 @@
 
 #include "../core/scene/scene.hpp"
 
+Light3D::Light3D() {
+    this->setName("Light3D");
+}
+
 void Light3D::onTreeEnter(Scene *newScene) {
     newScene->getLighting().lights.addLight(this->light);
 }

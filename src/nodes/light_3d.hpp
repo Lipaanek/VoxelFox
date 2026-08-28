@@ -9,9 +9,7 @@ private:
     Light light;
 
 public:
-    Light3D() {
-        this->setName("Light3D");
-    }
+    Light3D();
 
     void updateLight();
 

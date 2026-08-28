@@ -41,8 +41,13 @@ const glm::vec2 kUvData[kVerticesPerFace] = {
 
 }
 
-Voxel::Voxel(glm::vec3 position, float size, glm::vec3 color)
-    : position(position), size(size), color(color) {}
+Voxel::Voxel() {
+    this->setName("Voxel");
+}
+
+Voxel::Voxel(const std::string &name) {
+    this->setName(name);
+}
 
 MeshData Voxel::buildMeshData() const {
     MeshData data;
@@ -56,7 +61,7 @@ MeshData Voxel::buildMeshData() const {
         for (int i = 0; i < kVerticesPerFace; ++i) {
             glm::vec3 vertexColor = perVertex ? vertexColors[data.vertices.size()] : color;
             data.vertices.emplace_back(
-                position + size * kCubeCorners[face][i],
+                getPosition() + size * kCubeCorners[face][i],
                 kCubeNormals[face],
                 kUvData[i],
                 vertexColor);
@@ -71,11 +76,10 @@ void Voxel::setup() {
     mesh.setup();
 }
 
-void Voxel::draw(const ShaderProgram& program) {
+void Voxel::draw(const ShaderProgram& program) const {
     mesh.render(program);
 }
 
-void Voxel::setPosition(glm::vec3 position) { this->position = position; }
 void Voxel::setSize(float size) { this->size = size; }
 void Voxel::setColor(glm::vec3 color) { this->color = color; }
 void Voxel::setVertexColors(const std::vector<glm::vec3>& colors) { this->vertexColors = colors; }

@@ -1,5 +1,9 @@
 #include "mesh_instance_3d.hpp"
 
+MeshInstance3D::MeshInstance3D() {
+    this->setName("MeshInstance3D");
+}
+
 void MeshInstance3D::setMesh(MeshID mesh) {
     this->mesh = mesh;
 }
