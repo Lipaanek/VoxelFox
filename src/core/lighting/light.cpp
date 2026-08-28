@@ -3,32 +3,42 @@
 #include "../util/util.hpp"
 
 size_t SceneLights::addLight(const Light& light) {
-    if (this->sceneLights.size() >= kMaxLights) {
+    if (this->count >= kMaxLights) {
         Util::Log::error("SceneLights: maximum lights reached.");
-        return this->sceneLights.size() - 1;
+        return this->count;
     }
-    this->sceneLights.push_back(light);
-    return this->sceneLights.size() - 1;
+
+    this->sceneLights[count] = light;
+    return this->count++;
 }
 
 void SceneLights::clear() {
-    this->sceneLights.clear();
+    count = 0;
 }
 
-void SceneLights::uploadLights(ShaderProgram& program) {
-    program.setUniform("u_lightCount", static_cast<int>(this->sceneLights.size()));
+void SceneLights::removeLight(const Light& light) {
+    for (size_t i = 0; i < count; i ++) {
+        if (&sceneLights[i] == &light) {
+            sceneLights[i] = sceneLights[--count];
+            return;
+        }
+    }
+}
+
+void SceneLights::uploadLights(ShaderProgram& program) const {
+    program.setUniform("u_lightCount", static_cast<int>(count));
 
     std::vector<int> types;
     std::vector<glm::vec3> positions, directions, colors;
     std::vector<float> energies, ranges;
     
-    for (const Light& l : this->sceneLights) {
-        types.push_back(l.type == LightType::Directional ? 0 : 1);
-        positions.push_back(l.position);
-        directions.push_back(l.direction);
-        colors.push_back(l.color);
-        energies.push_back(l.energy);
-        ranges.push_back(l.range);
+    for (const auto&[type, position, direction, color, energy, range] : this->sceneLights) {
+        types.push_back(type == LightType::Directional ? 0 : 1);
+        positions.push_back(position);
+        directions.push_back(direction);
+        colors.push_back(color);
+        energies.push_back(energy);
+        ranges.push_back(range);
     }
 
     program.setUniform("u_lightTypes", types);
@@ -39,6 +49,15 @@ void SceneLights::uploadLights(ShaderProgram& program) {
     program.setUniform("u_lightRanges", ranges);
 }
 
-Light& SceneLights::getLight(size_t index) {
-    return this->sceneLights.at(index);
+void SceneLights::updateLight(Light &light) {
+    for (size_t i = 0; i < count; i ++) {
+        if (&sceneLights[i] == &light) {
+            sceneLights[i] = light;
+            return;
+        }
+    }
+}
+
+Light& SceneLights::getLight(const size_t index) {
+    return sceneLights[index];
 }

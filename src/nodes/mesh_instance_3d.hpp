@@ -8,7 +8,10 @@ private:
     MeshID mesh = 0;
 
 public:
-    MeshInstance3D() = default;
+    MeshInstance3D() {
+        this->setName("MeshInstance3D");
+    }
+
     explicit MeshInstance3D(const std::string& name);
 
     void setMesh(MeshID mesh);

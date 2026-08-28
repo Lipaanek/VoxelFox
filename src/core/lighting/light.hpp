@@ -16,14 +16,19 @@ struct Light {
 
 class SceneLights {
 private:
-    std::vector<Light> sceneLights;
     static constexpr int kMaxLights = 8;
+    std::array<Light, kMaxLights> sceneLights;
+    size_t count = 0;
+
 public:
     SceneLights() = default;
     ~SceneLights() = default;
 
     size_t addLight(const Light& light);
+    void removeLight(const Light& light);
+    void updateLight(Light& light);
+
     void clear();
-    void uploadLights(ShaderProgram& program);
+    void uploadLights(ShaderProgram& program) const;
     Light& getLight(size_t index);
 };

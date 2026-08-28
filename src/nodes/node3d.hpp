@@ -8,7 +8,10 @@
 
 class Node3D : public Node {
 public:
-    Node3D() = default;
+    Node3D() {
+        this->setName("Node3D");
+    }
+
     ~Node3D() override = default;
 
     explicit Node3D(const std::string& name);

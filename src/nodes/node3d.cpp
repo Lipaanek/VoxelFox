@@ -30,3 +30,15 @@ void Node3D::setScale(const glm::vec3 &scale) {
 void Node3D::setRotation(const glm::quat &rotation) {
     this->transform.rotation = rotation;
 }
+
+glm::vec3 Node3D::getPosition() const {
+    return this->transform.position;
+}
+
+glm::quat Node3D::getRotation() const {
+    return this->transform.rotation;
+}
+
+glm::vec3 Node3D::getScale() const {
+    return this->transform.scale;
+}

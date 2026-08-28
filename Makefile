@@ -59,6 +59,7 @@ SRCS = \
 	src/nodes/mesh_instance_3d.cpp \
 	src/nodes/node3d.cpp \
 	src/nodes/node.cpp \
+	src/nodes/light_3d.cpp \
 
 OBJS = $(SRCS:src/%.cpp=$(OBJDIR)/%.o)
 

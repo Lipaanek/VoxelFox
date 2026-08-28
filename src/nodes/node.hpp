@@ -12,11 +12,14 @@ class Scene;
 
 class Node {
 public:
-    Node() = default;
+    Node() {
+        this->setName("Node");
+    }
+
     virtual ~Node() = default;
 
     virtual void onTreeEnter(Scene* newScene) {}
-    //virtual void onTreeExit(Scene* scene);
+    virtual void onTreeExit(Scene* currentScene) {}
 
     void addChild(std::unique_ptr<Node> child) {
         if (!child) {

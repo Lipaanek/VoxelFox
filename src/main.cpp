@@ -9,6 +9,7 @@
 #include "core/input/input_system.hpp"
 #include "core/model_loading/obj_loader.hpp"
 #include "core/scripting/lua_engine.hpp"
+#include "nodes/light_3d.hpp"
 #include "nodes/mesh_instance_3d.hpp"
 #include "nodes/node3d.hpp"
 
@@ -54,6 +55,13 @@ int main() {
     // Make nodes
     auto root = std::make_unique<Node3D>();
     auto mesh = std::make_unique<MeshInstance3D>();
+    auto light = std::make_unique<Light3D>();
+
+    light->setLightPosition({0.0, 0.0, 0.0});
+    light->setEnergy(5.0f);
+    light->setLightType(LightType::Directional);
+    light->setLightDirection({70.0f, 0.0f, 0.0f});
+
     mesh->setName("studanka");
 
     // Load mesh
@@ -68,6 +76,7 @@ int main() {
 
     // Setup mesh and add node to tree
     mesh->setMesh(id);
+    mesh->addChild(std::move(light));
     root->addChild(std::move(mesh));
 
     // Set the tree root
