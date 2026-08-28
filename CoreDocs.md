@@ -1,5 +1,27 @@
 # Rendering & Render Pipeline
 
+## GLSL & Shaders
+**What does `shader.vert` mean?**
+Vertex shader handles the vertex transformations.
+
+**What does `shader.frag` mean?**
+Fragment shader handles pixel colors.
+
+This project uses GLSL (Graphics Library Shading Language) for shaders.
+
+## Data layout
+Each `layout(location = N) in <type> <name>` in GLSL maps 1:1 to a VertexAttribute:
+
+(Source: `3d_scene.vert`)
+```glsl
+layout (location = 0) in vec3 aPos; // -> { location: 0, size: 3, type: GL_GLOAT, offset: offsetof(Vertex, position) }
+layout (location = 1) in vec3 aNormal; // -> { location: 1, size: 3, type: GL_GLOAT, offset: offsetof(Vertex, normal) }
+layout (location = 2) in vec2 aTexCoord; // -> { location: 2, size: 2, type: GL_GLOAT, offset: offsetof(Vertex, texCoord) }
+layout (location = 3) in vec3 aColor; // -> { location: 3, size: 3, type: GL_GLOAT, offset: offsetof(Vertex, color) }
+```
+
+## Pipeline
+
 First you create shader program
 ```cpp
 ShaderProgram program;
@@ -82,6 +104,8 @@ For our example, we will set camera `view` and camera `projection` matrix and ca
 ctx.program.setUniform("u_view", ctx.camera.getViewMatrix());
 ctx.program.setUniform(
         "u_projection", 
+        
+        // getProjectionMatrix() is perspective-only
         ctx.camera.getProjectionMatrix(ctx.window.getAspect())
 );
 
@@ -90,13 +114,42 @@ ctx.program.setUniform("u_cameraPos", ctx.camera.getPosition());
 > [!NOTE]
 > Shader for 3D space in VoxelFox also uploads lights in similar way.
 
+> [!IMPORTANT]
+> The uniform name must match the uniform name declared in the GLSL shader source.
+
 And also set uniform for the mesh's matrix we want to render:
 ```cpp
 ctx.program.setUniform("u_model", meshInstance->getGlobalMatrix());
 ```
+Then we have to upload data to all the object buffers we created earlier via `upload` method.
+(Uploading is done in `mesh.cpp` in method `setup`)
+```cpp
+vao.bind();
+
+// Vertices
+vbo.upload(this->vertices.data(), this->vertices.size() * sizeof(Vertex));
+
+// Indices
+ebo.upload(this->indices.data(), this->indices.size() * sizeof(GLuint));
+```
+And then also upload the layout of the data:
+```cpp
+// In-engine example
+Layout layout3D = {
+    {
+        { 0, 3, GL_FLOAT, offsetof(Vertex, position) },
+        { 1, 3, GL_FLOAT, offsetof(Vertex, normal) },
+        { 2, 2, GL_FLOAT, offsetof(Vertex, texCoord) },
+        { 3, 3, GL_FLOAT, offsetof(Vertex, color) },
+    }, sizeof(Vertex)
+};
+
+layout3D.upload();
+```
+
 Then call `render` on the mesh itself.
 ```cpp
-void Mesh::render(const ShaderProgram& program) {
+void Mesh::render(const ShaderProgram& program) const {
     program.use();
     vao.bind();
 
@@ -104,4 +157,4 @@ void Mesh::render(const ShaderProgram& program) {
 }
 ```
 > [!TIP]
-> To see whole implementation of rendering nodes and meshes, visit `mesh_renderer.cpp`
+> To see whole implementation of rendering nodes and meshes, visit `mesh_renderer.cpp` and `mesh.cpp`
