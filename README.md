@@ -39,7 +39,4 @@ For additional build information and downloadable releases, visit the [Releases]
 
 ![GitHub tag](https://img.shields.io/github/v/tag/Lipaanek/VoxelFox)
 
-<img width=100% alt="3D Render of a well" src="https://github.com/user-attachments/assets/7116ef54-5507-429d-846f-8bba72a02cc1" />
-
-> [!NOTE]
-> The current state of the project may differ significantly from what is shown in the images above. The screenshots represent an earlier stage of development.
+<img width=100% alt="Current state of the game engine." src="https://github.com/user-attachments/assets/dd0714ae-c6f2-40a4-9af9-1eb7b2babd8c" />
