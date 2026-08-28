@@ -35,7 +35,7 @@ make
 For additional build information and downloadable releases, visit the [Releases](https://github.com/Lipaanek/VoxelFox/releases) page.
 
 > [!NOTE]
-> A precompiled `.exe` is not currently available. Precompiled binaries are planned for a future release.
+> A precompiled `.exe` is currently available in the latest release.
 
 ![GitHub tag](https://img.shields.io/github/v/tag/Lipaanek/VoxelFox)
 
