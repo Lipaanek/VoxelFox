@@ -26,10 +26,13 @@ If you use VoxelFox in your game, **a credit is always appreciated**. Feel free 
 
 ## How to Download VoxelFox
 
-To build VoxelFox from source, run the following command from the project root:
-
+To build VoxelFox from source and also execute it, run the following command from the project root:
 ```bash
-make
+make run
+```
+To build and run tests, run the following command from the project root:
+```bash
+make test
 ```
 
 For additional build information and downloadable releases, visit the [Releases](https://github.com/Lipaanek/VoxelFox/releases) page.
