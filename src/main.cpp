@@ -12,14 +12,14 @@
 #include "nodes/light_3d.hpp"
 #include "nodes/mesh_instance_3d.hpp"
 #include "nodes/node3d.hpp"
+#include "nodes/voxel.hpp"
 
 std::unique_ptr<Environment> currentEnvironment;
 
 int main() {
     Window window("VoxelFox", 1920, 1080);
 
-    MeshManager meshManager;
-    MeshRenderer meshRenderer(meshManager);
+    MeshRenderer meshRenderer;
 
     // Setup editor
     SceneManager sceneManager(window, meshRenderer);
@@ -56,6 +56,7 @@ int main() {
     auto root = std::make_unique<Node3D>();
     auto mesh = std::make_unique<MeshInstance3D>();
     auto light = std::make_unique<Light3D>();
+    auto voxel = std::make_unique<Voxel>();
 
     light->setLightPosition({0.0, 0.0, 0.0});
     light->setEnergy(5.0f);
@@ -72,12 +73,16 @@ int main() {
     );
 
     // Register mesh (better for sharing the same meshes)
-    MeshID id = meshManager.add(meshData);
+    MeshID id = scene->getMeshManager().add(meshData);
+
+    voxel->setSize(1.0f);
+    voxel->setPosition({ 5.0f, 0.5f, 1.0f });
 
     // Setup mesh and add node to tree
     mesh->setMesh(id);
     mesh->addChild(std::move(light));
     root->addChild(std::move(mesh));
+    root->addChild(std::move(voxel));
 
     // Set the tree root
     scene->setRoot(std::move(root));

@@ -8,12 +8,31 @@
 #include "lua_script.hpp"
 #include "../util/util.hpp"
 
+static int luaPrint(lua_State* L) {
+    const int n = lua_gettop(L);
+    std::string output;
+    for (int i = 1; i <= n; i++) {
+        if (i > 1) output += '\t';
+        size_t len;
+        if (const char* s = lua_tolstring(L, i, &len)) {
+            output.append(s, len);
+        } else {
+            output += "(nil)";
+        }
+    }
+    Util::Log::log(output);
+    return 0;
+}
+
 LuaEngine::LuaEngine() {
     this->L = luaL_newstate();
     if (!this->L)
         throw std::runtime_error("Failed to create Lua state");
 
     luaL_openlibs(this->L);
+
+    lua_pushcfunction(this->L, luaPrint);
+    lua_setglobal(this->L, "print");
 }
 
 LuaEngine::~LuaEngine() {
@@ -64,6 +83,7 @@ void LuaEngine::runUpdate(const float dt) const {
 }
 
 void LuaEngine::runReady() const {
+    Util::Log::log("Called ready");
     for (const auto& script : this->scripts_) {
         script->ready();
     }

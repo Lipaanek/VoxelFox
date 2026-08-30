@@ -1,27 +1,26 @@
 #pragma once
 
-#include "node3d.hpp"
+#include "mesh_instance_3d.hpp"
 #include <glm/glm.hpp>
-#include "../core/renderer/mesh/mesh.hpp"
 #include "../core/renderer/mesh/mesh_data.hpp"
+#include "core/renderer/mesh/mesh_manager.hpp"
 
-class Voxel : public Node3D {
+class Voxel : public MeshInstance3D {
 private:
     float size = 1.0f;
     glm::vec3 color { 1.0f };
-    std::vector<glm::vec3> vertexColors;
-    Mesh mesh;
+    using MeshInstance3D::setMesh;
 
 public:
     Voxel();
     explicit Voxel(const std::string& name);
-    ~Voxel() override = default;
+    ~Voxel() override;
+
+    void onTreeEnter(Scene *newScene) override;
+    void onTreeExit(Scene *currentScene) override;
 
     [[nodiscard]] MeshData buildMeshData() const;
-    void setup();
-    void draw(const ShaderProgram&) const;
 
     void setSize(float size);
     void setColor(glm::vec3 color);
-    void setVertexColors(const std::vector<glm::vec3>& colors);
 };

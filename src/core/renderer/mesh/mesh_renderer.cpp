@@ -3,9 +3,6 @@
 #include "../../../nodes/mesh_instance_3d.hpp"
 #include "../../util/util.hpp"
 
-MeshRenderer::MeshRenderer(MeshManager &meshManager)
-    : meshManager(meshManager) {}
-
 void MeshRenderer::render(const RenderContext& ctx, Scene& scene) const {
     this->uploadLights(ctx, scene);
 
@@ -16,18 +13,18 @@ void MeshRenderer::render(const RenderContext& ctx, Scene& scene) const {
 
     ctx.program.setUniform("u_cameraPos", ctx.camera.getPosition());
 
-    this->renderNode(ctx, *scene.getRoot());
+    this->renderNode(ctx, *scene.getRoot(), scene);
 }
 
-void MeshRenderer::renderNode(const RenderContext& ctx, const Node& node) const
+void MeshRenderer::renderNode(const RenderContext& ctx, const Node& node, Scene& scene) const
 {
     if (const auto* meshInstance =
             dynamic_cast<const MeshInstance3D*>(&node))
     {
         const MeshID meshID = meshInstance->getMesh();
 
-        if (meshID != -1) {
-            const Mesh& mesh = this->meshManager.get(meshID);
+        if (meshID != static_cast<MeshID>(-1)) {
+            const Mesh& mesh = scene.getMeshManager().get(meshID);
 
             ctx.program.setUniform(
                 "u_model",
@@ -39,7 +36,7 @@ void MeshRenderer::renderNode(const RenderContext& ctx, const Node& node) const
     }
 
     for (const auto& child : node.getChildren()) {
-        this->renderNode(ctx, *child);
+        this->renderNode(ctx, *child, scene);
     }
 }
 

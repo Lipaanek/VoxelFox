@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <format>
 #include <vector>
 
 namespace Util {
@@ -11,8 +12,10 @@ namespace File {
     std::string read(const std::string& path) {
         std::ifstream file(path);
 
-        if (!file.is_open())
+        if (!file.is_open()) {
+            Util::Log::error(std::format("Cannot open file: {}", path));
             return "";
+        }
 
         std::stringstream buffer;
         buffer << file.rdbuf();

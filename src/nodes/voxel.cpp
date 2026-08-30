@@ -2,6 +2,8 @@
 
 #include <iterator>
 
+#include "core/scene/scene.hpp"
+
 namespace {
 
 constexpr int kVerticesPerFace = 4;
@@ -42,11 +44,35 @@ const glm::vec2 kUvData[kVerticesPerFace] = {
 }
 
 Voxel::Voxel() {
-    this->setName("Voxel");
+    this->name = "Voxel";
 }
 
-Voxel::Voxel(const std::string &name) {
-    this->setName(name);
+Voxel::Voxel(const std::string &name) : MeshInstance3D(name) {
+    if (auto* scene = this->getScene()) {
+        const MeshID id = scene->getMeshManager().add(buildMeshData());
+        setMesh(id);
+    }
+}
+
+void Voxel::onTreeEnter(Scene *newScene) {
+    if (this->getMesh() != static_cast<MeshID>(-1)) return;
+
+    const MeshID id = newScene->getMeshManager().add(buildMeshData());
+    setMesh(id);
+}
+
+void Voxel::onTreeExit(Scene *currentScene) {
+    MeshID id = this->getMesh();
+    if (id != static_cast<MeshID>(-1))
+        currentScene->getMeshManager().remove(id);
+}
+
+Voxel::~Voxel() {
+    if (auto* scene = this->getScene()) {
+        MeshID id = this->getMesh();
+        if (id != static_cast<MeshID>(-1))
+            scene->getMeshManager().remove(id);
+    }
 }
 
 MeshData Voxel::buildMeshData() const {
@@ -55,31 +81,33 @@ MeshData Voxel::buildMeshData() const {
     data.vertices.reserve(kVertexCount);
     data.indices.assign(std::begin(kIndicesData), std::end(kIndicesData));
 
-    const bool perVertex = vertexColors.size() == kVertexCount;
-
     for (int face = 0; face < kFaces; ++face) {
         for (int i = 0; i < kVerticesPerFace; ++i) {
-            glm::vec3 vertexColor = perVertex ? vertexColors[data.vertices.size()] : color;
             data.vertices.emplace_back(
-                getPosition() + size * kCubeCorners[face][i],
+                size * kCubeCorners[face][i],
                 kCubeNormals[face],
                 kUvData[i],
-                vertexColor);
+                color);
         }
     }
 
     return data;
 }
 
-void Voxel::setup() {
-    mesh.setData(buildMeshData());
-    mesh.setup();
+void Voxel::setSize(float size) {
+    this->size = size;
+    if (auto* scene = this->getScene()) {
+        MeshID id = this->getMesh();
+        if (id != static_cast<MeshID>(-1))
+            scene->getMeshManager().update(id, buildMeshData());
+    }
 }
 
-void Voxel::draw(const ShaderProgram& program) const {
-    mesh.render(program);
+void Voxel::setColor(glm::vec3 color) {
+    this->color = color;
+    if (auto* scene = this->getScene()) {
+        MeshID id = this->getMesh();
+        if (id != static_cast<MeshID>(-1))
+            scene->getMeshManager().update(id, buildMeshData());
+    }
 }
-
-void Voxel::setSize(float size) { this->size = size; }
-void Voxel::setColor(glm::vec3 color) { this->color = color; }
-void Voxel::setVertexColors(const std::vector<glm::vec3>& colors) { this->vertexColors = colors; }

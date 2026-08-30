@@ -35,6 +35,7 @@ public:
     }
 
     void ready() {
+        Util::Log::log("Ready scene");
         onReady();
         lua_.runReady();
     }

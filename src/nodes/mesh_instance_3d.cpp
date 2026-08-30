@@ -13,5 +13,5 @@ MeshID MeshInstance3D::getMesh() const {
 }
 
 MeshInstance3D::MeshInstance3D(const std::string &name) {
-    
+    this->setName(name);
 }

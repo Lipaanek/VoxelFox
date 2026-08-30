@@ -5,7 +5,7 @@
 
 class MeshInstance3D : public Node3D {
 private:
-    MeshID mesh = 0;
+    MeshID mesh = static_cast<MeshID>(-1);
 
 public:
     MeshInstance3D();
