@@ -1,4 +1,4 @@
-#version 330 core
+#version 430 core
 #define MAX_LIGHTS 8
 
 in vec3 vColor;

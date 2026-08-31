@@ -2,46 +2,69 @@
 
 #include "../../../nodes/mesh_instance_3d.hpp"
 #include "../../util/util.hpp"
+#include "../../util/frustum_culling.hpp"
 
-void MeshRenderer::render(const RenderContext& ctx, Scene& scene) const {
+void MeshRenderer::render(const RenderContext& ctx, Scene& scene) {
     this->uploadLights(ctx, scene);
 
     ctx.program.setUniform("u_view", ctx.camera.getViewMatrix());
     ctx.program.setUniform("u_projection", ctx.camera.getProjectionMatrix(
         ctx.window.getAspect())
-        );
+    );
 
     ctx.program.setUniform("u_cameraPos", ctx.camera.getPosition());
 
-    this->renderNode(ctx, *scene.getRoot(), scene);
+    this->collectMeshes(ctx, *scene.getRoot(), scene);
+
+    for (const auto& [meshID, renderInstances] : this->instances) {
+        if (renderInstances.empty()) continue;
+
+        const Mesh& mesh = scene.getMeshManager().get(meshID);
+
+        this->instanceBuffer.upload(
+            renderInstances.data(),
+            static_cast<GLsizeiptr>(
+                renderInstances.size() *
+                sizeof(RenderInstance)
+            ),
+            GL_DYNAMIC_DRAW
+        );
+
+        ctx.program.setStorageBuffer(0, instanceBuffer);
+
+        mesh.renderInstanced(
+            ctx.program,
+            static_cast<GLsizei>(
+                renderInstances.size()
+            )
+        );
+    }
+
+    this->instances.clear();
 }
 
-void MeshRenderer::renderNode(const RenderContext& ctx, const Node& node, Scene& scene) const
-{
-    if (const auto* meshInstance =
-            dynamic_cast<const MeshInstance3D*>(&node))
-    {
-        const MeshID meshID = meshInstance->getMesh();
+void MeshRenderer::collectMeshes(const RenderContext& ctx, const Node& node, Scene& scene) {
+    if (const auto* meshInstance = dynamic_cast<const MeshInstance3D*>(&node)) {
+        if (const MeshID meshID = meshInstance->getMesh(); meshID != static_cast<MeshID>(-1)) {
+            const glm::mat4 transform = meshInstance->getGlobalMatrix();
 
-        if (meshID != static_cast<MeshID>(-1)) {
-            const Mesh& mesh = scene.getMeshManager().get(meshID);
+            if (isOnFrustum(ctx.camFrustum, transform, meshInstance->getBoundingSphere())) {
+                RenderInstance instance {};
+                instance.transform = transform;
+                instance.color = glm::vec4(meshInstance->getColor(), 1.0);
 
-            ctx.program.setUniform(
-                "u_model",
-                meshInstance->getGlobalMatrix()
-            );
-
-            mesh.render(ctx.program);
+                this->instances[meshID].push_back(instance);
+            }
         }
     }
 
     for (const auto& child : node.getChildren()) {
-        this->renderNode(ctx, *child, scene);
+        collectMeshes(ctx, *child, scene);
     }
 }
 
 void MeshRenderer::uploadLights(const RenderContext& ctx, Scene &scene) const {
-    Lighting lighting = scene.getLighting();
+    const Lighting lighting = scene.getLighting();
 
     lighting.lights.uploadLights(ctx.program);
 

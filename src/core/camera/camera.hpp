@@ -16,6 +16,8 @@ public:
     ~Camera() = default;
 
     [[nodiscard]] glm::vec3 getFront() const;
+    [[nodiscard]] glm::vec3 getRight() const;
+    [[nodiscard]] glm::vec3 getUp() const;
     [[nodiscard]] glm::mat4 getViewMatrix() const;
     [[nodiscard]] glm::mat4 getProjectionMatrix(float aspect) const;
 

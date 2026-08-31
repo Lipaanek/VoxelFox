@@ -1,4 +1,6 @@
 #include "mesh.hpp"
+
+#include <utility>
 #include "../../util/util.hpp"
 #include "../shader_program.hpp"
 
@@ -16,17 +18,24 @@ void Mesh::setup() const {
     this->layout3D.upload();
 }
 
+void Mesh::renderInstanced(const ShaderProgram &program, GLsizei instanceCount) const {
+    program.use();
+
+    vao.bind();
+    glDrawElementsInstanced(GL_TRIANGLES,static_cast<GLsizei>(indices.size()),GL_UNSIGNED_INT,nullptr,instanceCount);
+}
+
 void Mesh::setData(const MeshData& data) {
     this->vertices = data.vertices;
     this->indices = data.indices;
 }
 
 void Mesh::setVertices(std::vector<Vertex> vertices) {
-    this->vertices = vertices;
+    this->vertices = std::move(vertices);
 }
 
 void Mesh::setIndices(std::vector<GLuint> indices) {
-    this->indices = indices;
+    this->indices = std::move(indices);
 }
 
 void Mesh::render(const ShaderProgram& program) const {

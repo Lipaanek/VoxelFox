@@ -22,5 +22,4 @@ public:
     [[nodiscard]] MeshData buildMeshData() const;
 
     void setSize(float size);
-    void setColor(glm::vec3 color);
 };

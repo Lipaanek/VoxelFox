@@ -56,7 +56,6 @@ int main() {
     auto root = std::make_unique<Node3D>();
     auto mesh = std::make_unique<MeshInstance3D>();
     auto light = std::make_unique<Light3D>();
-    auto voxel = std::make_unique<Voxel>();
 
     light->setLightPosition({0.0, 0.0, 0.0});
     light->setEnergy(5.0f);
@@ -73,26 +72,45 @@ int main() {
     );
 
     // Register mesh (better for sharing the same meshes)
-    MeshID id = scene->getMeshManager().add(meshData);
+    MeshResult res = scene->getMeshManager().add(meshData);
 
-    voxel->setSize(1.0f);
-    voxel->setPosition({ 5.0f, 0.5f, 1.0f });
+    // ! Test for rendering and instancing
+    // constexpr int voxelCount = 10'000;
+    // constexpr float voxelSize = 1.0f;
+    // constexpr int gridSize = 22;
+    //
+    // for (int i = 0; i < voxelCount; ++i) {
+    //     auto voxel = std::make_unique<Voxel>();
+    //
+    //     int x = i % gridSize;
+    //     int y = (i / gridSize) % gridSize;
+    //     int z = i / (gridSize * gridSize);
+    //
+    //     voxel->setSize(voxelSize);
+    //     voxel->setPosition({
+    //         static_cast<float>(x),
+    //         static_cast<float>(y),
+    //         static_cast<float>(z)
+    //     });
+    //
+    //     root->addChild(std::move(voxel));
+    // }
 
     // Setup mesh and add node to tree
-    mesh->setMesh(id);
-    mesh->addChild(std::move(light));
+    mesh->setMesh(res.id, res.aabb);
+    root->addChild(std::move(light));
     root->addChild(std::move(mesh));
-    root->addChild(std::move(voxel));
 
     // Set the tree root
     scene->setRoot(std::move(root));
 
     // Test script attachment
     if (auto* wellMesh = scene->getRoot()->getChild("studanka")) {
-        auto res = wellMesh->setScript(
+        auto scriptRes = wellMesh->setScript(
             "assets/scripts/test_node_script.lua",
             {}
         );
+        Util::Log::scriptLoadLog(scriptRes);
     }
 
     currentEnvironment->setScene(std::move(scene));
@@ -111,11 +129,14 @@ int main() {
         // Clear screen from previous frame
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        Frustum camFrustum = createFrustumFromCamera(currentEnvironment->getCamera(), window.getAspect());
+
         // Render
         RenderContext ctx {
             .program = program,
             .camera = currentEnvironment->getCamera(),
-            .window = window
+            .window = window,
+            .camFrustum = camFrustum,
         };
         currentEnvironment->render(ctx);
 

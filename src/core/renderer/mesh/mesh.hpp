@@ -34,5 +34,6 @@ public:
     void setIndices(std::vector<GLuint> indices);
 
     void render(const ShaderProgram& program) const;
+    void renderInstanced(const ShaderProgram& program, GLsizei instanceCount) const;
     void setup() const;
 };

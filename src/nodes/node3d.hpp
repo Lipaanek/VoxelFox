@@ -22,6 +22,7 @@ public:
     [[nodiscard]] glm::vec3 getScale() const;
     [[nodiscard]] glm::quat getRotation() const;
     [[nodiscard]] Node3D* getParent() const override;
+    [[nodiscard]] Transform3D getTransform() const;
 
 protected:
     Transform3D transform;

@@ -48,31 +48,19 @@ Voxel::Voxel() {
 }
 
 Voxel::Voxel(const std::string &name) : MeshInstance3D(name) {
-    if (auto* scene = this->getScene()) {
-        const MeshID id = scene->getMeshManager().add(buildMeshData());
-        setMesh(id);
-    }
 }
 
 void Voxel::onTreeEnter(Scene *newScene) {
     if (this->getMesh() != static_cast<MeshID>(-1)) return;
 
-    const MeshID id = newScene->getMeshManager().add(buildMeshData());
-    setMesh(id);
+    const auto [id, aabb] = newScene->getMeshManager().getOrCreate(size, [this]() { return buildMeshData(); });
+    setMesh(id, aabb);
 }
 
 void Voxel::onTreeExit(Scene *currentScene) {
-    MeshID id = this->getMesh();
-    if (id != static_cast<MeshID>(-1))
-        currentScene->getMeshManager().remove(id);
 }
 
 Voxel::~Voxel() {
-    if (auto* scene = this->getScene()) {
-        MeshID id = this->getMesh();
-        if (id != static_cast<MeshID>(-1))
-            scene->getMeshManager().remove(id);
-    }
 }
 
 MeshData Voxel::buildMeshData() const {
@@ -87,7 +75,8 @@ MeshData Voxel::buildMeshData() const {
                 size * kCubeCorners[face][i],
                 kCubeNormals[face],
                 kUvData[i],
-                color);
+                glm::vec3(1.0f)
+            );
         }
     }
 
@@ -97,17 +86,7 @@ MeshData Voxel::buildMeshData() const {
 void Voxel::setSize(float size) {
     this->size = size;
     if (auto* scene = this->getScene()) {
-        MeshID id = this->getMesh();
-        if (id != static_cast<MeshID>(-1))
-            scene->getMeshManager().update(id, buildMeshData());
-    }
-}
-
-void Voxel::setColor(glm::vec3 color) {
-    this->color = color;
-    if (auto* scene = this->getScene()) {
-        MeshID id = this->getMesh();
-        if (id != static_cast<MeshID>(-1))
-            scene->getMeshManager().update(id, buildMeshData());
+        const auto [id, aabb] = scene->getMeshManager().getOrCreate(size, [this]() { return buildMeshData(); });
+        setMesh(id, aabb);
     }
 }

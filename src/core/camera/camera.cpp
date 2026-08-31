@@ -11,6 +11,18 @@ glm::vec3 Camera::getFront() const {
     return front;
 }
 
+glm::vec3 Camera::getRight() const {
+    return glm::normalize(
+        glm::cross(getFront(), glm::vec3(0.0f, 1.0f, 0.0f))
+    );
+}
+
+glm::vec3 Camera::getUp() const {
+    return glm::normalize(
+        glm::cross(getRight(), getFront())
+    );
+}
+
 glm::mat4 Camera::getViewMatrix() const {
     return glm::lookAt(this->position, this->position + this->getFront(), glm::vec3(0.0f, 1.0f, 0.0f));
 }

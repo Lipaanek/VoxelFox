@@ -12,6 +12,10 @@ Node3D* Node3D::getParent() const {
     return dynamic_cast<Node3D*>(parent);
 }
 
+Transform3D Node3D::getTransform() const {
+    return this->transform;
+}
+
 glm::mat4 Node3D::getGlobalMatrix() const {
     if (const Node3D* parent3D = getParent())
         return parent3D->getGlobalMatrix() * getLocalMatrix();
