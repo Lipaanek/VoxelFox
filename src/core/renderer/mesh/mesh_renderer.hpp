@@ -21,4 +21,7 @@ public:
     void uploadLights(const RenderContext& ctx, Scene &scene) const;
     void collectMeshes(const RenderContext& ctx, const Node& node, Scene& scene);
 
+private:
+    void collectUnchunked(const RenderContext& ctx, const Node& node, Scene& scene, const ChunkManager& chunkManager);
+
 };

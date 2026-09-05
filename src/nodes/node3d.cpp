@@ -29,14 +29,17 @@ glm::mat4 Node3D::getLocalMatrix() const {
 
 void Node3D::setPosition(const glm::vec3& position) {
     this->transform.position = position;
+    this->transform.dirty = true;
 }
 
 void Node3D::setScale(const glm::vec3 &scale) {
     this->transform.scale = scale;
+    this->transform.dirty = true;
 }
 
 void Node3D::setRotation(const glm::quat &rotation) {
     this->transform.rotation = rotation;
+    this->transform.dirty = true;
 }
 
 glm::vec3 Node3D::getPosition() const {

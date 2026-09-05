@@ -8,6 +8,7 @@ struct Transform3D {
     glm::vec3 position {0.0f};
     glm::vec3 scale {1.0f};
     glm::quat rotation {1.0f, 0.0f, 0.0f, 0.0f};
+    mutable bool dirty = true;
 
     [[nodiscard]]
     glm::mat4 getMatrix() const {

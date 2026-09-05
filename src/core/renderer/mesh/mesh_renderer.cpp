@@ -44,22 +44,45 @@ void MeshRenderer::render(const RenderContext& ctx, Scene& scene) {
 }
 
 void MeshRenderer::collectMeshes(const RenderContext& ctx, const Node& node, Scene& scene) {
+    auto& chunkManager = scene.getChunkManager();
+    const auto visibleChunks = chunkManager.getVisibleChunks(ctx.camFrustum);
+
+    for (const auto& chunkData : visibleChunks) {
+        for (auto* meshInstance : chunkData.objects) {
+            if (const MeshID meshID = meshInstance->getMesh(); meshID != static_cast<MeshID>(-1)) {
+                const glm::mat4 transform = meshInstance->getGlobalMatrix();
+
+                if (test_sphere_against_frustum(ctx.camFrustum, meshInstance->getGlobalBoundingSphere())) {
+                    RenderInstance instance {};
+                    instance.transform = transform;
+                    instance.color = glm::vec4(meshInstance->getColor(), 1.0);
+                    this->instances[meshID].push_back(instance);
+                }
+            }
+        }
+    }
+
+    collectUnchunked(ctx, node, scene, chunkManager);
+}
+
+void MeshRenderer::collectUnchunked(const RenderContext& ctx, const Node& node, Scene& scene, const ChunkManager& chunkManager) {
     if (const auto* meshInstance = dynamic_cast<const MeshInstance3D*>(&node)) {
         if (const MeshID meshID = meshInstance->getMesh(); meshID != static_cast<MeshID>(-1)) {
-            const glm::mat4 transform = meshInstance->getGlobalMatrix();
+            if (!chunkManager.isRegistered(meshInstance)) {
+                const glm::mat4 transform = meshInstance->getGlobalMatrix();
 
-            if (isOnFrustum(ctx.camFrustum, transform, meshInstance->getBoundingSphere())) {
-                RenderInstance instance {};
-                instance.transform = transform;
-                instance.color = glm::vec4(meshInstance->getColor(), 1.0);
-
-                this->instances[meshID].push_back(instance);
+                if (test_sphere_against_frustum(ctx.camFrustum, meshInstance->getGlobalBoundingSphere())) {
+                    RenderInstance instance {};
+                    instance.transform = transform;
+                    instance.color = glm::vec4(meshInstance->getColor(), 1.0);
+                    this->instances[meshID].push_back(instance);
+                }
             }
         }
     }
 
     for (const auto& child : node.getChildren()) {
-        collectMeshes(ctx, *child, scene);
+        collectUnchunked(ctx, *child, scene, chunkManager);
     }
 }
 

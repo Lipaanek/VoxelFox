@@ -126,3 +126,48 @@ inline bool isOnFrustum(const Frustum& frustum, const glm::mat4& model, const Bo
     return true;
 }
 
+inline bool test_sphere_against_frustum(
+    const Frustum& frustum,
+    const BoundingSphere& local_sphere,
+    const glm::mat4& model)
+{
+    const glm::vec3 center =
+        glm::vec3(model * glm::vec4(local_sphere.center, 1.0f));
+
+    const glm::vec3 scale = {
+        glm::length(glm::vec3(model[0])),
+        glm::length(glm::vec3(model[1])),
+        glm::length(glm::vec3(model[2]))
+    };
+
+    float radius =
+        local_sphere.radius *
+        glm::max(scale.x, glm::max(scale.y, scale.z));
+
+    for (const Plane& plane : frustum.planes)
+    {
+        float distance =
+            glm::dot(plane.normal, center) + plane.distance;
+
+        if (distance < -radius)
+            return false;
+    }
+
+    return true;
+}
+
+inline bool test_sphere_against_frustum(
+    const Frustum& frustum,
+    const BoundingSphere& world_sphere)
+{
+    for (const Plane& plane : frustum.planes) {
+        float distance =
+            glm::dot(plane.normal, world_sphere.center) + plane.distance;
+
+        if (distance < -world_sphere.radius)
+            return false;
+    }
+
+    return true;
+}
+

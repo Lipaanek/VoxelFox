@@ -51,6 +51,8 @@ SRCS = \
 	src/core/scripting/camera/lua_camera.cpp \
 	src/core/scripting/vector/lua_vector3.cpp \
 	src/core/util/util.cpp \
+	src/core/util/aabb.cpp \
+	src/core/util/chunk_manager.cpp \
 	src/core/lighting/light.cpp \
 	src/core/lighting/lighting.cpp \
 	src/core/model_loading/obj_loader.cpp \

@@ -6,6 +6,7 @@
 #include "../lighting/lighting.hpp"
 #include "../renderer/mesh/mesh_manager.hpp"
 #include "core/util/util.hpp"
+#include "../util/chunk_manager.hpp"
 
 class Scene {
 private:
@@ -13,6 +14,7 @@ private:
     Lighting lighting;
     MeshManager meshManager;
     LuaEngine lua_;
+    ChunkManager chunkManager;
 
 public:
     virtual ~Scene() = default;
@@ -23,19 +25,21 @@ public:
         if (root) {
             root->setScene(this);
         }
+
+        chunkManager.reset(16.0f);
     }
 
     Node* getRoot() const { return this->root.get(); }
 
     LuaEngine& lua() { return lua_; }
+    ChunkManager& getChunkManager() { return chunkManager; }
 
-    virtual void update(float dt) {
+    virtual void update(const float dt) {
         onUpdate(dt);
         lua_.runUpdate(dt);
     }
 
     void ready() {
-        Util::Log::log("Ready scene");
         onReady();
         lua_.runReady();
     }

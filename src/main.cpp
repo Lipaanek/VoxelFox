@@ -6,6 +6,7 @@
 #include "scene/basic_scene.hpp"
 #include "core/renderer/shader_program.hpp"
 #include "core/util/util.hpp"
+#include "core/util/chunk_manager.hpp"
 #include "core/input/input_system.hpp"
 #include "core/model_loading/obj_loader.hpp"
 #include "core/scripting/lua_engine.hpp"
@@ -21,7 +22,6 @@ int main() {
 
     MeshRenderer meshRenderer;
 
-    // Setup editor
     SceneManager sceneManager(window, meshRenderer);
     InputSystem input(window.getHandle());
     currentEnvironment = std::make_unique<Editor>(
@@ -30,12 +30,10 @@ int main() {
         input
     );
 
-    // Shader program and shader creation
     ShaderProgram program;
     Shader frag {"assets/shaders/3d_scene.frag", ShaderType::Fragment};
     Shader vert{"assets/shaders/3d_scene.vert", ShaderType::Vertex};
 
-    // Need to compile the shaders before linking
     frag.compile();
     vert.compile();
 
@@ -43,17 +41,13 @@ int main() {
         Util::Log::error("Failed to compile shaders");
         return 1;
     }
-        
-    // Attach and link programs
+
     program.attach(vert);
     program.attach(frag);
     program.link();
 
-    // Init scene
     std::unique_ptr<Scene> scene = std::make_unique<BasicScene>();
 
-    // Make nodes
-    auto root = std::make_unique<Node3D>();
     auto mesh = std::make_unique<MeshInstance3D>();
     auto light = std::make_unique<Light3D>();
 
@@ -64,17 +58,16 @@ int main() {
 
     mesh->setName("studanka");
 
-    // Load mesh
     ObjLoader loader;
     MeshData meshData = loader.Load(
         R"(C:\Users\lipov\Downloads\Studanka2\Studanka2.obj)",
         R"(C:\Users\lipov\Downloads\Studanka2\Studanka2.mtl)"
     );
 
-    // Register mesh (better for sharing the same meshes)
     MeshResult res = scene->getMeshManager().add(meshData);
 
-    // ! Test for rendering and instancing
+    scene->setRoot(std::make_unique<Node3D>());
+
     // constexpr int voxelCount = 10'000;
     // constexpr float voxelSize = 1.0f;
     // constexpr int gridSize = 22;
@@ -93,18 +86,15 @@ int main() {
     //         static_cast<float>(z)
     //     });
     //
-    //     root->addChild(std::move(voxel));
+    //     MeshInstance3D* voxelPtr = voxel.get();
+    //     scene->getRoot()->addChild(std::move(voxel));
+    //     scene->getChunkManager().registerNode(voxelPtr);
     // }
 
-    // Setup mesh and add node to tree
     mesh->setMesh(res.id, res.aabb);
-    root->addChild(std::move(light));
-    root->addChild(std::move(mesh));
+    scene->getRoot()->addChild(std::move(light));
+    scene->getRoot()->addChild(std::move(mesh));
 
-    // Set the tree root
-    scene->setRoot(std::move(root));
-
-    // Test script attachment
     if (auto* wellMesh = scene->getRoot()->getChild("studanka")) {
         auto scriptRes = wellMesh->setScript(
             "assets/scripts/test_node_script.lua",
@@ -124,14 +114,14 @@ int main() {
         auto dt = static_cast<float>(now - lastTime);
         lastTime = now;
 
+        //Util::Log::log(std::to_string(dt));
+
         currentEnvironment->update(dt);
 
-        // Clear screen from previous frame
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         Frustum camFrustum = createFrustumFromCamera(currentEnvironment->getCamera(), window.getAspect());
 
-        // Render
         RenderContext ctx {
             .program = program,
             .camera = currentEnvironment->getCamera(),
@@ -140,7 +130,6 @@ int main() {
         };
         currentEnvironment->render(ctx);
 
-        // Display frame
         window.present();
     }
 
