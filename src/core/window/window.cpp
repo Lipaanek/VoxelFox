@@ -3,7 +3,7 @@
 #include <cstdio>
 #include <stdexcept>
 
-Window::Window(const char* title, int width, int height) : width(width), height(height) {
+Window::Window(const WindowSettings &settings) : width(settings.width), height(settings.height) {
     if (!glfwInit())
         throw std::runtime_error("Failed to initialize GLFW");
 
@@ -13,11 +13,11 @@ Window::Window(const char* title, int width, int height) : width(width), height(
         this->height = mode->height;
     }
 
-    glfwSetErrorCallback([](int code, const char* desc) {
+    glfwSetErrorCallback([](const int code, const char* desc) {
         fprintf(stderr, "GLFW error %d: %s\n", code, desc);
     });
 
-    this->handle = glfwCreateWindow(width, height, title, nullptr, nullptr);
+    this->handle = glfwCreateWindow(width, height, settings.title, nullptr, nullptr);
 
     if (!this->handle) {
         glfwTerminate();
@@ -30,6 +30,9 @@ Window::Window(const char* title, int width, int height) : width(width), height(
         throw std::runtime_error("Failed to init glad");
 
     glEnable(GL_DEPTH_TEST);
+
+    // V-Sync
+    glfwSwapInterval(static_cast<int>(settings.vsync));
 }
 
 Window::~Window() {

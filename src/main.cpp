@@ -18,7 +18,14 @@
 std::unique_ptr<Environment> currentEnvironment;
 
 int main() {
-    Window window("VoxelFox", 1920, 1080);
+    WindowSettings settings {
+        .width = 1920,
+        .height = 1080,
+        .title = "VoxelFox",
+        .vsync = VSync::VSyncEnabled
+    };
+
+    Window window(settings);
 
     MeshRenderer meshRenderer;
 
@@ -132,6 +139,9 @@ int main() {
         double now = glfwGetTime();
         auto dt = static_cast<float>(now - lastTime);
         lastTime = now;
+
+        // FPS counter
+        // Util::Log::log(std::to_string(1 / dt));
 
         currentEnvironment->update(dt);
 
