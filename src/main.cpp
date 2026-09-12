@@ -13,6 +13,7 @@
 #include "nodes/mesh_instance_3d.hpp"
 #include "nodes/node3d.hpp"
 #include "nodes/voxel.hpp"
+#include "nodes/voxel_model.hpp"
 
 std::unique_ptr<Environment> currentEnvironment;
 
@@ -60,19 +61,26 @@ int main() {
     light->setLightPosition({0.0, 0.0, 0.0});
     light->setEnergy(5.0f);
     light->setLightType(LightType::Directional);
-    light->setLightDirection({70.0f, 0.0f, 0.0f});
+    light->setLightDirection({45.0f, 0.0f, 0.0f});
 
     mesh->setName("studanka");
 
     // Load mesh
     ObjLoader loader;
-    MeshData meshData = loader.Load(
+    MeshData wellMeshData = loader.Load(
         R"(C:\Users\lipov\Downloads\Studanka2\Studanka2.obj)",
         R"(C:\Users\lipov\Downloads\Studanka2\Studanka2.mtl)"
     );
 
+    MeshData preVoxelwellMesh = wellMeshData;
+
+    auto voxelModel = std::make_unique<VoxelModel>("Model", 0.1f);
+    voxelModel->voxelize(preVoxelwellMesh);
+
+    voxelModel->setPosition({ 5.0f, 0.0f, 0.0f });
+
     // Register mesh (better for sharing the same meshes)
-    MeshResult res = scene->getMeshManager().add(meshData);
+    MeshResult res = scene->getMeshManager().add(wellMeshData);
 
     // ! Test for rendering and instancing
     // constexpr int voxelCount = 10'000;
@@ -97,9 +105,10 @@ int main() {
     // }
 
     // Setup mesh and add node to tree
-    mesh->setMesh(res.id, res.aabb);
+    mesh->setMesh(res.id);
     root->addChild(std::move(light));
     root->addChild(std::move(mesh));
+    root->addChild(std::move(voxelModel));
 
     // Set the tree root
     scene->setRoot(std::move(root));
@@ -129,14 +138,12 @@ int main() {
         // Clear screen from previous frame
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        Frustum camFrustum = createFrustumFromCamera(currentEnvironment->getCamera(), window.getAspect());
 
         // Render
         RenderContext ctx {
             .program = program,
             .camera = currentEnvironment->getCamera(),
             .window = window,
-            .camFrustum = camFrustum,
         };
         currentEnvironment->render(ctx);
 

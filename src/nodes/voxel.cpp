@@ -37,7 +37,7 @@ constexpr GLuint kIndicesData[] = {
     20, 21, 22, 22, 23, 20,
 };
 
-const glm::vec2 kUvData[kVerticesPerFace] = {
+constexpr glm::vec2 kUvData[kVerticesPerFace] = {
     { 0.0f, 0.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f }, { 0.0f, 1.0f }
 };
 
@@ -53,15 +53,11 @@ Voxel::Voxel(const std::string &name) : MeshInstance3D(name) {
 void Voxel::onTreeEnter(Scene *newScene) {
     if (this->getMesh() != static_cast<MeshID>(-1)) return;
 
-    const auto [id, aabb] = newScene->getMeshManager().getOrCreate(size, [this]() { return buildMeshData(); });
-    setMesh(id, aabb);
+    const auto [id] = newScene->getMeshManager().getOrCreate(size, [this]() { return buildMeshData(); });
+    setMesh(id);
 }
 
-void Voxel::onTreeExit(Scene *currentScene) {
-}
-
-Voxel::~Voxel() {
-}
+Voxel::~Voxel() = default;
 
 MeshData Voxel::buildMeshData() const {
     MeshData data;
@@ -86,7 +82,8 @@ MeshData Voxel::buildMeshData() const {
 void Voxel::setSize(float size) {
     this->size = size;
     if (auto* scene = this->getScene()) {
-        const auto [id, aabb] = scene->getMeshManager().getOrCreate(size, [this]() { return buildMeshData(); });
-        setMesh(id, aabb);
+        const auto [id] = scene->getMeshManager().getOrCreate(size, [this]() { return buildMeshData(); });
+
+        setMesh(id);
     }
 }

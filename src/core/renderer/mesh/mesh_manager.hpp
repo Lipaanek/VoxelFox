@@ -4,14 +4,11 @@
 #include <functional>
 #include "mesh.hpp"
 #include "../shader_program.hpp"
-#include "../../../nodes/transform3d.hpp"
-#include "core/util/aabb.hpp"
 
 using MeshID = unsigned int;
 
 struct MeshResult {
     MeshID id;
-    AABB aabb;
 };
 
 class MeshManager {
@@ -23,8 +20,6 @@ private:
 public:
     MeshResult add(const MeshData &mesh);
     MeshResult getOrCreate(float size, const std::function<MeshData()>& factory);
-
-    AABB computeBoundingBox(const std::vector<Vertex>& vertices);
 
     void update(MeshID uid, const MeshData& data);
     void remove(MeshID uid);

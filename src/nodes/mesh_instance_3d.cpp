@@ -4,21 +4,8 @@ MeshInstance3D::MeshInstance3D() {
     this->setName("MeshInstance3D");
 }
 
-void MeshInstance3D::setMesh(MeshID mesh, AABB aabb) {
+void MeshInstance3D::setMesh(MeshID mesh) {
     this->mesh = mesh;
-
-    BoundingSphere sphere {};
-    sphere.center =
-        (aabb.min + aabb.max) * 0.5f;
-
-    sphere.radius =
-        glm::length(aabb.max - sphere.center);
-
-    this->sphere = sphere;
-}
-
-BoundingSphere MeshInstance3D::getBoundingSphere() const {
-    return this->sphere;
 }
 
 MeshID MeshInstance3D::getMesh() const {

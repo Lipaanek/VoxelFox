@@ -1,10 +1,8 @@
 #include "environment.hpp"
 
-#include "../input/input_system.hpp"
 #include "../renderer/render_context.hpp"
 #include "../scene/scene.hpp"
 #include "../scene/scene_manager.hpp"
-#include "../window/window.hpp"
 
 Environment::Environment(
     SceneManager& sceneManager,

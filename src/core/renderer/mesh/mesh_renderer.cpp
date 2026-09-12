@@ -2,7 +2,6 @@
 
 #include "../../../nodes/mesh_instance_3d.hpp"
 #include "../../util/util.hpp"
-#include "../../util/frustum_culling.hpp"
 
 void MeshRenderer::render(const RenderContext& ctx, Scene& scene) {
     this->uploadLights(ctx, scene);
@@ -45,16 +44,16 @@ void MeshRenderer::render(const RenderContext& ctx, Scene& scene) {
 
 void MeshRenderer::collectMeshes(const RenderContext& ctx, const Node& node, Scene& scene) {
     if (const auto* meshInstance = dynamic_cast<const MeshInstance3D*>(&node)) {
-        if (const MeshID meshID = meshInstance->getMesh(); meshID != static_cast<MeshID>(-1)) {
+        const MeshID meshID = meshInstance->getMesh();
+
+        if (meshID != static_cast<MeshID>(-1)) {
             const glm::mat4 transform = meshInstance->getGlobalMatrix();
 
-            if (isOnFrustum(ctx.camFrustum, transform, meshInstance->getBoundingSphere())) {
-                RenderInstance instance {};
-                instance.transform = transform;
-                instance.color = glm::vec4(meshInstance->getColor(), 1.0);
+            RenderInstance instance {};
+            instance.transform = transform;
+            instance.color = glm::vec4(meshInstance->getColor(), 1.0);
 
-                this->instances[meshID].push_back(instance);
-            }
+            this->instances[meshID].push_back(instance);
         }
     }
 

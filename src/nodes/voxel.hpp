@@ -3,7 +3,6 @@
 #include "mesh_instance_3d.hpp"
 #include <glm/glm.hpp>
 #include "../core/renderer/mesh/mesh_data.hpp"
-#include "core/renderer/mesh/mesh_manager.hpp"
 
 class Voxel : public MeshInstance3D {
 private:
@@ -17,7 +16,6 @@ public:
     ~Voxel() override;
 
     void onTreeEnter(Scene *newScene) override;
-    void onTreeExit(Scene *currentScene) override;
 
     [[nodiscard]] MeshData buildMeshData() const;
 

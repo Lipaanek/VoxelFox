@@ -56,6 +56,7 @@ SRCS = \
 	src/core/model_loading/obj_loader.cpp \
 	src/core/model_loading/voxelizer.cpp \
 	src/nodes/voxel.cpp \
+	src/nodes/voxel_model.cpp \
 	src/nodes/mesh_instance_3d.cpp \
 	src/nodes/node3d.cpp \
 	src/nodes/node.cpp \
