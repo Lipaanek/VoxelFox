@@ -42,4 +42,4 @@ For additional build information and downloadable releases, visit the [Releases]
 
 ![GitHub tag](https://img.shields.io/github/v/tag/Lipaanek/VoxelFox)
 
-<img width=100% alt="Current state of the game engine." src="https://github.com/user-attachments/assets/dd0714ae-c6f2-40a4-9af9-1eb7b2babd8c" />
+<img width="100%" alt="Current state of the game engine." src="https://github.com/user-attachments/assets/f6f6987a-00de-466c-b09d-1ef0f525f947" />
