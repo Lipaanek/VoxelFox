@@ -9,6 +9,10 @@ Fragment shader handles pixel colors.
 
 This project uses GLSL (Graphics Library Shading Language) for shaders.
 
+The 3D renderer uploads instances through an SSBO using std430 layout. Keep the C++ `MeshRenderInstance` members in the same order as the GLSL `Instance`: `mat4 model` followed by `vec4 color`.
+
+Current 3D shading uses ambient hemisphere, diffuse, and Blinn-Phong specular lighting. It does not implement shadow mapping, so lights do not cast shadows or occlude other objects.
+
 ## Data layout
 Each `layout(location = N) in <type> <name>` in GLSL maps 1:1 to a VertexAttribute:
 

@@ -41,10 +41,14 @@ SRCS = \
 	src/core/renderer/mesh/mesh.cpp \
 	src/core/renderer/mesh/mesh_manager.cpp \
 	src/core/renderer/mesh/mesh_renderer.cpp \
+	src/core/renderer/ui/ui_renderer.cpp \
+    src/core/renderer/frame_data_collector.cpp \
+    src/core/renderer/renderer.cpp \
 	src/core/camera/camera.cpp \
 	src/core/input/action_map.cpp \
 	src/core/input/input_system.cpp \
 	src/core/scripting/lua_engine.cpp \
+	src/core/scripting/lua_api_registry.cpp \
 	src/core/scripting/lua_flags.cpp \
 	src/core/scripting/lua_script.cpp \
 	src/core/scripting/inputs/lua_input_bindings.cpp \
@@ -61,12 +65,19 @@ SRCS = \
 	src/nodes/node3d.cpp \
 	src/nodes/node.cpp \
 	src/nodes/light_3d.cpp \
+	src/nodes/ui/ui_node.cpp \
+	src/nodes/ui/ui_panel.cpp \
+	src/core/renderer/ui/ui_renderer.cpp \
 
 OBJS = $(SRCS:src/%.cpp=$(OBJDIR)/%.o)
 
 TEST_SRCS = \
 	tests/test_util.cpp \
 	tests/test_camera.cpp \
+	tests/test_frame_lighting_data.cpp \
+	tests/test_lua_api_registry.cpp \
+	tests/test_mesh_render_instance.cpp \
+	tests/test_voxel_normals.cpp \
 	tests/test_obj_loader.cpp \
 	tests/test_action_map.cpp \
 

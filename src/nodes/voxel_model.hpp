@@ -22,7 +22,6 @@ private:
 
     glm::ivec3 snapToGrid(glm::vec3 worldPos) const;
     VoxelHash computeHash(glm::ivec3 pos) const;
-    MeshData buildMeshData() const;
 
     glm::ivec3 worldToGrid(glm::vec3 position) const;
     glm::vec3 gridToWorld(glm::ivec3 position) const;
@@ -38,6 +37,7 @@ public:
     void bake();
 
     void voxelize(const MeshData& mesh);
+    [[nodiscard]] MeshData buildMeshData() const;
 
     void onTreeEnter(Scene* newScene) override;
 };

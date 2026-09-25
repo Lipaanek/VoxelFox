@@ -1,9 +1,9 @@
 #version 430 core
 
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aNormal;
-layout (location = 2) in vec2 aTexCoord;
-layout (location = 3) in vec3 aColor;
+layout (location = 0) in vec3 a_pos;
+layout (location = 1) in vec3 a_normal;
+layout (location = 2) in vec2 a_texCoord;
+layout (location = 3) in vec3 a_color;
 
 uniform mat4 u_view;
 uniform mat4 u_projection;
@@ -26,10 +26,10 @@ void main() {
 
     mat4 model = instance.model;
 
-    vec4 worldPos = model * vec4(aPos, 1.0);
+    vec4 worldPos = model * vec4(a_pos, 1.0);
     gl_Position = u_projection * u_view * worldPos;
 
     vWorldPos = worldPos.xyz;
-    vNormal = normalize(transpose(inverse(mat3(model))) * aNormal);
-    vColor = aColor * instance.color.rgb;
+    vNormal = normalize(transpose(inverse(mat3(model))) * a_normal);
+    vColor = a_color * instance.color.rgb;
 }

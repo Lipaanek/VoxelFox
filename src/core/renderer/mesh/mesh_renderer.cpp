@@ -3,71 +3,91 @@
 #include "../../../nodes/mesh_instance_3d.hpp"
 #include "../../util/util.hpp"
 
-void MeshRenderer::render(const RenderContext& ctx, Scene& scene) {
-    this->uploadLights(ctx, scene);
+MeshRenderer::MeshRenderer() : program {} {
+    Shader frag {"assets/shaders/3d_scene.frag", ShaderType::Fragment};
+    Shader vert{"assets/shaders/3d_scene.vert", ShaderType::Vertex};
 
-    ctx.program.setUniform("u_view", ctx.camera.getViewMatrix());
-    ctx.program.setUniform("u_projection", ctx.camera.getProjectionMatrix(
-        ctx.window.getAspect())
-    );
+    frag.compile();
+    vert.compile();
 
-    ctx.program.setUniform("u_cameraPos", ctx.camera.getPosition());
+    if (frag.getID() == 0 || vert.getID() == 0) {
+        Util::Log::error("Failed to compile shaders for 3D rendering.");
+        return;
+    }
 
-    this->collectMeshes(ctx, *scene.getRoot(), scene);
+    program.attach(vert);
+    program.attach(frag);
+    program.link();
+}
 
-    for (const auto& [meshID, renderInstances] : this->instances) {
-        if (renderInstances.empty()) continue;
+void MeshRenderer::render(const FrameRenderData& frameData, Scene& scene) {
+    this->program.use();
+
+    this->uploadLights(frameData);
+
+    this->program.setUniform("u_view", frameData.camera.view);
+    this->program.setUniform("u_projection", frameData.camera.projection);
+
+    this->program.setUniform("u_cameraPos", frameData.camera.position);
+
+    std::unordered_map<MeshID, std::vector<MeshRenderInstance>> instances;
+
+    // Group 3D objects by meshes
+    for (const auto&[mesh, transform, color] : frameData.objects3D) {
+        instances[mesh].push_back({
+            .transform = transform,
+            .color = color
+        });
+    }
+
+    // Use instancing to render meshes
+    for (const auto& [meshID, renderInstances] : instances) {
+        if (renderInstances.empty())
+            continue;
 
         const Mesh& mesh = scene.getMeshManager().get(meshID);
 
-        this->instanceBuffer.upload(
+        instanceBuffer.upload(
             renderInstances.data(),
             static_cast<GLsizeiptr>(
-                renderInstances.size() *
-                sizeof(RenderInstance)
+                renderInstances.size() * sizeof(MeshRenderInstance)
             ),
             GL_DYNAMIC_DRAW
         );
 
-        ctx.program.setStorageBuffer(0, instanceBuffer);
+        program.setStorageBuffer(0, instanceBuffer);
 
         mesh.renderInstanced(
-            ctx.program,
-            static_cast<GLsizei>(
-                renderInstances.size()
-            )
+            program,
+            static_cast<GLsizei>(renderInstances.size())
         );
     }
-
-    this->instances.clear();
 }
 
-void MeshRenderer::collectMeshes(const RenderContext& ctx, const Node& node, Scene& scene) {
-    if (const auto* meshInstance = dynamic_cast<const MeshInstance3D*>(&node)) {
-        const MeshID meshID = meshInstance->getMesh();
+void MeshRenderer::uploadLights(const FrameRenderData& frameData) {
+    this->program.setUniform("u_lightCount", static_cast<int>(frameData.lights3D.size()));
 
-        if (meshID != static_cast<MeshID>(-1)) {
-            const glm::mat4 transform = meshInstance->getGlobalMatrix();
+    std::vector<int> types;
+    std::vector<glm::vec3> positions, directions, colors;
+    std::vector<float> energies, ranges;
 
-            RenderInstance instance {};
-            instance.transform = transform;
-            instance.color = glm::vec4(meshInstance->getColor(), 1.0);
-
-            this->instances[meshID].push_back(instance);
-        }
+    for (const auto&[light, position] : frameData.lights3D) {
+        types.push_back(light.type == LightType::Directional ? 0 : 1);
+        positions.push_back(position);
+        directions.push_back(light.direction);
+        colors.push_back(light.color);
+        energies.push_back(light.energy);
+        ranges.push_back(light.range);
     }
 
-    for (const auto& child : node.getChildren()) {
-        collectMeshes(ctx, *child, scene);
-    }
-}
+    this->program.setUniform("u_lightTypes", types);
+    this->program.setUniform("u_lightPositions", positions);
+    this->program.setUniform("u_lightDirections", directions);
+    this->program.setUniform("u_lightColors", colors);
+    this->program.setUniform("u_lightEnergy", energies);
+    this->program.setUniform("u_lightRanges", ranges);
 
-void MeshRenderer::uploadLights(const RenderContext& ctx, Scene &scene) const {
-    const Lighting lighting = scene.getLighting();
-
-    lighting.lights.uploadLights(ctx.program);
-
-    ctx.program.setUniform("u_shininess", lighting.getShininess());
-    ctx.program.setUniform("u_skyColor", lighting.getSkyColor());
-    ctx.program.setUniform("u_groundColor", lighting.getGroundColor());
+    this->program.setUniform("u_shininess", frameData.lightingData.shininess);
+    this->program.setUniform("u_skyColor", frameData.lightingData.skyColor);
+    this->program.setUniform("u_groundColor", frameData.lightingData.groundColor);
 }

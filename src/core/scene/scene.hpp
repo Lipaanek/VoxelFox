@@ -46,6 +46,9 @@ public:
     Lighting& getLighting() {
         return this->lighting;
     }
+    const Lighting& getLighting() const {
+        return this->lighting;
+    }
 
 protected:
     virtual void onReady() {}

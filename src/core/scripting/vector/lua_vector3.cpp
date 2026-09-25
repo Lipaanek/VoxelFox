@@ -33,3 +33,7 @@ void LuaVector3Bindings::registerVector3(lua_State* L) {
     luaL_newlib(L, vector3Functions);
     lua_setglobal(L, "Vector3");
 }
+
+void LuaVector3Bindings::registerApi(lua_State* L, const LuaApiContext&) {
+    registerVector3(L);
+}

@@ -27,5 +27,6 @@ public:
     [[nodiscard]] glm::vec3 getColor() const;
     [[nodiscard]] float getEnergy() const;
     [[nodiscard]] float getRange() const;
+    [[nodiscard]] Light getLightObject() const;
 };
 

@@ -25,5 +25,5 @@ public:
     [[nodiscard]] Transform3D getTransform() const;
 
 protected:
-    Transform3D transform;
+    Transform3D transform {};
 };

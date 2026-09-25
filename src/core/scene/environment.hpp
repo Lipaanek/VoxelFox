@@ -4,27 +4,34 @@
 
 #include "core/camera/camera.hpp"
 #include "core/scripting/lua_engine.hpp"
+#include "core/scripting/lua_api_registry.hpp"
 
 class SceneManager;
 class Window;
 class InputSystem;
 class Scene;
-class RenderContext;
+class MeshRenderContext;
+
+struct EnvironmentObjects {
+    SceneManager& sceneManager;
+    Window& window;
+    InputSystem& inputSystem;
+    Camera& camera;
+    LuaApiRegistry luaApiRegistry = LuaApiRegistry::createDefault();
+};
 
 class Environment {
 protected:
     SceneManager& sceneManager;
     Window& window;
     InputSystem& inputSystem;
-    Camera camera;
+
+    Camera& camera;
+    LuaApiRegistry luaApiRegistry;
     LuaEngine luaEngine;
 
 public:
-    Environment(
-        SceneManager& sceneManager,
-        Window& window,
-        InputSystem& inputSystem
-    );
+    explicit Environment(EnvironmentObjects objects);
 
     virtual ~Environment() = default;
 
@@ -32,7 +39,7 @@ public:
     [[nodiscard]] const Camera& getCamera() const;
 
     virtual void update(float dt);
-    virtual void render(const RenderContext& ctx);
+    virtual void render();
 
     void setScene(std::unique_ptr<Scene> scene) const;
 };

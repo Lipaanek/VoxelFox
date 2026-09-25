@@ -44,6 +44,14 @@ lua_State* LuaEngine::state() const {
     return this->L;
 }
 
+void LuaEngine::registerApiBindings(const LuaApiRegistry& registry, const LuaApiContext& context) {
+    if (apiBindingsRegistered_)
+        throw std::logic_error("Lua API bindings are already registered");
+
+    registry.registerAll(this->L, context);
+    apiBindingsRegistered_ = true;
+}
+
 LoadScriptResult LuaEngine::loadScript(const char* path, const std::vector<std::string>& flags) {
     const std::string source = Util::File::read(path);
     this->flags_.clear();

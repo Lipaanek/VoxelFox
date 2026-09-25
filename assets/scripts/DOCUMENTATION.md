@@ -77,24 +77,35 @@ All the default actions are the following: `look_x`, `look_y`, `zoom`, `rotate_f
 > `is_pressed` and `is_released` fire on the frame of the transition, not continuously
 
 # Camera functions
-The `Camera` table controls the editor camera, which is not the scene camera. It is only available to editor scripts.
-- `Camera.set_position(x, y, z)` moves the editor camera to the given position
+The `Camera` table controls the active environment camera used to render the scene. It is available to editor and scene/node scripts.
+- `Camera.set_position(pos)` moves the camera to the given `Vector3`
     Example:
 
     ```lua
-    Camera.set_position(10.0, 5.0, 0.0)
+    Camera.set_position(Vector3.new(10.0, 5.0, 0.0))
     ```
-- `Camera.get_position()` returns the current editor camera position
+- `Camera.get_position()` returns the current position as a `Vector3`
     Example:
 
     ```lua
-    local x, y, z = Camera.get_position()
-    print("Camera at: " .. x .. ", " .. y .. ", " .. z)
+    local pos = Camera.get_position()
+    print("Camera at: " .. pos.x .. ", " .. pos.y .. ", " .. pos.z)
     ```
 - `Camera.set_yaw(yaw)` sets the camera rotation around the vertical axis (degrees)
 - `Camera.get_yaw()` returns the current yaw (degrees)
 - `Camera.set_pitch(pitch)` sets the camera vertical rotation (degrees)
 - `Camera.get_pitch()` returns the current pitch (degrees)
+
+# Adding engine Lua APIs
+Each `LuaEngine` receives the same environment API modules through `LuaApiRegistry`. Modules are installed before scripts run, including scene/node scripts, and each engine keeps its own Lua state.
+
+To add an API in C++, implement a binding function with the `LuaApiRegistry::BindingModule` signature:
+
+```cpp
+void registerClockApi(lua_State* L, const LuaApiContext& context);
+```
+
+Register it in `LuaApiRegistry::createDefault()`. If the binding needs an engine service, add that non-owning service to `LuaApiContext` and validate it in the module before registering its Lua functions. This keeps binding setup out of script callers and makes the new API available to both environment and scene Lua states.
 
 `rotate_focus` is the right mouse button. While held, the cursor is captured and you can
 rotate the camera by reading `look_x`/`look_y`. Example free-look:

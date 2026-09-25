@@ -29,7 +29,7 @@ float Light3D::getEnergy() const {
 }
 
 glm::vec3 Light3D::getLightPosition() const {
-    return this->light.position;
+    return this->transform.position;
 }
 
 float Light3D::getRange() const {
@@ -62,7 +62,7 @@ void Light3D::setLightType(const LightType type) {
 }
 
 void Light3D::setLightPosition(const glm::vec3 position) {
-    this->light.position = position;
+    this->transform.position = position;
     this->setPosition(position);
 
     updateLight();
@@ -72,4 +72,8 @@ void Light3D::setRange(const float range) {
     this->light.range = range;
 
     updateLight();
+}
+
+Light Light3D::getLightObject() const {
+    return this->light;
 }

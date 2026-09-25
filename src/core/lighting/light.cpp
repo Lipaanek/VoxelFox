@@ -32,7 +32,7 @@ void SceneLights::uploadLights(ShaderProgram& program) const {
     std::vector<glm::vec3> positions, directions, colors;
     std::vector<float> energies, ranges;
     
-    for (const auto&[type, position, direction, color, energy, range] : this->sceneLights) {
+    for (const auto&[type, direction, color, energy, range, position] : this->sceneLights) {
         types.push_back(type == LightType::Directional ? 0 : 1);
         positions.push_back(position);
         directions.push_back(direction);

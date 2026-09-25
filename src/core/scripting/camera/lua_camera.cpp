@@ -3,6 +3,9 @@
 #include <lua.hpp>
 
 #include "../vector/lua_vector3.hpp"
+#include "core/util/util.hpp"
+
+#include <stdexcept>
 
 namespace {
 
@@ -10,7 +13,7 @@ constexpr const char* CAMERA_REGISTRY_KEY = "voxelfox_camera";
 
 Camera* getCamera(lua_State* L) {
     lua_getfield(L, LUA_REGISTRYINDEX, CAMERA_REGISTRY_KEY);
-    Camera* cam = static_cast<Camera*>(lua_touserdata(L, -1));
+    auto* cam = static_cast<Camera*>(lua_touserdata(L, -1));
     lua_pop(L, 1);
 
     if (!cam)
@@ -23,7 +26,7 @@ int cameraSetPosition(lua_State* L) {
     lua_getfield(L, 1, "x");
     lua_getfield(L, 1, "y");
     lua_getfield(L, 1, "z");
-    glm::vec3 pos {
+    const glm::vec3 pos {
         static_cast<float>(luaL_checknumber(L, -3)),
         static_cast<float>(luaL_checknumber(L, -2)),
         static_cast<float>(luaL_checknumber(L, -1))
@@ -36,7 +39,7 @@ int cameraSetPosition(lua_State* L) {
 
 int cameraGetPosition(lua_State* L) {
     LuaCamera cam(getCamera(L));
-    glm::vec3 pos = cam.getPosition();
+    const glm::vec3 pos = cam.getPosition();
     LuaVector3Bindings::pushVector3(L, pos.x, pos.y, pos.z);
     return 1;
 }
@@ -79,34 +82,34 @@ const luaL_Reg cameraFunctions[] = {
 
 LuaCamera::LuaCamera(Camera* cam) : cam(cam) {}
 
-void LuaCamera::setPosition(glm::vec3 pos) {
+void LuaCamera::setPosition(const glm::vec3 pos) const {
     if (this->cam)
         this->cam->setPosition(pos);
 }
 
-glm::vec3 LuaCamera::getPosition() {
+glm::vec3 LuaCamera::getPosition() const {
     if (this->cam)
         return this->cam->getPosition();
     return glm::vec3(0.0f);
 }
 
-void LuaCamera::setYaw(float yaw) {
+void LuaCamera::setYaw(const float yaw) const {
     if (this->cam)
         this->cam->setYaw(yaw);
 }
 
-void LuaCamera::setPitch(float pitch) {
+void LuaCamera::setPitch(const float pitch) const {
     if (this->cam)
         this->cam->setPitch(pitch);
 }
 
-float LuaCamera::getYaw() {
+float LuaCamera::getYaw() const {
     if (this->cam)
         return this->cam->getYaw();
     return 0.0f;
 }
 
-float LuaCamera::getPitch() {
+float LuaCamera::getPitch() const {
     if (this->cam)
         return this->cam->getPitch();
     return 0.0f;
@@ -118,4 +121,11 @@ void LuaCameraBindings::registerCamera(lua_State* L, Camera* cam) {
 
     luaL_newlib(L, cameraFunctions);
     lua_setglobal(L, "Camera");
+}
+
+void LuaCameraBindings::registerApi(lua_State* L, const LuaApiContext& context) {
+    if (!context.camera)
+        throw std::invalid_argument("Camera API requires a camera service");
+
+    registerCamera(L, context.camera);
 }

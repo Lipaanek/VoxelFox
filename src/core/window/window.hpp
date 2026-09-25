@@ -20,17 +20,21 @@ private:
     GLFWwindow* handle = nullptr;
     int width;
     int height;
+    int framebufferWidth = 0;
+    int framebufferHeight = 0;
+
+    void updateFramebuffer();
 
 public:
-    Window(const WindowSettings &settings);
+    explicit Window(const WindowSettings &settings);
     ~Window();
 
-    bool shouldClose() const;
     void update();
     void present();
 
-    GLFWwindow* getHandle() const;
-    int getWidth() const;
-    int getHeight() const;
-    float getAspect() const;
+    [[nodiscard]] GLFWwindow* getHandle() const;
+    [[nodiscard]] int getWidth() const;
+    [[nodiscard]] int getHeight() const;
+    [[nodiscard]] float getAspect() const;
+    [[nodiscard]] bool shouldClose() const;
 };

@@ -4,8 +4,8 @@
 #include "../camera/camera.hpp"
 #include "../window/window.hpp"
 
-struct RenderContext {
-    ShaderProgram& program;
+struct MeshRenderContext {
+    ShaderProgram& shader;
     Camera& camera;
     Window& window;
 };

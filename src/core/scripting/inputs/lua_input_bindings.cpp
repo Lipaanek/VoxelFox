@@ -1,6 +1,7 @@
 #include "lua_input_bindings.hpp"
 
 #include <lua.hpp>
+#include <stdexcept>
 
 #include "../../input/input_system.hpp"
 
@@ -69,4 +70,11 @@ void LuaInputBindings::registerInput(lua_State* L, InputSystem* input) {
 
     luaL_newlib(L, inputFunctions);
     lua_setglobal(L, "Input");
+}
+
+void LuaInputBindings::registerApi(lua_State* L, const LuaApiContext& context) {
+    if (!context.inputSystem)
+        throw std::invalid_argument("Input API requires an input system service");
+
+    registerInput(L, context.inputSystem);
 }

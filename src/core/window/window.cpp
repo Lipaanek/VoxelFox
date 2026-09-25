@@ -29,6 +29,9 @@ Window::Window(const WindowSettings &settings) : width(settings.width), height(s
     if (!gladLoadGL())
         throw std::runtime_error("Failed to init glad");
 
+    glfwGetWindowSize(handle, &width, &height);
+    updateFramebuffer();
+
     glEnable(GL_DEPTH_TEST);
 
     // V-Sync
@@ -44,6 +47,13 @@ Window::~Window() {
 
 void Window::update() {
     glfwPollEvents();
+    glfwGetWindowSize(handle, &width, &height);
+    updateFramebuffer();
+}
+
+void Window::updateFramebuffer() {
+    glfwGetFramebufferSize(handle, &framebufferWidth, &framebufferHeight);
+    glViewport(0, 0, framebufferWidth, framebufferHeight);
 }
 
 // Displays current frame
@@ -68,5 +78,8 @@ int Window::getHeight() const {
 }
 
 float Window::getAspect() const {
-    return static_cast<float>(this->width) / this->height;
+    if (framebufferWidth <= 0 || framebufferHeight <= 0)
+        return 1.0f;
+
+    return static_cast<float>(framebufferWidth) / static_cast<float>(framebufferHeight);
 }

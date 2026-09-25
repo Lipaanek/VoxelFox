@@ -14,6 +14,7 @@
 #include "nodes/node3d.hpp"
 #include "nodes/voxel.hpp"
 #include "nodes/voxel_model.hpp"
+#include "nodes/ui/ui_panel.hpp"
 
 std::unique_ptr<Environment> currentEnvironment;
 
@@ -27,15 +28,18 @@ int main() {
 
     Window window(settings);
 
-    MeshRenderer meshRenderer;
+    Camera camera;
+
+    Renderer renderer;
 
     // Setup editor
-    SceneManager sceneManager(window, meshRenderer);
+    SceneManager sceneManager(window, renderer, camera);
     InputSystem input(window.getHandle());
     currentEnvironment = std::make_unique<Editor>(
         sceneManager,
         window,
-        input
+        input,
+        camera
     );
 
     // Shader program and shader creation
@@ -65,10 +69,19 @@ int main() {
     auto mesh = std::make_unique<MeshInstance3D>();
     auto light = std::make_unique<Light3D>();
 
+    // GUI Example - simple box with custom color, dimensions, anchor and position (can add transparency)
+    // auto gui = std::make_unique<UIPanel>();
+    //
+    // gui->setDimensions({ 400.0f, 100.0f });
+    // gui->setPosition( { 100.0f, 100.0f });
+    // gui->setAnchor( { 0.5, 0.5 } );
+    // gui->setColor( { 0.16f, 0.16f, 0.16f } );
+    // root->addChild(std::move(gui));
+
     light->setLightPosition({0.0, 0.0, 0.0});
-    light->setEnergy(5.0f);
+    light->setEnergy(1.0f);
     light->setLightType(LightType::Directional);
-    light->setLightDirection({45.0f, 0.0f, 0.0f});
+    light->setLightDirection({1.0f, -1.0f, -1.0f});
 
     mesh->setName("studanka");
 
@@ -79,7 +92,7 @@ int main() {
         R"(C:\Users\lipov\Downloads\Studanka2\Studanka2.mtl)"
     );
 
-    MeshData preVoxelwellMesh = wellMeshData;
+    const MeshData& preVoxelwellMesh = wellMeshData;
 
     auto voxelModel = std::make_unique<VoxelModel>("Model", 0.1f);
     voxelModel->voxelize(preVoxelwellMesh);
@@ -88,28 +101,6 @@ int main() {
 
     // Register mesh (better for sharing the same meshes)
     MeshResult res = scene->getMeshManager().add(wellMeshData);
-
-    // ! Test for rendering and instancing
-    // constexpr int voxelCount = 10'000;
-    // constexpr float voxelSize = 1.0f;
-    // constexpr int gridSize = 22;
-    //
-    // for (int i = 0; i < voxelCount; ++i) {
-    //     auto voxel = std::make_unique<Voxel>();
-    //
-    //     int x = i % gridSize;
-    //     int y = (i / gridSize) % gridSize;
-    //     int z = i / (gridSize * gridSize);
-    //
-    //     voxel->setSize(voxelSize);
-    //     voxel->setPosition({
-    //         static_cast<float>(x),
-    //         static_cast<float>(y),
-    //         static_cast<float>(z)
-    //     });
-    //
-    //     root->addChild(std::move(voxel));
-    // }
 
     // Setup mesh and add node to tree
     mesh->setMesh(res.id);
@@ -120,16 +111,17 @@ int main() {
     // Set the tree root
     scene->setRoot(std::move(root));
 
+    auto* wellMesh = scene->getRoot()->getChild("studanka");
+    currentEnvironment->setScene(std::move(scene));
+
     // Test script attachment
-    if (auto* wellMesh = scene->getRoot()->getChild("studanka")) {
+    if (wellMesh) {
         auto scriptRes = wellMesh->setScript(
             "assets/scripts/test_node_script.lua",
             {}
         );
         Util::Log::scriptLoadLog(scriptRes);
     }
-
-    currentEnvironment->setScene(std::move(scene));
 
     double lastTime = glfwGetTime();
     while (!window.shouldClose()) {
@@ -150,12 +142,7 @@ int main() {
 
 
         // Render
-        RenderContext ctx {
-            .program = program,
-            .camera = currentEnvironment->getCamera(),
-            .window = window,
-        };
-        currentEnvironment->render(ctx);
+        currentEnvironment->render();
 
         // Display frame
         window.present();

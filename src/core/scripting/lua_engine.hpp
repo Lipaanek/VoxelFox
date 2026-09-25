@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#include "lua_api_context.hpp"
+#include "lua_api_registry.hpp"
 #include "lua_flags.hpp"
 
 struct lua_State;
@@ -25,6 +27,7 @@ private:
     lua_State* L;
     LuaFlags flags_;
     std::vector<LuaScript*> scripts_;
+    bool apiBindingsRegistered_ = false;
 
 public:
     LuaEngine();
@@ -33,7 +36,11 @@ public:
     LuaEngine(const LuaEngine&) = delete;
     LuaEngine& operator=(const LuaEngine&) = delete;
 
+    LuaEngine(LuaEngine&&) = delete;
+    LuaEngine& operator=(LuaEngine&&) = delete;
+
     [[nodiscard]] lua_State* state() const;
+    void registerApiBindings(const LuaApiRegistry& registry, const LuaApiContext& context);
 
     // Error message on fail, nullopt for success
     LoadScriptResult loadScript(const char* path, const std::vector<std::string>& flags);

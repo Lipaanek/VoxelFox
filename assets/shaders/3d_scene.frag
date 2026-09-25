@@ -37,14 +37,14 @@ void main() {
             lightPower = u_lightEnergy[i];
         } else {
             vec3 toLight = u_lightPositions[i] - vWorldPos;
-            float dist = length(toLight);
+            float dist = max(length(toLight), 0.001);
             lightDir = toLight / dist;
 
             // Inverse-square falloff, clamped near the light
             lightPower = u_lightEnergy[i] / max(dist * dist, 0.01);
 
             // Smooth range cutoff: 1 at d=0, 0 at d=range
-            float falloff = max(1.0 - pow(dist / u_lightRanges[i], 4.0), 0.0);
+            float falloff = max(1.0 - pow(dist / max(u_lightRanges[i], 0.001), 4.0), 0.0);
             falloff *= falloff;
             lightPower *= falloff;
         }
@@ -52,10 +52,11 @@ void main() {
         float nDotL = max(dot(normal, lightDir), 0.0);
         diffuse += u_lightColors[i] * lightPower * nDotL;
 
-        // Blinn-Phong specular highlight
-        vec3 halfDir = normalize(lightDir + viewDir);
-        float spec = pow(max(dot(normal, halfDir), 0.0), u_shininess);
-        specular += u_lightColors[i] * lightPower * spec;
+        if (nDotL > 0.0) {
+            vec3 halfDir = normalize(lightDir + viewDir);
+            float spec = pow(max(dot(normal, halfDir), 0.0), max(u_shininess, 1.0));
+            specular += u_lightColors[i] * lightPower * spec * 0.15;
+        }
     }
 
     vec3 ambient = mix(u_groundColor, u_skyColor, normal.y * 0.5f + 0.5f);
