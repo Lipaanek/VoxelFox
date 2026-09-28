@@ -36,6 +36,10 @@ Window::Window(const WindowSettings &settings) : width(settings.width), height(s
 
     // V-Sync
     glfwSwapInterval(static_cast<int>(settings.vsync));
+
+    // Window resize handling
+    glfwSetWindowUserPointer(handle, this);
+    glfwSetFramebufferSizeCallback(handle, Window::framebufferSizeCallback);
 }
 
 Window::~Window() {
@@ -56,8 +60,21 @@ void Window::updateFramebuffer() {
     glViewport(0, 0, framebufferWidth, framebufferHeight);
 }
 
+void Window::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
+    auto* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
+
+    self->windowResize(width, height);
+}
+
+void Window::windowResize(int width, int height) {
+    this->width = width;
+    this->height = height;
+
+    glViewport(0, 0, width, height);
+}
+
 // Displays current frame
-void Window::present() {
+void Window::present() const {
     glfwSwapBuffers(handle);
 }
 

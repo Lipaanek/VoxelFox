@@ -25,12 +25,16 @@ private:
 
     void updateFramebuffer();
 
+    static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
+
 public:
     explicit Window(const WindowSettings &settings);
     ~Window();
 
     void update();
-    void present();
+    void present() const;
+
+    void windowResize(int width, int height);
 
     [[nodiscard]] GLFWwindow* getHandle() const;
     [[nodiscard]] int getWidth() const;

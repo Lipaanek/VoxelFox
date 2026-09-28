@@ -37,8 +37,8 @@ struct LightingData {
 };
 
 struct WindowData {
-    float width;
-    float height;
+    int width;
+    int height;
 };
 
 struct FrameRenderData {
