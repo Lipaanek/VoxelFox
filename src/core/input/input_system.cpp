@@ -1,9 +1,13 @@
 #include "input_system.hpp"
 
+#include <stdexcept>
+
+#include "core/window/window.hpp"
 #include <GLFW/glfw3.h>
 
-InputSystem::InputSystem(GLFWwindow* window)
-    : window(window),
+InputSystem::InputSystem(Window& window)
+    : window(window.getHandle()),
+      callbackContext(&window.callbackContext),
       raw { this->heldKeys,
             this->pressedKeys,
             this->releasedKeys,
@@ -12,18 +16,26 @@ InputSystem::InputSystem(GLFWwindow* window)
             this->releasedButtons,
             this->mouseDelta,
             this->scrollDelta } {
-    glfwSetWindowUserPointer(window, this);
-    glfwSetKeyCallback(window, keyCallback);
-    glfwSetMouseButtonCallback(window, mouseButtonCallback);
-    glfwSetCursorPosCallback(window, cursorPosCallback);
-    glfwSetScrollCallback(window, scrollCallback);
+    if (!this->window)
+        throw std::invalid_argument("InputSystem requires a valid window");
+    if (this->callbackContext->inputSystem)
+        throw std::logic_error("Window already has an input system");
 
-    glfwGetCursorPos(window, &this->lastMouseX, &this->lastMouseY);
+    this->callbackContext->inputSystem = this;
+    glfwSetKeyCallback(this->window, keyCallback);
+    glfwSetMouseButtonCallback(this->window, mouseButtonCallback);
+    glfwSetCursorPosCallback(this->window, cursorPosCallback);
+    glfwSetScrollCallback(this->window, scrollCallback);
+
+    glfwGetCursorPos(this->window, &this->lastMouseX, &this->lastMouseY);
 }
 
 InputSystem::~InputSystem() {
     if (!this->window)
         return;
+
+    if (this->callbackContext && this->callbackContext->inputSystem == this)
+        this->callbackContext->inputSystem = nullptr;
 
     glfwSetKeyCallback(this->window, nullptr);
     glfwSetMouseButtonCallback(this->window, nullptr);
@@ -90,7 +102,8 @@ void InputSystem::setCursorCaptured(bool captured) {
 }
 
 void InputSystem::keyCallback(GLFWwindow* window, int key, int, int action, int) {
-    InputSystem* self = static_cast<InputSystem*>(glfwGetWindowUserPointer(window));
+    auto* context = static_cast<WindowCallbackContext*>(glfwGetWindowUserPointer(window));
+    InputSystem* self = context ? context->inputSystem : nullptr;
     if (!self)
         return;
 
@@ -104,7 +117,8 @@ void InputSystem::keyCallback(GLFWwindow* window, int key, int, int action, int)
 }
 
 void InputSystem::mouseButtonCallback(GLFWwindow* window, int button, int action, int) {
-    InputSystem* self = static_cast<InputSystem*>(glfwGetWindowUserPointer(window));
+    auto* context = static_cast<WindowCallbackContext*>(glfwGetWindowUserPointer(window));
+    InputSystem* self = context ? context->inputSystem : nullptr;
     if (!self)
         return;
 
@@ -118,7 +132,8 @@ void InputSystem::mouseButtonCallback(GLFWwindow* window, int button, int action
 }
 
 void InputSystem::cursorPosCallback(GLFWwindow* window, double xpos, double ypos) {
-    InputSystem* self = static_cast<InputSystem*>(glfwGetWindowUserPointer(window));
+    auto* context = static_cast<WindowCallbackContext*>(glfwGetWindowUserPointer(window));
+    InputSystem* self = context ? context->inputSystem : nullptr;
     if (!self)
         return;
 
@@ -129,7 +144,8 @@ void InputSystem::cursorPosCallback(GLFWwindow* window, double xpos, double ypos
 }
 
 void InputSystem::scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
-    InputSystem* self = static_cast<InputSystem*>(glfwGetWindowUserPointer(window));
+    auto* context = static_cast<WindowCallbackContext*>(glfwGetWindowUserPointer(window));
+    InputSystem* self = context ? context->inputSystem : nullptr;
     if (!self)
         return;
 

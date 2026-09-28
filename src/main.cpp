@@ -16,8 +16,6 @@
 #include "nodes/voxel_model.hpp"
 #include "nodes/ui/ui_panel.hpp"
 
-std::unique_ptr<Environment> currentEnvironment;
-
 int main() {
     WindowSettings settings {
         .width = 1920,
@@ -34,8 +32,8 @@ int main() {
 
     // Setup editor
     SceneManager sceneManager(window, renderer, camera);
-    InputSystem input(window.getHandle());
-    currentEnvironment = std::make_unique<Editor>(
+    InputSystem input(window);
+    std::unique_ptr<Environment> currentEnvironment = std::make_unique<Editor>(
         sceneManager,
         window,
         input,

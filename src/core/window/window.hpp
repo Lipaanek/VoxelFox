@@ -8,6 +8,14 @@ enum class VSync {
     VSyncDisabled = 0,
 };
 
+class Window;
+class InputSystem;
+
+struct WindowCallbackContext {
+    Window* window;
+    InputSystem* inputSystem = nullptr;
+};
+
 struct WindowSettings {
     int width;
     int height;
@@ -16,8 +24,11 @@ struct WindowSettings {
 };
 
 class Window {
+    friend class InputSystem;
+
 private:
     GLFWwindow* handle = nullptr;
+    WindowCallbackContext callbackContext;
     int width;
     int height;
     int framebufferWidth = 0;
@@ -30,6 +41,11 @@ private:
 public:
     explicit Window(const WindowSettings &settings);
     ~Window();
+
+    Window(const Window&) = delete;
+    Window& operator=(const Window&) = delete;
+    Window(Window&&) = delete;
+    Window& operator=(Window&&) = delete;
 
     void update();
     void present() const;

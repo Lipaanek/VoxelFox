@@ -6,11 +6,18 @@
 #include "action_map.hpp"
 
 struct GLFWwindow;
+class Window;
+struct WindowCallbackContext;
 
 class InputSystem {
 public:
-    explicit InputSystem(GLFWwindow* window);
+    explicit InputSystem(Window& window);
     ~InputSystem();
+
+    InputSystem(const InputSystem&) = delete;
+    InputSystem& operator=(const InputSystem&) = delete;
+    InputSystem(InputSystem&&) = delete;
+    InputSystem& operator=(InputSystem&&) = delete;
 
     void beginInput();
 
@@ -28,6 +35,7 @@ public:
 
 private:
     GLFWwindow* window;
+    WindowCallbackContext* callbackContext;
 
     ActionMap actionMap;
 

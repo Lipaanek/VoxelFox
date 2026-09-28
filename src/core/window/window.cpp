@@ -3,7 +3,8 @@
 #include <cstdio>
 #include <stdexcept>
 
-Window::Window(const WindowSettings &settings) : width(settings.width), height(settings.height) {
+Window::Window(const WindowSettings &settings)
+    : callbackContext{this, nullptr}, width(settings.width), height(settings.height) {
     if (!glfwInit())
         throw std::runtime_error("Failed to initialize GLFW");
 
@@ -38,13 +39,16 @@ Window::Window(const WindowSettings &settings) : width(settings.width), height(s
     glfwSwapInterval(static_cast<int>(settings.vsync));
 
     // Window resize handling
-    glfwSetWindowUserPointer(handle, this);
+    glfwSetWindowUserPointer(handle, &callbackContext);
     glfwSetFramebufferSizeCallback(handle, Window::framebufferSizeCallback);
 }
 
 Window::~Window() {
-    if (handle)
+    if (handle) {
+        glfwSetWindowUserPointer(handle, nullptr);
         glfwDestroyWindow(handle);
+        this->handle = nullptr;
+    }
 
     glfwTerminate();
 }
@@ -61,9 +65,11 @@ void Window::updateFramebuffer() {
 }
 
 void Window::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
-    auto* self = static_cast<Window*>(glfwGetWindowUserPointer(window));
+    auto* context = static_cast<WindowCallbackContext*>(glfwGetWindowUserPointer(window));
+    if (!context || !context->window)
+        return;
 
-    self->windowResize(width, height);
+    context->window->windowResize(width, height);
 }
 
 void Window::windowResize(int width, int height) {
