@@ -19,6 +19,59 @@ Vector3 = {}
 ---@return Vector3
 function Vector3.new(x, y, z) end
 
+---@class Vector2
+---@field x number
+---@field y number
+Vector2 = {}
+
+---@constructor
+---@param x number
+---@param y number
+---@return Vector2
+function Vector2.new(x, y) end
+
+---@class Node
+Node = {}
+
+---@return string
+function Node.get_name() end
+
+---@param name string
+---@return Node?
+function Node.get_child(name) end
+
+---@param path string
+---@return Node?
+function Node.get_node(path) end
+
+---@return Node?
+function Node.get_root() end
+
+---@param position Vector2|Vector3
+function Node.set_position(position) end
+
+---@return Vector2|Vector3
+function Node.get_position() end
+
+---@class Event
+---@field name string
+
+---@class EventBus
+EventBus = {}
+
+---@param name string
+---@param callback fun(event: Event)
+---@return integer subscriptionId
+function EventBus.subscribe(name, callback) end
+
+---@param name string
+---@param data table<string, boolean|number|string>?
+function EventBus.emit(name, data) end
+
+---@param subscriptionId integer
+---@return boolean unsubscribed
+function EventBus.unsubscribe(subscriptionId) end
+
 ---@class Camera
 Camera = {}
 

@@ -1,8 +1,80 @@
+# Node-attached scripts
+
+Lua 5.4 does not support `extends` in a local declaration. A node-attached script
+gets a `Node` base table whose methods are bound to that specific node. Use Lua's
+standard metatable syntax to inherit those methods:
+
+```lua
+local self = setmetatable({}, Node)
+
+function ready()
+    local position = self.get_position()
+    self.set_position(Vector3.new(position.x, position.y, position.z))
+end
+
+function update(dt)
+    -- Called once per frame for this node.
+end
+```
+
+Each script has its own Lua environment, so its `ready`/`update` callbacks and
+global state do not replace those of other node scripts. Node methods use dot
+calls (`self.set_position(...)`) and currently include `get_name`, `get_child`,
+`get_node`, `get_root`, `get_position`, and `set_position`. `Node3D` positions
+use `Vector3`; UI node positions use a table with `x` and `y` fields.
+
+## Event bus
+
+`EventBus.subscribe(name, callback)` subscribes to an event and returns a
+subscription ID. `EventBus.emit(name, data)` emits a named event with an
+optional table of scalar fields. Payload keys must be strings and values must
+be booleans, numbers, or strings. The callback receives an event table with
+the event `name` and all payload fields. Use `EventBus.unsubscribe(id)` to
+remove a subscription.
+
+```lua
+local subscription
+
+function ready()
+    subscription = EventBus.subscribe("game.started", function(event)
+        print("Received:", event.name, event.level)
+    end)
+
+    EventBus.emit("game.started", { level = "forest" })
+end
+```
+
+Subscriptions are cleaned up when their script is replaced or its node is
+removed. Engine events use typed C++ event subclasses; their scalar payload
+fields are available to Lua subscribers where provided.
+
+C++ event types derive from `Util::Event` and can carry strongly typed members.
+Populate the inherited `data` map with scalar values when Lua subscribers also
+need to see those fields:
+
+```cpp
+struct DoorOpenedEvent : Util::Event {
+    int doorId;
+};
+
+scene.eventBus().subscribe<DoorOpenedEvent>(
+    "door.opened",
+    [](const DoorOpenedEvent& event) {
+        // Use the typed event fields.
+    }
+);
+
+DoorOpenedEvent event;
+event.doorId = 12;
+event.data.emplace("door_id", std::int64_t{12});
+scene.eventBus().emit("door.opened", event);
+```
+
 # Default script structure
 
-Before the update loop starts, the `on_ready` function will be called:
+Before the update loop starts, the `ready` function will be called:
 ```lua
-function on_ready()
+function ready()
     print("Ready function called!")
 end
 ```
@@ -107,8 +179,7 @@ void registerClockApi(lua_State* L, const LuaApiContext& context);
 
 Register it in `LuaApiRegistry::createDefault()`. If the binding needs an engine service, add that non-owning service to `LuaApiContext` and validate it in the module before registering its Lua functions. This keeps binding setup out of script callers and makes the new API available to both environment and scene Lua states.
 
-`rotate_focus` is the right mouse button. While held, the cursor is captured and you can
-rotate the camera by reading `look_x`/`look_y`. Example free-look:
+`rotate_focus` is the right mouse button. While held, the cursor is captured and you can rotate the camera by reading `look_x`/`look_y`. Example free-look:
 
 ```lua
 function update(dt)

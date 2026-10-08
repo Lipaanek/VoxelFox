@@ -5,6 +5,7 @@
 #include "core/camera/camera.hpp"
 #include "core/scripting/lua_engine.hpp"
 #include "core/scripting/lua_api_registry.hpp"
+#include "core/util/event_bus.hpp"
 
 class SceneManager;
 class Window;
@@ -28,6 +29,7 @@ protected:
 
     Camera& camera;
     LuaApiRegistry luaApiRegistry;
+    Util::EventBus eventBus;
     LuaEngine luaEngine;
 
 public:

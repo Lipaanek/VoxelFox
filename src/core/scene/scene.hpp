@@ -1,21 +1,25 @@
 #pragma once
 
 #include <memory>
+#include <cstdint>
 
 #include "../../nodes/node.hpp"
 #include "../lighting/lighting.hpp"
 #include "../renderer/mesh/mesh_manager.hpp"
 #include "core/util/util.hpp"
+#include "core/util/event_bus.hpp"
 
 class Scene {
 private:
+    Util::EventBus eventBus_;
+    LuaEngine lua_;
     std::unique_ptr<Node> root = nullptr;
     Lighting lighting;
     MeshManager meshManager;
-    LuaEngine lua_;
 
 public:
-    virtual ~Scene() = default;
+    Scene();
+    virtual ~Scene();
 
     void setRoot(std::unique_ptr<Node> newRoot) {
         root = std::move(newRoot);
@@ -28,6 +32,8 @@ public:
     Node* getRoot() const { return this->root.get(); }
 
     LuaEngine& lua() { return lua_; }
+    Util::EventBus& eventBus() { return eventBus_; }
+    [[nodiscard]] Node* findNode(std::int64_t instanceId) const;
 
     virtual void update(float dt) {
         onUpdate(dt);

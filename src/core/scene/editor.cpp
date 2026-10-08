@@ -36,7 +36,7 @@ void Editor::update(const float dt) {
     luaEngine.runUpdate(dt);
 
     // Deleted cus editor doesn't need node scripts to be running
-    //Environment::update(dt);
+    Environment::update(dt);
 }
 
 void Editor::render() {

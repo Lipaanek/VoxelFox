@@ -31,6 +31,7 @@ SRCS = \
 	src/main.cpp \
 	src/scene/basic_scene.cpp \
 	src/core/scene/scene_manager.cpp \
+	src/core/scene/scene.cpp \
 	src/core/scene/editor.cpp \
 	src/core/scene/environment.cpp \
 	src/core/window/window.cpp \
@@ -48,6 +49,8 @@ SRCS = \
 	src/core/input/action_map.cpp \
 	src/core/input/input_system.cpp \
 	src/core/scripting/lua_engine.cpp \
+	src/core/scripting/events/lua_event_bindings.cpp \
+	src/core/scripting/nodes/lua_node_bindings.cpp \
 	src/core/scripting/lua_api_registry.cpp \
 	src/core/scripting/lua_flags.cpp \
 	src/core/scripting/lua_script.cpp \
@@ -55,6 +58,7 @@ SRCS = \
 	src/core/scripting/camera/lua_camera.cpp \
 	src/core/scripting/vector/lua_vector3.cpp \
 	src/core/util/util.cpp \
+	src/core/util/event_bus.cpp \
 	src/core/lighting/light.cpp \
 	src/core/lighting/lighting.cpp \
 	src/core/model_loading/obj_loader.cpp \
@@ -80,6 +84,8 @@ TEST_SRCS = \
 	tests/test_voxel_normals.cpp \
 	tests/test_obj_loader.cpp \
 	tests/test_action_map.cpp \
+	tests/test_event_bus.cpp \
+	tests/test_lua_node_scripts.cpp \
 
 
 TEST_OBJS = $(TEST_SRCS:tests/%.cpp=$(OBJDIR)/%.o)

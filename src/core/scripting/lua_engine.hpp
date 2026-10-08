@@ -10,6 +10,9 @@
 struct lua_State;
 
 class LuaScript;
+namespace Util {
+    class EventBus;
+}
 
 enum class LoadResult {
     Success,
@@ -28,6 +31,7 @@ private:
     LuaFlags flags_;
     std::vector<LuaScript*> scripts_;
     bool apiBindingsRegistered_ = false;
+    Util::EventBus* eventBus_ = nullptr;
 
 public:
     LuaEngine();
@@ -40,11 +44,13 @@ public:
     LuaEngine& operator=(LuaEngine&&) = delete;
 
     [[nodiscard]] lua_State* state() const;
+    [[nodiscard]] Util::EventBus* eventBus() const;
     void registerApiBindings(const LuaApiRegistry& registry, const LuaApiContext& context);
 
     // Error message on fail, nullopt for success
     LoadScriptResult loadScript(const char* path, const std::vector<std::string>& flags);
     void addScript(LuaScript* script);
+    void removeScript(const LuaScript* script);
     void runUpdate(float dt) const;
     void runReady() const;
 };

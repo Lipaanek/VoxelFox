@@ -3,6 +3,7 @@
 #include <stdexcept>
 
 #include "camera/lua_camera.hpp"
+#include "events/lua_event_bindings.hpp"
 #include "inputs/lua_input_bindings.hpp"
 #include "vector/lua_vector3.hpp"
 
@@ -11,6 +12,7 @@ LuaApiRegistry LuaApiRegistry::createDefault() {
     registry.addModule(&LuaCameraBindings::registerApi);
     registry.addModule(&LuaInputBindings::registerApi);
     registry.addModule(&LuaVector3Bindings::registerApi);
+    registry.addModule(&LuaEventBindings::registerApi);
     return registry;
 }
 

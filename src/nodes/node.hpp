@@ -2,9 +2,8 @@
 
 #include <string>
 #include <vector>
-#include <algorithm>
-#include <iostream>
 #include <memory>
+#include <cstdint>
 
 #include "../core/scripting/lua_script.hpp"
 
@@ -13,7 +12,7 @@ class Scene;
 class Node {
 public:
     Node();
-    virtual ~Node() = default;
+    virtual ~Node();
 
     virtual void onTreeEnter(Scene* newScene) {}
     virtual void onTreeExit(Scene* currentScene) {}
@@ -29,6 +28,7 @@ public:
     [[nodiscard]] virtual Node* getParent() const;
     [[nodiscard]] const std::vector<std::unique_ptr<Node>>& getChildren() const;
     [[nodiscard]] const std::string& getName() const;
+    [[nodiscard]] std::int64_t getInstanceId() const;
 
     void setName(const std::string& newName);
     void setScene(Scene* newScene);
@@ -39,6 +39,7 @@ protected:
 
     std::vector<std::unique_ptr<Node>> children;
     std::string name;
+    std::int64_t instanceId;
 
     std::unique_ptr<LuaScript> script_;
 };

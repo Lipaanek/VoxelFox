@@ -9,7 +9,10 @@
 Environment::Environment(EnvironmentObjects objects)
     : sceneManager(objects.sceneManager), window(objects.window), inputSystem(objects.inputSystem),
       camera(objects.camera), luaApiRegistry(std::move(objects.luaApiRegistry)) {
-    luaEngine.registerApiBindings(luaApiRegistry, { .camera = &camera, .inputSystem = &inputSystem });
+    luaEngine.registerApiBindings(
+        luaApiRegistry,
+        { .camera = &camera, .inputSystem = &inputSystem, .eventBus = &eventBus }
+    );
 }
 
 Camera& Environment::getCamera() {
@@ -32,7 +35,11 @@ void Environment::setScene(std::unique_ptr<Scene> scene) const {
     if (scene)
         scene->lua().registerApiBindings(
             luaApiRegistry,
-            { .camera = &camera, .inputSystem = &inputSystem }
+            {
+                .camera = &camera,
+                .inputSystem = &inputSystem,
+                .eventBus = &scene->eventBus()
+            }
         );
 
     sceneManager.setScene(std::move(scene));

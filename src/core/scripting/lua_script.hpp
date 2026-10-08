@@ -3,14 +3,25 @@
 #include "lua_engine.hpp"
 #include <lua.hpp>
 
+class Node;
+namespace Util {
+    class EventBus;
+}
+
 class LuaScript {
 private:
     LuaEngine& engine_;
-    int instanceRef_ = LUA_NOREF;
+    class Node* attachedNode_ = nullptr;
+    Util::EventBus* eventBus_ = nullptr;
+    int environmentRef_ = LUA_NOREF;
+
+    void releaseEnvironment();
+    void callLifecycle(const char* name, float dt, bool passDelta) const;
 
 public:
     explicit LuaScript(LuaEngine& engine);
-    ~LuaScript() = default;
+    LuaScript(LuaEngine& engine, Node& node);
+    ~LuaScript();
 
     LuaScript(const LuaScript&) = delete;
     LuaScript& operator=(const LuaScript&) = delete;
