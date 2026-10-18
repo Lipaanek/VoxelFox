@@ -57,6 +57,7 @@ SRCS = \
 	src/core/scripting/inputs/lua_input_bindings.cpp \
 	src/core/scripting/camera/lua_camera.cpp \
 	src/core/scripting/vector/lua_vector3.cpp \
+	src/core/util/file_system.cpp \
 	src/core/util/util.cpp \
 	src/core/util/event_bus.cpp \
 	src/core/lighting/light.cpp \
