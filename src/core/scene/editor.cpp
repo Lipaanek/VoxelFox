@@ -40,5 +40,5 @@ void Editor::update(const float dt) {
 }
 
 void Editor::render() {
-    this->sceneManager.render();
+    Environment::render();
 }

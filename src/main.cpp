@@ -14,7 +14,7 @@
 #include "nodes/node3d.hpp"
 #include "nodes/voxel.hpp"
 #include "nodes/voxel_model.hpp"
-#include "nodes/ui/ui_panel.hpp"
+#include "core/gui/ui_builder.hpp"
 
 int main() {
     WindowSettings settings {
@@ -67,15 +67,6 @@ int main() {
     auto mesh = std::make_unique<MeshInstance3D>();
     auto light = std::make_unique<Light3D>();
 
-    // GUI Example - simple box with custom color, dimensions, anchor and position (can add transparency)
-    // auto gui = std::make_unique<UIPanel>();
-    //
-    // gui->setDimensions({ 400.0f, 100.0f });
-    // gui->setPosition( { 100.0f, 100.0f });
-    // gui->setAnchor( { 0.5, 0.5 } );
-    // gui->setColor( { 0.16f, 0.16f, 0.16f } );
-    // root->addChild(std::move(gui));
-
     light->setLightPosition({0.0, 0.0, 0.0});
     light->setEnergy(1.0f);
     light->setLightType(LightType::Directional);
@@ -121,30 +112,42 @@ int main() {
         Util::Log::scriptLoadLog(scriptRes);
     }
 
+    currentEnvironment->addUIElement(makeWindow(
+        "main_window",
+        "VoxelFox GUI Test Window",
+    {
+            makeText("welcome", "Welcome!"),
+            makeButton("action", "Click me", [] {
+                Util::Log::log("UI button was clicked.");
+            }),
+            makeCheckbox("enabled", "Enabled", [] {
+                Util::Log::log("UI checkbox was clicked.");
+            }),
+        }
+    ));
+
     double lastTime = glfwGetTime();
     while (!window.shouldClose()) {
         input.beginInput();
         window.update();
 
-        double now = glfwGetTime();
-        auto dt = static_cast<float>(now - lastTime);
-        lastTime = now;
+        currentEnvironment->beginUI();
 
-        // FPS counter
-        // Util::Log::log(std::to_string(1 / dt));
-
-        currentEnvironment->update(dt);
-
-        // Clear screen from previous frame
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-        // Render
+        // Render world
+        currentEnvironment->update(
+            static_cast<float>(glfwGetTime() - lastTime)
+        );
         currentEnvironment->render();
 
         // Display frame
         window.present();
+
+        lastTime = glfwGetTime();
     }
+
+
 
     return 0;
 }

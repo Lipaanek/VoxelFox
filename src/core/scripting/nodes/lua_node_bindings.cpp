@@ -10,7 +10,6 @@
 #include "../../scene/scene.hpp"
 #include "../../../nodes/node.hpp"
 #include "../../../nodes/node3d.hpp"
-#include "../../../nodes/ui/ui_node.hpp"
 #include "../vector/lua_vector3.hpp"
 
 namespace {
@@ -154,12 +153,6 @@ int nodeSetPosition(lua_State* L) {
         node->getScene()->eventBus().emit("node.set_position", event);
         return 0;
     }
-    if (dynamic_cast<UINode*>(node)) {
-        const glm::vec2 position = readVector2(L, 1);
-        const UINodeSetPositionEvent event(node->getInstanceId(), position);
-        node->getScene()->eventBus().emit("node.set_position", event);
-        return 0;
-    }
     return luaL_error(L, "set_position is only available on Node3D and UINode nodes");
 }
 
@@ -168,15 +161,6 @@ int nodeGetPosition(lua_State* L) {
     if (const auto* node3D = dynamic_cast<Node3D*>(node)) {
         const glm::vec3 position = node3D->getPosition();
         LuaVector3Bindings::pushVector3(L, position.x, position.y, position.z);
-        return 1;
-    }
-    if (const auto* uiNode = dynamic_cast<UINode*>(node)) {
-        const glm::vec2 position = uiNode->getPosition();
-        lua_createtable(L, 0, 2);
-        lua_pushnumber(L, position.x);
-        lua_setfield(L, -2, "x");
-        lua_pushnumber(L, position.y);
-        lua_setfield(L, -2, "y");
         return 1;
     }
     return luaL_error(L, "get_position is only available on Node3D and UINode nodes");

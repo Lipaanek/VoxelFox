@@ -14,6 +14,10 @@ namespace Log {
         std::cout << "[LOG] " << message << "\n" << std::flush;
     }
 
+    void warning(const std::string &message) {
+        std::cerr << "[WARN] " << message << "\n" << std::flush;
+    }
+
     void scriptLoadLog(const LoadScriptResult& result) {
         switch (result.result) {
             case LoadResult::Success:

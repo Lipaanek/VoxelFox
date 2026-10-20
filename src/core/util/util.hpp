@@ -9,6 +9,7 @@ namespace Util {
     namespace Log {
         void error(const std::string& message);
         void log(const std::string& message);
+        void warning(const std::string& message);
         void scriptLoadLog(const LoadScriptResult& result);
     }
     namespace String {

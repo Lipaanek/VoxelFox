@@ -3,7 +3,6 @@
 #include "../window/window.hpp"
 #include <memory>
 #include "scene.hpp"
-#include "../renderer/mesh/mesh_renderer.hpp"
 #include "core/renderer/frame_data_collector.hpp"
 #include "core/renderer/renderer.hpp"
 

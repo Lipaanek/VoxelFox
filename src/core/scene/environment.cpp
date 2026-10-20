@@ -8,7 +8,7 @@
 
 Environment::Environment(EnvironmentObjects objects)
     : sceneManager(objects.sceneManager), window(objects.window), inputSystem(objects.inputSystem),
-      camera(objects.camera), luaApiRegistry(std::move(objects.luaApiRegistry)) {
+      uiRenderer(objects.window), camera(objects.camera), luaApiRegistry(std::move(objects.luaApiRegistry)) {
     luaEngine.registerApiBindings(
         luaApiRegistry,
         { .camera = &camera, .inputSystem = &inputSystem, .eventBus = &eventBus }
@@ -29,6 +29,7 @@ void Environment::update(const float dt) {
 
 void Environment::render() {
     sceneManager.render();
+    endUI();
 }
 
 void Environment::setScene(std::unique_ptr<Scene> scene) const {
@@ -43,4 +44,24 @@ void Environment::setScene(std::unique_ptr<Scene> scene) const {
         );
 
     sceneManager.setScene(std::move(scene));
+}
+
+void Environment::beginUI() {
+    this->uiRenderer.begin();
+}
+
+void Environment::endUI() {
+    uiRenderer.render(uiElements);
+}
+
+void Environment::addUIElement(UIElement element) {
+    uiElements.push_back(std::move(element));
+}
+
+std::vector<UIElement>& Environment::getUIElements() {
+    return uiElements;
+}
+
+const std::vector<UIElement>& Environment::getUIElements() const {
+    return uiElements;
 }

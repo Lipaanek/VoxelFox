@@ -2,6 +2,7 @@
 #include "frame_render_data.hpp"
 #include "../camera/camera.hpp"
 #include "../window/window.hpp"
+#include "nodes/node.hpp"
 
 class Lighting;
 

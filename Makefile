@@ -3,7 +3,7 @@ CC         = x86_64-w64-mingw32-gcc
 CXXFLAGS   = -std=c++20 -Wall -Wextra -Wpedantic -MMD -MP
 CFLAGS     = -std=c11 -Wall -Wextra -Wpedantic -MMD -MP
 THIRDPARTY_CFLAGS = -std=c11 -MMD -MP
-INCLUDES   = -Isrc -Ithirdparty -Ithirdparty/glad -Ithirdparty/GLFW -Ithirdparty/glm -Ithirdparty/tinyfiledialogs -Ithirdparty/lua
+INCLUDES   = -Isrc -Ithirdparty -Ithirdparty/glad -Ithirdparty/GLFW -Ithirdparty/glm -Ithirdparty/tinyfiledialogs -Ithirdparty/lua -Ithirdparty/imgui
 LDFLAGS    = -Lthirdparty
 LDLIBS     = -lglfw3dll -lopengl32 -lgdi32 -lole32 -lcomdlg32
 
@@ -17,6 +17,14 @@ GLAD_SRC  = thirdparty/glad/glad.c
 GLAD_OBJ  = $(OBJDIR)/glad.o
 LUA_SRCS = $(wildcard thirdparty/lua/*.c)
 LUA_OBJS = $(LUA_SRCS:thirdparty/lua/%.c=$(OBJDIR)/lua/%.o)
+IMGUI_SRCS = \
+	thirdparty/imgui/imgui.cpp \
+	thirdparty/imgui/imgui_draw.cpp \
+	thirdparty/imgui/imgui_tables.cpp \
+	thirdparty/imgui/imgui_widgets.cpp \
+	thirdparty/imgui/imgui_impl_glfw.cpp \
+	thirdparty/imgui/imgui_impl_opengl3.cpp
+IMGUI_OBJS = $(IMGUI_SRCS:thirdparty/imgui/%.cpp=$(OBJDIR)/imgui/%.o)
 CATCH2_INCLUDES = -Ithirdparty/catch2
 CATCH2_OBJ = $(OBJDIR)/catch_amalgamated.o
 
@@ -42,7 +50,6 @@ SRCS = \
 	src/core/renderer/mesh/mesh.cpp \
 	src/core/renderer/mesh/mesh_manager.cpp \
 	src/core/renderer/mesh/mesh_renderer.cpp \
-	src/core/renderer/ui/ui_renderer.cpp \
     src/core/renderer/frame_data_collector.cpp \
     src/core/renderer/renderer.cpp \
 	src/core/camera/camera.cpp \
@@ -70,9 +77,8 @@ SRCS = \
 	src/nodes/node3d.cpp \
 	src/nodes/node.cpp \
 	src/nodes/light_3d.cpp \
-	src/nodes/ui/ui_node.cpp \
-	src/nodes/ui/ui_panel.cpp \
-	src/core/renderer/ui/ui_renderer.cpp \
+	src/core/gui/ui_builder.cpp \
+	src/core/gui/ui_renderer.cpp \
 
 OBJS = $(SRCS:src/%.cpp=$(OBJDIR)/%.o)
 
@@ -103,7 +109,7 @@ else
   WINPATH = $(1)
 endif
 
-DIRS = $(sort $(dir $(OBJS) $(TINYFD_OBJ) $(LUA_OBJS)))
+DIRS = $(sort $(dir $(OBJS) $(TINYFD_OBJ) $(LUA_OBJS) $(IMGUI_OBJS)))
 $(shell $(call MKDIR,$(DIRS)))
 
 -include $(OBJS:.o=.d)
@@ -111,6 +117,7 @@ $(shell $(call MKDIR,$(DIRS)))
 -include $(TINYFD_OBJ:.o=.d)
 -include $(GLAD_OBJ:.o=.d)
 -include $(LUA_OBJS:.o=.d)
+-include $(IMGUI_OBJS:.o=.d)
 -include $(CATCH2_OBJ:.o=.d)
 
 GLFW_COPIES = $(BUILDDIR)/glfw3.dll $(BUILDDIR)/libglfw3dll.a
@@ -127,7 +134,7 @@ $(BUILDDIR)/libglfw3dll.a: thirdparty/libglfw3dll.a
 
 all: $(TARGET) $(GLFW_COPIES)
 
-$(TARGET): $(OBJS) $(TINYFD_OBJ) $(GLAD_OBJ) $(LUA_OBJS)
+$(TARGET): $(OBJS) $(TINYFD_OBJ) $(GLAD_OBJ) $(LUA_OBJS) $(IMGUI_OBJS)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS) $(LDLIBS)
 
 $(OBJDIR)/%.o: src/%.cpp
@@ -142,6 +149,12 @@ $(GLAD_OBJ): $(GLAD_SRC)
 $(OBJDIR)/lua/%.o: thirdparty/lua/%.c
 	$(CC) $(THIRDPARTY_CFLAGS) $(INCLUDES) -c $< -o $@
 
+$(OBJDIR)/imgui/%.o: thirdparty/imgui/%.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+$(OBJDIR)/imgui/imgui_impl_opengl3.o: thirdparty/imgui/imgui_impl_opengl3.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -DIMGUI_IMPL_OPENGL_LOADER_CUSTOM -include glad/glad.h -c $< -o $@
+
 $(CATCH2_OBJ): thirdparty/catch2/catch_amalgamated.cpp
 	$(CXX) -std=c++20 $(CATCH2_INCLUDES) -c $< -o $@
 
@@ -149,7 +162,7 @@ test: $(TESTTARGET) $(GLFW_COPIES)
 	@echo "=== Running tests ==="
 	$(RUNNER) $(TESTTARGET)
 
-$(TESTTARGET): $(TEST_OBJS) $(CATCH2_OBJ) $(filter-out %/main.o,$(OBJS)) $(TINYFD_OBJ) $(GLAD_OBJ) $(LUA_OBJS)
+$(TESTTARGET): $(TEST_OBJS) $(CATCH2_OBJ) $(filter-out %/main.o,$(OBJS)) $(TINYFD_OBJ) $(GLAD_OBJ) $(LUA_OBJS) $(IMGUI_OBJS)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS) $(LDLIBS)
 
 $(OBJDIR)/%.o: tests/%.cpp

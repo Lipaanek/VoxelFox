@@ -4,7 +4,6 @@
 #include "../../nodes/mesh_instance_3d.hpp"
 #include "../camera/camera.hpp"
 #include "../scene/scene.hpp"
-#include "nodes/ui/ui_panel.hpp"
 
 void FrameDataCollector::collectNode(FrameRenderData& data, Node* node) {
     if (const auto* meshNode = dynamic_cast<MeshInstance3D*>(node)) {
@@ -22,18 +21,6 @@ void FrameDataCollector::collectNode(FrameRenderData& data, Node* node) {
         light3D.position = lightNode->getPosition();
 
         data.lights3D.push_back(light3D);
-    } else if (const auto* guiPanelNode = dynamic_cast<UIPanel*>(node)) {
-        RenderItemGUI guiItem {};
-
-        guiItem.transform.position = guiPanelNode->getPosition();
-        guiItem.transform.dimensions = guiPanelNode->getDimensions();
-        guiItem.transform.anchor = guiPanelNode->getAnchor();
-        guiItem.transform.scale = guiPanelNode->getScale();
-
-        guiItem.color = { guiPanelNode->getColor(), guiPanelNode->getTransparency() };
-        guiItem.uiType = UIType::Panel;
-
-        data.gui.push_back(guiItem);
     }
 
     for (const auto& child : node->getChildren()) {

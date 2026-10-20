@@ -2,7 +2,6 @@
 
 #include "../events/node_events.hpp"
 #include "../../nodes/node3d.hpp"
-#include "../../nodes/ui/ui_node.hpp"
 
 namespace {
 
@@ -26,15 +25,6 @@ Scene::Scene() {
         "node.set_position",
         [this](const NodeSetPositionEvent& event) {
             auto* node = dynamic_cast<Node3D*>(findNode(event.nodeId));
-            if (node)
-                node->setPosition(event.position);
-        },
-        this
-    );
-    eventBus_.subscribe<UINodeSetPositionEvent>(
-        "node.set_position",
-        [this](const UINodeSetPositionEvent& event) {
-            auto* node = dynamic_cast<UINode*>(findNode(event.nodeId));
             if (node)
                 node->setPosition(event.position);
         },
