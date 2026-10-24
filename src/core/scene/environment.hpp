@@ -1,10 +1,8 @@
 #pragma once
 
 #include <memory>
-#include <vector>
 
 #include "core/camera/camera.hpp"
-#include "core/gui/ui_element.hpp"
 #include "core/gui/ui_renderer.hpp"
 #include "core/scripting/lua_engine.hpp"
 #include "core/scripting/lua_api_registry.hpp"
@@ -22,6 +20,7 @@ struct EnvironmentObjects {
     InputSystem& inputSystem;
     Camera& camera;
     LuaApiRegistry luaApiRegistry = LuaApiRegistry::createDefault();
+    UIRenderMode uiRenderMode = UIRenderMode::Runtime;
 };
 
 class Environment {
@@ -32,10 +31,10 @@ protected:
     UIRenderer uiRenderer;
 
     Camera& camera;
+    UIRenderMode uiRenderMode;
     LuaApiRegistry luaApiRegistry;
     Util::EventBus eventBus;
     LuaEngine luaEngine;
-    std::vector<UIElement> uiElements;
 
 public:
     explicit Environment(EnvironmentObjects objects);
@@ -50,8 +49,8 @@ public:
 
     void beginUI();
     void endUI();
-    void addUIElement(UIElement element);
-    [[nodiscard]] std::vector<UIElement>& getUIElements();
-    [[nodiscard]] const std::vector<UIElement>& getUIElements() const;
     void setScene(std::unique_ptr<Scene> scene) const;
+
+protected:
+    virtual void renderEditorUI();
 };

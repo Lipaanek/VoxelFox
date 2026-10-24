@@ -86,6 +86,43 @@ function update(dt)
 end
 ```
 
+# Runtime UI (C++)
+
+Runtime UI is scene-owned and built with the engine's C++ UI builders; it is
+separate from the dockable ImGui panels used by editor tooling. UI elements are
+screen-space widgets and do not create movable or dockable editor windows.
+
+The logical canvas is 1080 units tall and scales uniformly with the viewport.
+Top-level elements are anchored to the viewport; child positions are relative
+to their parent container. Position values are offsets from the selected
+anchor, with positive X moving right and positive Y moving down. Use negative
+offsets with right/bottom anchors to inset a HUD element from an edge.
+
+```cpp
+scene.addUIElement(makeContainer(
+    "hud",
+    { 16.0f, 16.0f },
+    { 320.0f, 144.0f },
+    {
+        makeText("title", "Game HUD", { 8.0f, 8.0f }),
+        makeButton("action", "Use", [] {}, { 8.0f, 40.0f }, { 128.0f, 32.0f }),
+        makeCheckbox("enabled", "Enabled", [] {}, false, { 8.0f, 88.0f }),
+    }
+));
+
+scene.addUIElement(makeText(
+    "hint",
+    "Press Escape to pause",
+    { -16.0f, -16.0f },
+    UIAnchor::BottomRight
+));
+```
+
+The current runtime widget set is containers, text, buttons, and checkboxes.
+The engine routes UI input separately from gameplay actions while a widget is
+being interacted with. Runtime UI currently has a C++ API; it is not exposed to
+Lua scripts.
+
 # Input functions
 - `Input.is_active(action_name)` checks if the action name is active
     Example:

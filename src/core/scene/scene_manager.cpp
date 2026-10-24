@@ -9,6 +9,10 @@ void SceneManager::setScene(std::unique_ptr<Scene> scene) {
     firstSceneRun = true;
 }
 
+Scene* SceneManager::getCurrentScene() const {
+    return currentScene.get();
+}
+
 void SceneManager::update(const float dt) {
     if (firstSceneRun == true) {
         firstSceneRun = false;

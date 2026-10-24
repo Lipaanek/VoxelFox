@@ -78,6 +78,7 @@ SRCS = \
 	src/nodes/node.cpp \
 	src/nodes/light_3d.cpp \
 	src/core/gui/ui_builder.cpp \
+	src/core/gui/ui_layout.cpp \
 	src/core/gui/ui_renderer.cpp \
 
 OBJS = $(SRCS:src/%.cpp=$(OBJDIR)/%.o)
@@ -93,6 +94,7 @@ TEST_SRCS = \
 	tests/test_action_map.cpp \
 	tests/test_event_bus.cpp \
 	tests/test_lua_node_scripts.cpp \
+	tests/test_ui_layout.cpp \
 
 
 TEST_OBJS = $(TEST_SRCS:tests/%.cpp=$(OBJDIR)/%.o)

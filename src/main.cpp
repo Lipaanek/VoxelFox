@@ -1,4 +1,5 @@
 #include <memory>
+#include <string_view>
 
 #include "core/window/window.hpp"
 #include "core/scene/scene_manager.hpp"
@@ -16,7 +17,13 @@
 #include "nodes/voxel_model.hpp"
 #include "core/gui/ui_builder.hpp"
 
-int main() {
+int main(const int argc, char* argv[]) {
+    const std::string_view mode = argc > 1 ? argv[1] : "--editor";
+    if (argc > 2 || (mode != "--editor" && mode != "--playback" && mode != "--export")) {
+        Util::Log::error("Usage: voxelfox.exe [--editor|--playback|--export]");
+        return 1;
+    }
+
     WindowSettings settings {
         .width = 1920,
         .height = 1080,
@@ -33,12 +40,24 @@ int main() {
     // Setup editor
     SceneManager sceneManager(window, renderer, camera);
     InputSystem input(window);
-    std::unique_ptr<Environment> currentEnvironment = std::make_unique<Editor>(
-        sceneManager,
-        window,
-        input,
-        camera
-    );
+    std::unique_ptr<Environment> currentEnvironment;
+    if (mode == "--editor") {
+        currentEnvironment = std::make_unique<Editor>(
+            sceneManager,
+            window,
+            input,
+            camera
+        );
+    } else {
+        input.setDefaultBindings();
+        currentEnvironment = std::make_unique<Environment>(EnvironmentObjects {
+            .sceneManager = sceneManager,
+            .window = window,
+            .inputSystem = input,
+            .camera = camera,
+            .uiRenderMode = UIRenderMode::Runtime
+        });
+    }
 
     // Shader program and shader creation
     ShaderProgram program;
@@ -100,6 +119,21 @@ int main() {
     // Set the tree root
     scene->setRoot(std::move(root));
 
+    scene->addUIElement(makeContainer(
+        "main_hud",
+        { 16.0f, 16.0f },
+        { 320.0f, 144.0f },
+        {
+            makeText("welcome", "VoxelFox runtime UI", { 8.0f, 8.0f }),
+            makeButton("action", "Click me", [] {
+                Util::Log::log("Runtime UI button was clicked.");
+            }, { 8.0f, 40.0f }, { 128.0f, 32.0f }),
+            makeCheckbox("enabled", "Enabled", [] {
+                Util::Log::log("Runtime UI checkbox was clicked.");
+            }, false, { 8.0f, 88.0f }),
+        }
+    ));
+
     auto* wellMesh = scene->getRoot()->getChild("studanka");
     currentEnvironment->setScene(std::move(scene));
 
@@ -111,19 +145,6 @@ int main() {
         );
         Util::Log::scriptLoadLog(scriptRes);
     }
-
-    currentEnvironment->addUIElement(makeWindow(
-        "main_window",
-        "VoxelFox GUI Test Window",{
-            makeText("welcome", "Welcome!"),
-            makeButton("action", "Click me", [] {
-                Util::Log::log("UI button was clicked.");
-            }),
-            makeCheckbox("enabled", "Enabled", [] {
-                Util::Log::log("UI checkbox was clicked.");
-            }),
-        }
-    ));
 
     double lastTime = glfwGetTime();
     while (!window.shouldClose()) {

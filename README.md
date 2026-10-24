@@ -30,6 +30,14 @@ To build VoxelFox from source and also execute it, run the following command fro
 ```bash
 make run
 ```
+The executable starts in editor mode by default. Pass `--playback` to run the
+scene without the editor dockspace and with runtime UI locked in place:
+```bash
+build/voxelfox.exe --playback
+```
+`--export` uses the same locked runtime UI mode; it does not itself package or
+export a game.
+
 To build and run tests, run the following command from the project root:
 ```bash
 make test

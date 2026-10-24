@@ -1,5 +1,7 @@
 #include "scene.hpp"
 
+#include <utility>
+
 #include "../events/node_events.hpp"
 #include "../../nodes/node3d.hpp"
 
@@ -39,4 +41,16 @@ Scene::~Scene() {
 
 Node* Scene::findNode(const std::int64_t instanceId) const {
     return findNodeRecursive(root.get(), instanceId);
+}
+
+void Scene::addUIElement(UIElement element) {
+    uiElements.push_back(std::move(element));
+}
+
+std::vector<UIElement>& Scene::getUIElements() {
+    return uiElements;
+}
+
+const std::vector<UIElement>& Scene::getUIElements() const {
+    return uiElements;
 }

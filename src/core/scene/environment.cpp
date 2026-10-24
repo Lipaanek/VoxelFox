@@ -2,13 +2,15 @@
 
 #include <utility>
 
+#include "core/input/input_system.hpp"
 #include "../renderer/render_context.hpp"
 #include "../scene/scene.hpp"
 #include "../scene/scene_manager.hpp"
 
 Environment::Environment(EnvironmentObjects objects)
     : sceneManager(objects.sceneManager), window(objects.window), inputSystem(objects.inputSystem),
-      uiRenderer(objects.window), camera(objects.camera), luaApiRegistry(std::move(objects.luaApiRegistry)) {
+      uiRenderer(objects.window), camera(objects.camera), uiRenderMode(objects.uiRenderMode),
+      luaApiRegistry(std::move(objects.luaApiRegistry)) {
     luaEngine.registerApiBindings(
         luaApiRegistry,
         { .camera = &camera, .inputSystem = &inputSystem, .eventBus = &eventBus }
@@ -29,6 +31,12 @@ void Environment::update(const float dt) {
 
 void Environment::render() {
     sceneManager.render();
+    if (uiRenderMode == UIRenderMode::Editor)
+        renderEditorUI();
+
+    if (Scene* scene = sceneManager.getCurrentScene())
+        uiRenderer.renderRuntimeUI(scene->getUIElements(), uiRenderMode);
+
     endUI();
 }
 
@@ -47,21 +55,14 @@ void Environment::setScene(std::unique_ptr<Scene> scene) const {
 }
 
 void Environment::beginUI() {
-    this->uiRenderer.begin();
+    const UICaptureState capture = uiRenderer.begin();
+    inputSystem.setUICapture(capture.mouse, capture.keyboard);
 }
 
 void Environment::endUI() {
-    uiRenderer.render(uiElements);
+    const UICaptureState capture = uiRenderer.end();
+    inputSystem.setUICapture(capture.mouse, capture.keyboard);
 }
 
-void Environment::addUIElement(UIElement element) {
-    uiElements.push_back(std::move(element));
-}
-
-std::vector<UIElement>& Environment::getUIElements() {
-    return uiElements;
-}
-
-const std::vector<UIElement>& Environment::getUIElements() const {
-    return uiElements;
+void Environment::renderEditorUI() {
 }

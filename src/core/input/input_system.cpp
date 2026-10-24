@@ -81,19 +81,39 @@ void InputSystem::clearBindings(const std::string& name) {
 }
 
 bool InputSystem::isActive(const std::string& name) const {
-    return this->actionMap.isActive(name, this->raw);
+    return this->actionMap.isActive(
+        name,
+        this->raw,
+        !this->uiCapturesKeyboard,
+        !this->uiCapturesMouse
+    );
 }
 
 bool InputSystem::isPressed(const std::string& name) const {
-    return this->actionMap.isPressed(name, this->raw);
+    return this->actionMap.isPressed(
+        name,
+        this->raw,
+        !this->uiCapturesKeyboard,
+        !this->uiCapturesMouse
+    );
 }
 
 bool InputSystem::isReleased(const std::string& name) const {
-    return this->actionMap.isReleased(name, this->raw);
+    return this->actionMap.isReleased(
+        name,
+        this->raw,
+        !this->uiCapturesKeyboard,
+        !this->uiCapturesMouse
+    );
 }
 
 float InputSystem::getAxis(const std::string& name) const {
-    return this->actionMap.getAxis(name, this->raw);
+    return this->actionMap.getAxis(name, this->raw, !this->uiCapturesMouse);
+}
+
+void InputSystem::setUICapture(const bool mouse, const bool keyboard) {
+    this->uiCapturesMouse = mouse;
+    this->uiCapturesKeyboard = keyboard;
 }
 
 void InputSystem::setCursorCaptured(bool captured) {

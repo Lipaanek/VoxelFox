@@ -2,10 +2,12 @@
 
 #include <memory>
 #include <cstdint>
+#include <vector>
 
 #include "../../nodes/node.hpp"
 #include "../lighting/lighting.hpp"
 #include "../renderer/mesh/mesh_manager.hpp"
+#include "core/gui/ui_element.hpp"
 #include "core/util/util.hpp"
 #include "core/util/event_bus.hpp"
 
@@ -16,6 +18,7 @@ private:
     std::unique_ptr<Node> root = nullptr;
     Lighting lighting;
     MeshManager meshManager;
+    std::vector<UIElement> uiElements;
 
 public:
     Scene();
@@ -34,6 +37,9 @@ public:
     LuaEngine& lua() { return lua_; }
     Util::EventBus& eventBus() { return eventBus_; }
     [[nodiscard]] Node* findNode(std::int64_t instanceId) const;
+    void addUIElement(UIElement element);
+    [[nodiscard]] std::vector<UIElement>& getUIElements();
+    [[nodiscard]] const std::vector<UIElement>& getUIElements() const;
 
     virtual void update(float dt) {
         onUpdate(dt);

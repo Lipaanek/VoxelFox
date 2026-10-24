@@ -12,7 +12,13 @@ Editor::Editor(
     Window& window,
     InputSystem& inputSystem,
     Camera& camera)
-    : Environment({.sceneManager = sceneManager, .window = window, .inputSystem = inputSystem, .camera = camera})
+    : Environment({
+        .sceneManager = sceneManager,
+        .window = window,
+        .inputSystem = inputSystem,
+        .camera = camera,
+        .uiRenderMode = UIRenderMode::Editor
+    })
 {
     inputSystem.setDefaultBindings();
 
@@ -39,6 +45,6 @@ void Editor::update(const float dt) {
     Environment::update(dt);
 }
 
-void Editor::render() {
-    Environment::render();
+void Editor::renderEditorUI() {
+    uiRenderer.renderEditorDockspace();
 }

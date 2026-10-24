@@ -20,6 +20,7 @@ public:
     ~SceneManager() = default;
 
     void setScene(std::unique_ptr<Scene> scene);
+    [[nodiscard]] Scene* getCurrentScene() const;
     void update(float dt);
 
     void render();

@@ -29,8 +29,23 @@ public:
     void clearBindings(const std::string& name);
     void clear();
 
-    bool isActive(const std::string& name, const RawInputState& raw) const;
-    bool isPressed(const std::string& name, const RawInputState& raw) const;
-    bool isReleased(const std::string& name, const RawInputState& raw) const;
-    float getAxis(const std::string& name, const RawInputState& raw) const;
+    bool isActive(
+        const std::string& name,
+        const RawInputState& raw,
+        bool allowKeyboard = true,
+        bool allowMouse = true
+    ) const;
+    bool isPressed(
+        const std::string& name,
+        const RawInputState& raw,
+        bool allowKeyboard = true,
+        bool allowMouse = true
+    ) const;
+    bool isReleased(
+        const std::string& name,
+        const RawInputState& raw,
+        bool allowKeyboard = true,
+        bool allowMouse = true
+    ) const;
+    float getAxis(const std::string& name, const RawInputState& raw, bool allowMouse = true) const;
 };

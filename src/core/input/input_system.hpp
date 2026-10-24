@@ -31,6 +31,7 @@ public:
     bool isReleased(const std::string& name) const;
     float getAxis(const std::string& name) const;
 
+    void setUICapture(bool mouse, bool keyboard);
     void setCursorCaptured(bool captured);
 
 private:
@@ -38,6 +39,8 @@ private:
     WindowCallbackContext* callbackContext;
 
     ActionMap actionMap;
+    bool uiCapturesMouse = false;
+    bool uiCapturesKeyboard = false;
 
     std::unordered_set<int> heldKeys;
     std::unordered_set<int> pressedKeys;

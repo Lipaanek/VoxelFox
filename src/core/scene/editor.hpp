@@ -20,5 +20,7 @@ public:
     );
 
     void update(float dt) override;
-    void render() override;
+
+protected:
+    void renderEditorUI() override;
 };

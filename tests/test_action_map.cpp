@@ -96,3 +96,22 @@ TEST_CASE("Unknown or cleared actions are inactive and zero") {
     map.clearBindings("temp");
     REQUIRE_FALSE(map.isActive("temp", input.raw));
 }
+
+TEST_CASE("UI capture filters keyboard and mouse bindings independently") {
+    ActionMap map;
+    map.addBinding("move", { ActionType::Bool, InputSource::Key, GLFW_KEY_W });
+    map.addBinding("select", { ActionType::Bool, InputSource::MouseButton, 0, GLFW_MOUSE_BUTTON_LEFT });
+    map.addBinding("look_x", { ActionType::Axis, InputSource::MouseAxis, 0, 0, 0 });
+
+    TestInput input;
+    input.heldKeys.insert(GLFW_KEY_W);
+    input.heldButtons.insert(GLFW_MOUSE_BUTTON_LEFT);
+    input.mouseDelta.x = 6.0f;
+
+    REQUIRE_FALSE(map.isActive("move", input.raw, false, true));
+    REQUIRE(map.isActive("move", input.raw, true, false));
+    REQUIRE_FALSE(map.isActive("select", input.raw, true, false));
+    REQUIRE(map.isActive("select", input.raw, false, true));
+    REQUIRE(map.getAxis("look_x", input.raw, false) == 0.0f);
+    REQUIRE(map.getAxis("look_x", input.raw) == Catch::Approx(6.0f));
+}
