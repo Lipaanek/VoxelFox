@@ -27,8 +27,10 @@ UIRenderer::UIRenderer(const Window& window) {
     }
 
     ImGuiIO& io = ImGui::GetIO();
+    io.Fonts->AddFontFromFileTTF("assets/fonts/Inter-Regular.ttf", 18.0f);
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     io.IniFilename = nullptr; // disable .ini file
 
     if (!ImGui_ImplGlfw_InitForOpenGL(handle, true)) {

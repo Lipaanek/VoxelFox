@@ -103,7 +103,7 @@ int main() {
     auto* wellMesh = scene->getRoot()->getChild("studanka");
     currentEnvironment->setScene(std::move(scene));
 
-    // Test script attachment
+    // Script attachment
     if (wellMesh) {
         auto scriptRes = wellMesh->setScript(
             "assets/scripts/test_node_script.lua",
@@ -114,8 +114,7 @@ int main() {
 
     currentEnvironment->addUIElement(makeWindow(
         "main_window",
-        "VoxelFox GUI Test Window",
-    {
+        "VoxelFox GUI Test Window",{
             makeText("welcome", "Welcome!"),
             makeButton("action", "Click me", [] {
                 Util::Log::log("UI button was clicked.");
@@ -128,6 +127,10 @@ int main() {
 
     double lastTime = glfwGetTime();
     while (!window.shouldClose()) {
+        const double currentTime = glfwGetTime();
+        const auto dt = static_cast<float>(currentTime - lastTime);
+        lastTime = currentTime;
+
         input.beginInput();
         window.update();
 
@@ -136,18 +139,12 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Render world
-        currentEnvironment->update(
-            static_cast<float>(glfwGetTime() - lastTime)
-        );
+        currentEnvironment->update(dt);
         currentEnvironment->render();
 
         // Display frame
         window.present();
-
-        lastTime = glfwGetTime();
     }
-
-
 
     return 0;
 }
