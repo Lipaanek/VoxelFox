@@ -44,6 +44,6 @@ public:
 
     UICaptureState begin();
     void renderRuntimeUI(std::vector<UIElement>& elements, UIRenderMode mode);
-    void renderEditorDockspace();
+    void renderEditorDockspace() const;
     UICaptureState end();
 };

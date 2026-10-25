@@ -49,7 +49,6 @@ int main(const int argc, char* argv[]) {
             camera
         );
     } else {
-        input.setDefaultBindings();
         currentEnvironment = std::make_unique<Environment>(EnvironmentObjects {
             .sceneManager = sceneManager,
             .window = window,
@@ -119,20 +118,20 @@ int main(const int argc, char* argv[]) {
     // Set the tree root
     scene->setRoot(std::move(root));
 
-    scene->addUIElement(makeContainer(
-        "main_hud",
-        { 16.0f, 16.0f },
-        { 320.0f, 144.0f },
-        {
-            makeText("welcome", "VoxelFox runtime UI", { 8.0f, 8.0f }),
-            makeButton("action", "Click me", [] {
-                Util::Log::log("Runtime UI button was clicked.");
-            }, { 8.0f, 40.0f }, { 128.0f, 32.0f }),
-            makeCheckbox("enabled", "Enabled", [] {
-                Util::Log::log("Runtime UI checkbox was clicked.");
-            }, false, { 8.0f, 88.0f }),
-        }
-    ));
+    // scene->addUIElement(makeContainer(
+    //     "main_hud",
+    //     { .x = 16.0f, .y = 16.0f },
+    //     { .x = 320.0f, .y = 144.0f },
+    //     {
+    //         makeText("welcome", "VoxelFox runtime UI", { 8.0f, 8.0f }),
+    //         makeButton("action", "Click me", [] {
+    //             Util::Log::log("Runtime UI button was clicked.");
+    //         }, { 8.0f, 40.0f }, { 128.0f, 32.0f }),
+    //         makeCheckbox("enabled", "Enabled", [] {
+    //             Util::Log::log("Runtime UI checkbox was clicked.");
+    //         }, false, { 8.0f, 88.0f }),
+    //     }
+    // ));
 
     auto* wellMesh = scene->getRoot()->getChild("studanka");
     currentEnvironment->setScene(std::move(scene));

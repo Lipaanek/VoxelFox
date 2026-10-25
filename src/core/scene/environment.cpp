@@ -2,6 +2,7 @@
 
 #include <utility>
 
+#include "imgui.h"
 #include "core/input/input_system.hpp"
 #include "../renderer/render_context.hpp"
 #include "../scene/scene.hpp"
@@ -13,7 +14,14 @@ Environment::Environment(EnvironmentObjects objects)
       luaApiRegistry(std::move(objects.luaApiRegistry)) {
     luaEngine.registerApiBindings(
         luaApiRegistry,
-        { .camera = &camera, .inputSystem = &inputSystem, .eventBus = &eventBus }
+        {
+            .camera = &camera,
+            .inputSystem = &inputSystem,
+            .inputMapScope = uiRenderMode == UIRenderMode::Editor
+                ? InputMapScope::Editor
+                : InputMapScope::Runtime,
+            .eventBus = &eventBus
+        }
     );
 }
 
@@ -65,4 +73,5 @@ void Environment::endUI() {
 }
 
 void Environment::renderEditorUI() {
+
 }

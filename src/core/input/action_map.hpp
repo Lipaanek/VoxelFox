@@ -21,31 +21,50 @@ struct RawInputState {
 };
 
 class ActionMap {
+    using BindingMap = std::unordered_map<std::string, std::vector<Binding>>;
+
 private:
-    std::unordered_map<std::string, std::vector<Binding>> bindings;
+    BindingMap editorBindings;
+    BindingMap runtimeBindings;
+
+    BindingMap& bindingsFor(InputMapScope scope);
+    const BindingMap& bindingsFor(InputMapScope scope) const;
     
 public:
-    void addBinding(const std::string& name, const Binding& binding);
-    void clearBindings(const std::string& name);
+    void addBinding(
+        const std::string& name,
+        const Binding& binding,
+        InputMapScope scope = InputMapScope::Runtime
+    );
+    void clearBindings(const std::string& name, InputMapScope scope = InputMapScope::Runtime);
     void clear();
+    void clear(InputMapScope scope);
 
     bool isActive(
         const std::string& name,
         const RawInputState& raw,
         bool allowKeyboard = true,
-        bool allowMouse = true
+        bool allowMouse = true,
+        InputMapScope scope = InputMapScope::Runtime
     ) const;
     bool isPressed(
         const std::string& name,
         const RawInputState& raw,
         bool allowKeyboard = true,
-        bool allowMouse = true
+        bool allowMouse = true,
+        InputMapScope scope = InputMapScope::Runtime
     ) const;
     bool isReleased(
         const std::string& name,
         const RawInputState& raw,
         bool allowKeyboard = true,
-        bool allowMouse = true
+        bool allowMouse = true,
+        InputMapScope scope = InputMapScope::Runtime
     ) const;
-    float getAxis(const std::string& name, const RawInputState& raw, bool allowMouse = true) const;
+    float getAxis(
+        const std::string& name,
+        const RawInputState& raw,
+        bool allowMouse = true,
+        InputMapScope scope = InputMapScope::Runtime
+    ) const;
 };

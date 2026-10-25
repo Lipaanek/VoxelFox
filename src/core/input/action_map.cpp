@@ -1,25 +1,44 @@
 #include "action_map.hpp"
 
-void ActionMap::addBinding(const std::string& name, const Binding& binding) {
-    this->bindings[name].push_back(binding);
+ActionMap::BindingMap& ActionMap::bindingsFor(const InputMapScope scope) {
+    return scope == InputMapScope::Editor ? this->editorBindings : this->runtimeBindings;
 }
 
-void ActionMap::clearBindings(const std::string& name) {
-    this->bindings.erase(name);
+const ActionMap::BindingMap& ActionMap::bindingsFor(const InputMapScope scope) const {
+    return scope == InputMapScope::Editor ? this->editorBindings : this->runtimeBindings;
+}
+
+void ActionMap::addBinding(
+    const std::string& name,
+    const Binding& binding,
+    const InputMapScope scope
+) {
+    this->bindingsFor(scope)[name].push_back(binding);
+}
+
+void ActionMap::clearBindings(const std::string& name, const InputMapScope scope) {
+    this->bindingsFor(scope).erase(name);
 }
 
 void ActionMap::clear() {
-    this->bindings.clear();
+    this->editorBindings.clear();
+    this->runtimeBindings.clear();
+}
+
+void ActionMap::clear(const InputMapScope scope) {
+    this->bindingsFor(scope).clear();
 }
 
 bool ActionMap::isActive(
     const std::string& name,
     const RawInputState& raw,
     const bool allowKeyboard,
-    const bool allowMouse
+    const bool allowMouse,
+    const InputMapScope scope
 ) const {
-    auto it = this->bindings.find(name);
-    if (it == this->bindings.end())
+    const auto& bindings = this->bindingsFor(scope);
+    auto it = bindings.find(name);
+    if (it == bindings.end())
         return false;
 
     for (const Binding& b : it->second) {
@@ -44,10 +63,12 @@ bool ActionMap::isPressed(
     const std::string& name,
     const RawInputState& raw,
     const bool allowKeyboard,
-    const bool allowMouse
+    const bool allowMouse,
+    const InputMapScope scope
 ) const {
-    auto it = this->bindings.find(name);
-    if (it == this->bindings.end())
+    const auto& bindings = this->bindingsFor(scope);
+    auto it = bindings.find(name);
+    if (it == bindings.end())
         return false;
 
     for (const Binding& b : it->second) {
@@ -72,10 +93,12 @@ bool ActionMap::isReleased(
     const std::string& name,
     const RawInputState& raw,
     const bool allowKeyboard,
-    const bool allowMouse
+    const bool allowMouse,
+    const InputMapScope scope
 ) const {
-    auto it = this->bindings.find(name);
-    if (it == this->bindings.end())
+    const auto& bindings = this->bindingsFor(scope);
+    auto it = bindings.find(name);
+    if (it == bindings.end())
         return false;
 
     for (const Binding& b : it->second) {
@@ -96,9 +119,15 @@ bool ActionMap::isReleased(
     return false;
 }
 
-float ActionMap::getAxis(const std::string& name, const RawInputState& raw, const bool allowMouse) const {
-    auto it = this->bindings.find(name);
-    if (it == this->bindings.end())
+float ActionMap::getAxis(
+    const std::string& name,
+    const RawInputState& raw,
+    const bool allowMouse,
+    const InputMapScope scope
+) const {
+    const auto& bindings = this->bindingsFor(scope);
+    auto it = bindings.find(name);
+    if (it == bindings.end())
         return 0.0f;
 
     float value = 0.0f;

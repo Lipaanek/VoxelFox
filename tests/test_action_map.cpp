@@ -31,6 +31,28 @@ TEST_CASE("Multiple keys bind to one action") {
     REQUIRE(map.isActive("move_forward", input.raw));
 }
 
+TEST_CASE("Editor and runtime input maps are isolated") {
+    ActionMap map;
+    map.addBinding("confirm", { ActionType::Bool, InputSource::Key, GLFW_KEY_ENTER }, InputMapScope::Editor);
+    map.addBinding("confirm", { ActionType::Bool, InputSource::Key, GLFW_KEY_SPACE }, InputMapScope::Runtime);
+
+    TestInput input;
+    input.heldKeys.insert(GLFW_KEY_ENTER);
+    REQUIRE(map.isActive("confirm", input.raw, true, true, InputMapScope::Editor));
+    REQUIRE_FALSE(map.isActive("confirm", input.raw, true, true, InputMapScope::Runtime));
+
+    input.heldKeys.clear();
+    input.heldKeys.insert(GLFW_KEY_SPACE);
+    REQUIRE_FALSE(map.isActive("confirm", input.raw, true, true, InputMapScope::Editor));
+    REQUIRE(map.isActive("confirm", input.raw, true, true, InputMapScope::Runtime));
+
+    input.heldKeys.clear();
+    input.heldKeys.insert(GLFW_KEY_ENTER);
+    map.clear(InputMapScope::Runtime);
+    REQUIRE(map.isActive("confirm", input.raw, true, true, InputMapScope::Editor));
+    REQUIRE_FALSE(map.isActive("confirm", input.raw, true, true, InputMapScope::Runtime));
+}
+
 TEST_CASE("Pressed and released edges fire per key") {
     ActionMap map;
     map.addBinding("jump", { ActionType::Bool, InputSource::Key, GLFW_KEY_SPACE });

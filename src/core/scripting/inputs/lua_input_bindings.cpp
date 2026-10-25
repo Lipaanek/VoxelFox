@@ -8,6 +8,7 @@
 namespace {
 
 constexpr const char* INPUT_REGISTRY_KEY = "voxelfox_input_system";
+constexpr const char* INPUT_SCOPE_REGISTRY_KEY = "voxelfox_input_map_scope";
 
 InputSystem* getInputSystem(lua_State* L) {
     lua_getfield(L, LUA_REGISTRYINDEX, INPUT_REGISTRY_KEY);
@@ -19,31 +20,38 @@ InputSystem* getInputSystem(lua_State* L) {
     return input;
 }
 
+InputMapScope getInputMapScope(lua_State* L) {
+    lua_getfield(L, LUA_REGISTRYINDEX, INPUT_SCOPE_REGISTRY_KEY);
+    const auto scope = static_cast<InputMapScope>(lua_tointeger(L, -1));
+    lua_pop(L, 1);
+    return scope;
+}
+
 int inputIsActive(lua_State* L) {
     InputSystem* input = getInputSystem(L);
     const char* name = luaL_checkstring(L, 1);
-    lua_pushboolean(L, input->isActive(name));
+    lua_pushboolean(L, input->isActive(name, getInputMapScope(L)));
     return 1;
 }
 
 int inputIsPressed(lua_State* L) {
     InputSystem* input = getInputSystem(L);
     const char* name = luaL_checkstring(L, 1);
-    lua_pushboolean(L, input->isPressed(name));
+    lua_pushboolean(L, input->isPressed(name, getInputMapScope(L)));
     return 1;
 }
 
 int inputIsReleased(lua_State* L) {
     InputSystem* input = getInputSystem(L);
     const char* name = luaL_checkstring(L, 1);
-    lua_pushboolean(L, input->isReleased(name));
+    lua_pushboolean(L, input->isReleased(name, getInputMapScope(L)));
     return 1;
 }
 
 int inputAxis(lua_State* L) {
     InputSystem* input = getInputSystem(L);
     const char* name = luaL_checkstring(L, 1);
-    lua_pushnumber(L, input->getAxis(name));
+    lua_pushnumber(L, input->getAxis(name, getInputMapScope(L)));
     return 1;
 }
 
@@ -64,9 +72,16 @@ const luaL_Reg inputFunctions[] = {
 
 } // namespace
 
-void LuaInputBindings::registerInput(lua_State* L, InputSystem* input) {
+void LuaInputBindings::registerInput(
+    lua_State* L,
+    InputSystem* input,
+    const InputMapScope scope
+) {
     lua_pushlightuserdata(L, input);
     lua_setfield(L, LUA_REGISTRYINDEX, INPUT_REGISTRY_KEY);
+
+    lua_pushinteger(L, static_cast<lua_Integer>(scope));
+    lua_setfield(L, LUA_REGISTRYINDEX, INPUT_SCOPE_REGISTRY_KEY);
 
     luaL_newlib(L, inputFunctions);
     lua_setglobal(L, "Input");
@@ -76,5 +91,5 @@ void LuaInputBindings::registerApi(lua_State* L, const LuaApiContext& context) {
     if (!context.inputSystem)
         throw std::invalid_argument("Input API requires an input system service");
 
-    registerInput(L, context.inputSystem);
+    registerInput(L, context.inputSystem, context.inputMapScope);
 }

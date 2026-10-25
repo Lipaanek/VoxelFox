@@ -21,15 +21,20 @@ public:
 
     void beginInput();
 
-    void setDefaultBindings();
+    void setEditorDefaultBindings();
 
-    void addBinding(const std::string& name, const Binding& binding);
-    void clearBindings(const std::string& name);
+    void addBinding(
+        const std::string& name,
+        const Binding& binding,
+        InputMapScope scope = InputMapScope::Runtime
+    );
+    void clearBindings(const std::string& name, InputMapScope scope = InputMapScope::Runtime);
+    void clearBindings(InputMapScope scope);
 
-    bool isActive(const std::string& name) const;
-    bool isPressed(const std::string& name) const;
-    bool isReleased(const std::string& name) const;
-    float getAxis(const std::string& name) const;
+    bool isActive(const std::string& name, InputMapScope scope = InputMapScope::Runtime) const;
+    bool isPressed(const std::string& name, InputMapScope scope = InputMapScope::Runtime) const;
+    bool isReleased(const std::string& name, InputMapScope scope = InputMapScope::Runtime) const;
+    float getAxis(const std::string& name, InputMapScope scope = InputMapScope::Runtime) const;
 
     void setUICapture(bool mouse, bool keyboard);
     void setCursorCaptured(bool captured);

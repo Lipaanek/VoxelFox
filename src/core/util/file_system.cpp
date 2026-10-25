@@ -144,7 +144,7 @@ namespace Util {
         return File(childPath(this->path_, name));
     }
 
-    Directory& Directory::file(const std::string& name, std::string_view text) {
+    Directory& Directory::file(const std::string& name, const std::string_view text) {
         this->file(name).writeText(text);
         return *this;
     }

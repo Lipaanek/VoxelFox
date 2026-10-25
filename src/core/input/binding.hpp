@@ -12,6 +12,11 @@ enum class InputSource {
     ScrollAxis
 };
 
+enum class InputMapScope {
+    Editor,
+    Runtime
+};
+
 struct Binding {
     ActionType type;
     InputSource src;

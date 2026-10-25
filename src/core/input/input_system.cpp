@@ -52,63 +52,79 @@ void InputSystem::beginInput() {
     this->scrollDelta = { 0.0f, 0.0f };
 }
 
-void InputSystem::setDefaultBindings() {
-    this->addBinding("move_forward", { ActionType::Bool, InputSource::Key, GLFW_KEY_W });
-    this->addBinding("move_forward", { ActionType::Bool, InputSource::Key, GLFW_KEY_UP });
-    this->addBinding("move_back", { ActionType::Bool, InputSource::Key, GLFW_KEY_S });
-    this->addBinding("move_back", { ActionType::Bool, InputSource::Key, GLFW_KEY_DOWN });
-    this->addBinding("move_left", { ActionType::Bool, InputSource::Key, GLFW_KEY_A });
-    this->addBinding("move_left", { ActionType::Bool, InputSource::Key, GLFW_KEY_LEFT });
-    this->addBinding("move_right", { ActionType::Bool, InputSource::Key, GLFW_KEY_D });
-    this->addBinding("move_right", { ActionType::Bool, InputSource::Key, GLFW_KEY_RIGHT });
-    this->addBinding("move_up", { ActionType::Bool, InputSource::Key, GLFW_KEY_SPACE });
-    this->addBinding("move_down", { ActionType::Bool, InputSource::Key, GLFW_KEY_LEFT_SHIFT });
-    this->addBinding("boost", { ActionType::Bool, InputSource::Key, GLFW_KEY_LEFT_CONTROL });
+void InputSystem::setEditorDefaultBindings() {
+    constexpr InputMapScope scope = InputMapScope::Editor;
+    this->addBinding("move_forward", { ActionType::Bool, InputSource::Key, GLFW_KEY_W }, scope);
+    this->addBinding("move_forward", { ActionType::Bool, InputSource::Key, GLFW_KEY_UP }, scope);
+    this->addBinding("move_back", { ActionType::Bool, InputSource::Key, GLFW_KEY_S }, scope);
+    this->addBinding("move_back", { ActionType::Bool, InputSource::Key, GLFW_KEY_DOWN }, scope);
+    this->addBinding("move_left", { ActionType::Bool, InputSource::Key, GLFW_KEY_A }, scope);
+    this->addBinding("move_left", { ActionType::Bool, InputSource::Key, GLFW_KEY_LEFT }, scope);
+    this->addBinding("move_right", { ActionType::Bool, InputSource::Key, GLFW_KEY_D }, scope);
+    this->addBinding("move_right", { ActionType::Bool, InputSource::Key, GLFW_KEY_RIGHT }, scope);
+    this->addBinding("move_up", { ActionType::Bool, InputSource::Key, GLFW_KEY_SPACE }, scope);
+    this->addBinding("move_down", { ActionType::Bool, InputSource::Key, GLFW_KEY_LEFT_SHIFT }, scope);
+    this->addBinding("boost", { ActionType::Bool, InputSource::Key, GLFW_KEY_LEFT_CONTROL }, scope);
 
-    this->addBinding("rotate_focus", { ActionType::Bool, InputSource::MouseButton, 0, GLFW_MOUSE_BUTTON_RIGHT });
+    this->addBinding(
+        "rotate_focus",
+        { ActionType::Bool, InputSource::MouseButton, 0, GLFW_MOUSE_BUTTON_RIGHT },
+        scope
+    );
 
-    this->addBinding("look_x", { ActionType::Axis, InputSource::MouseAxis, 0, 0, 0 });
-    this->addBinding("look_y", { ActionType::Axis, InputSource::MouseAxis, 0, 0, 1 });
-    this->addBinding("zoom", { ActionType::Axis, InputSource::ScrollAxis, 0, 0, 1 });
+    this->addBinding("look_x", { ActionType::Axis, InputSource::MouseAxis, 0, 0, 0 }, scope);
+    this->addBinding("look_y", { ActionType::Axis, InputSource::MouseAxis, 0, 0, 1 }, scope);
+    this->addBinding("zoom", { ActionType::Axis, InputSource::ScrollAxis, 0, 0, 1 }, scope);
 }
 
-void InputSystem::addBinding(const std::string& name, const Binding& binding) {
-    this->actionMap.addBinding(name, binding);
+void InputSystem::addBinding(
+    const std::string& name,
+    const Binding& binding,
+    const InputMapScope scope
+) {
+    this->actionMap.addBinding(name, binding, scope);
 }
 
-void InputSystem::clearBindings(const std::string& name) {
-    this->actionMap.clearBindings(name);
+void InputSystem::clearBindings(const std::string& name, const InputMapScope scope) {
+    this->actionMap.clearBindings(name, scope);
 }
 
-bool InputSystem::isActive(const std::string& name) const {
+void InputSystem::clearBindings(const InputMapScope scope) {
+    this->actionMap.clear(scope);
+}
+
+bool InputSystem::isActive(const std::string& name, const InputMapScope scope) const {
     return this->actionMap.isActive(
         name,
         this->raw,
         !this->uiCapturesKeyboard,
-        !this->uiCapturesMouse
+        !this->uiCapturesMouse,
+        scope
     );
 }
 
-bool InputSystem::isPressed(const std::string& name) const {
+bool InputSystem::isPressed(const std::string& name, const InputMapScope scope) const {
     return this->actionMap.isPressed(
         name,
         this->raw,
         !this->uiCapturesKeyboard,
-        !this->uiCapturesMouse
+        !this->uiCapturesMouse,
+        scope
     );
 }
 
-bool InputSystem::isReleased(const std::string& name) const {
+bool InputSystem::isReleased(const std::string& name, const InputMapScope scope) const {
     return this->actionMap.isReleased(
         name,
         this->raw,
         !this->uiCapturesKeyboard,
-        !this->uiCapturesMouse
+        !this->uiCapturesMouse,
+        scope
     );
 }
 
-float InputSystem::getAxis(const std::string& name) const {
-    return this->actionMap.getAxis(name, this->raw, !this->uiCapturesMouse);
+float InputSystem::getAxis(const std::string& name, const InputMapScope scope) const {
+    return this->actionMap.getAxis(name, this->raw, !this->uiCapturesMouse, scope);
 }
 
 void InputSystem::setUICapture(const bool mouse, const bool keyboard) {

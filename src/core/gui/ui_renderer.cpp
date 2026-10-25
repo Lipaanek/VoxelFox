@@ -288,7 +288,7 @@ void UIRenderer::renderRuntimeUI(std::vector<UIElement>& elements, const UIRende
         callback();
 }
 
-void UIRenderer::renderEditorDockspace() {
+void UIRenderer::renderEditorDockspace() const {
     if (!frameStarted)
         return;
 

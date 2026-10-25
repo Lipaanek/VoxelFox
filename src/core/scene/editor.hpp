@@ -23,4 +23,6 @@ public:
 
 protected:
     void renderEditorUI() override;
+
+    void saveProject(const std::string &filePath);
 };
