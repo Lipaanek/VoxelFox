@@ -66,6 +66,11 @@ void Editor::renderEditorUI() {
                 tinyfd_messageBox("Save Project Failed", error.what(), "ok", "error", 1);
             };
 
+            const auto reportLoadError = [](const std::exception& error) {
+                Util::Log::error(std::format("Failed to load project: {}", error.what()));
+                tinyfd_messageBox("Load Project Failed", error.what(), "ok", "error", 1);
+            };
+
             const auto saveAs = [this, &reportSaveError] {
                 const char* filters[] = { "*.vfp" };
                 const char* path = tinyfd_saveFileDialog(
@@ -83,6 +88,30 @@ void Editor::renderEditorUI() {
                 }
                 catch (const std::exception& error) {
                     reportSaveError(error);
+                }
+            };
+
+            const auto loadProject = [this, &reportLoadError] {
+                const char* filters[] = { "*.vfp" };
+                const char* path = tinyfd_openFileDialog(
+                    "Load VoxelFox Project",
+                    "",
+                    1,
+                    filters,
+                    "VoxelFox project",
+                    0
+                );
+
+                if (path == nullptr) return;
+
+                try {
+                    projectFileHandler.load(path);
+                    activeProjectPath = path;
+
+                    Util::Log::log(std::format("Loaded project: {}", activeProjectPath.string()));
+                }
+                catch (const std::exception& error) {
+                    reportLoadError(error);
                 }
             };
 
@@ -104,7 +133,9 @@ void Editor::renderEditorUI() {
                 saveAs();
             }
 
-            ImGui::MenuItem("Load Project");
+            if (ImGui::MenuItem("Load Project")) {
+                loadProject();
+            }
             ImGui::EndMenu();
         }
 
@@ -125,12 +156,13 @@ void Editor::saveProject() const {
 void Editor::saveProjectAs(const std::string& filePath) {
     const std::filesystem::path selectedPath{ filePath };
     const std::string projectName = selectedPath.stem().string();
+
     if (projectName.empty()) {
         throw std::invalid_argument("Project name cannot be empty");
     }
 
     const std::filesystem::path projectFolder = selectedPath.parent_path() / projectName;
-    const Util::Directory directory{ projectFolder };
+    const Util::Directory directory { projectFolder };
 
     ProjectFile pendingProject = projectFile;
     pendingProject.file = directory.file("project.vfp");
@@ -142,6 +174,7 @@ void Editor::saveProjectAs(const std::string& filePath) {
         "version",
         std::string{ EngineConfig::ENGINE_VERSION }
     );
+
     pendingHandler.addVariable("application", "project_name", projectName);
     pendingHandler.save();
 

@@ -28,10 +28,14 @@ private:
     void buildProjectFile() const;
 
 public:
-    std::string valueToString(const VariableValue &value) const;
+    [[nodiscard]] std::string valueToString(const VariableValue &value) const;
+
+    [[nodiscard]] ProjectFile& getEnv() const;
 
     explicit ProjectFileHandler(ProjectFile& projectFile);
 
+    void load() const;
+    void load(const std::filesystem::path& filePath) const;
     void save() const;
 
     void addVariable(const std::string& sectionName, const std::string& variableName, const VariableValue &value) const;
