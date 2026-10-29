@@ -3,6 +3,8 @@
 #include <format>
 #include <filesystem>
 #include <memory>
+#include <stdexcept>
+#include <utility>
 
 #include "imgui.h"
 #include "scene_manager.hpp"
@@ -23,7 +25,9 @@ Editor::Editor(
         .inputSystem = inputSystem,
         .camera = camera,
         .uiRenderMode = UIRenderMode::Editor
-    })
+    }),
+    projectFile{ Util::File("project.vfp"), {} },
+    projectFileHandler{ projectFile }
 {
     inputSystem.setEditorDefaultBindings();
 
@@ -50,10 +54,19 @@ void Editor::update(const float dt) {
     Environment::update(dt);
 }
 
+ProjectFileHandler& Editor::getProjectFileHandler() noexcept {
+    return projectFileHandler;
+}
+
 void Editor::renderEditorUI() {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
-            if (ImGui::MenuItem("Save Project")) {
+            const auto reportSaveError = [](const std::exception& error) {
+                Util::Log::error(std::format("Failed to save project: {}", error.what()));
+                tinyfd_messageBox("Save Project Failed", error.what(), "ok", "error", 1);
+            };
+
+            const auto saveAs = [this, &reportSaveError] {
                 const char* filters[] = { "*.vfp" };
                 const char* path = tinyfd_saveFileDialog(
                     "Save VoxelFox Project",
@@ -63,12 +76,34 @@ void Editor::renderEditorUI() {
                     "VoxelFox project"
                 );
 
-                if (path != nullptr) {
-                    saveProject(path);
+                if (path == nullptr) return;
+
+                try {
+                    saveProjectAs(path);
+                }
+                catch (const std::exception& error) {
+                    reportSaveError(error);
+                }
+            };
+
+            if (ImGui::MenuItem("Save Project")) {
+                if (activeProjectPath.empty()) {
+                    saveAs();
+                }
+                else {
+                    try {
+                        saveProject();
+                    }
+                    catch (const std::exception& error) {
+                        reportSaveError(error);
+                    }
                 }
             }
 
-            ImGui::MenuItem("Save Project As");
+            if (ImGui::MenuItem("Save Project As")) {
+                saveAs();
+            }
+
             ImGui::MenuItem("Load Project");
             ImGui::EndMenu();
         }
@@ -79,15 +114,37 @@ void Editor::renderEditorUI() {
     uiRenderer.renderEditorDockspace();
 }
 
-void Editor::saveProject(const std::string& filePath) {
-    const std::filesystem::path selectedPath { filePath };
-    const std::filesystem::path projectFolder = selectedPath.parent_path() / selectedPath.stem();
+void Editor::saveProject() const {
+    if (activeProjectPath.empty()) {
+        throw std::logic_error("Cannot save a project before choosing a project path");
+    }
 
-    const Util::Directory directory { projectFolder };
-    Util::File projectFile = directory.file("project.vfp");
+    projectFileHandler.save();
+}
 
-    projectFile.writeText("; VoxelFox project\n");
-    projectFile.appendText(
-        std::format("version=\"{}\"\n", EngineConfig::ENGINE_VERSION)
+void Editor::saveProjectAs(const std::string& filePath) {
+    const std::filesystem::path selectedPath{ filePath };
+    const std::string projectName = selectedPath.stem().string();
+    if (projectName.empty()) {
+        throw std::invalid_argument("Project name cannot be empty");
+    }
+
+    const std::filesystem::path projectFolder = selectedPath.parent_path() / projectName;
+    const Util::Directory directory{ projectFolder };
+
+    ProjectFile pendingProject = projectFile;
+    pendingProject.file = directory.file("project.vfp");
+
+    const ProjectFileHandler pendingHandler{ pendingProject };
+    pendingHandler.addSection("application");
+    pendingHandler.addVariable(
+        "application",
+        "version",
+        std::string{ EngineConfig::ENGINE_VERSION }
     );
+    pendingHandler.addVariable("application", "project_name", projectName);
+    pendingHandler.save();
+
+    projectFile = std::move(pendingProject);
+    activeProjectPath = projectFolder / "project.vfp";
 }

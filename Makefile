@@ -80,6 +80,7 @@ SRCS = \
 	src/core/gui/ui_builder.cpp \
 	src/core/gui/ui_layout.cpp \
 	src/core/gui/ui_renderer.cpp \
+	src/core/readable_files/project_file_handler.cpp \
 
 OBJS = $(SRCS:src/%.cpp=$(OBJDIR)/%.o)
 
@@ -95,6 +96,7 @@ TEST_SRCS = \
 	tests/test_event_bus.cpp \
 	tests/test_lua_node_scripts.cpp \
 	tests/test_ui_layout.cpp \
+	tests/test_project_file_handler.cpp \
 
 
 TEST_OBJS = $(TEST_SRCS:tests/%.cpp=$(OBJDIR)/%.o)

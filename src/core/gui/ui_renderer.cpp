@@ -153,6 +153,7 @@ void UIRenderer::renderElement(
 
         std::string title = element.id.empty() ? "Runtime UI" : element.id;
         title += "##runtime_ui";
+
         const bool visible = ImGui::Begin(title.c_str(), nullptr, flags);
         if (visible) {
             ImGui::SetWindowFontScale(scale);
@@ -196,10 +197,10 @@ void UIRenderer::renderElement(
         ImGui::PopStyleVar(3);
     } else if (element.type == UIType::Container) {
         const ImVec2 cursorStart = ImGui::GetCursorStartPos();
-        const UIVector2 position = resolveUIElementPosition(element, parentSize);
+        const auto [x, y] = resolveUIElementPosition(element, parentSize);
         ImGui::SetCursorPos({
-            cursorStart.x + position.x * scale,
-            cursorStart.y + position.y * scale
+            cursorStart.x + x * scale,
+            cursorStart.y + y * scale
         });
 
         const bool visible = ImGui::BeginChild(
@@ -223,10 +224,10 @@ void UIRenderer::renderElement(
         ImGui::EndChild();
     } else {
         const ImVec2 cursorStart = ImGui::GetCursorStartPos();
-        const UIVector2 position = resolveUIElementPosition(element, parentSize);
+        const auto [x, y] = resolveUIElementPosition(element, parentSize);
         ImGui::SetCursorPos({
-            cursorStart.x + position.x * scale,
-            cursorStart.y + position.y * scale
+            cursorStart.x + x * scale,
+            cursorStart.y + y * scale
         });
 
         switch (element.type) {
@@ -274,8 +275,8 @@ void UIRenderer::renderRuntimeUI(std::vector<UIElement>& elements, const UIRende
     const float scale = viewport->Size.y / UI_LOGICAL_CANVAS_HEIGHT;
     std::vector<std::function<void()>> callbacks;
     const UIVector2 logicalViewportSize {
-        viewport->Size.x / scale,
-        UI_LOGICAL_CANVAS_HEIGHT
+        .x = viewport->Size.x / scale,
+        .y = UI_LOGICAL_CANVAS_HEIGHT
     };
 
     for (std::size_t i = 0; i < elements.size(); ++i) {
