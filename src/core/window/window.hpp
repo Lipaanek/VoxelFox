@@ -8,6 +8,11 @@ enum class VSync {
     VSyncDisabled = 0,
 };
 
+enum class DisplayType {
+    WindowMaximized = 1,
+    WindowNormal = 0
+};
+
 class Window;
 class InputSystem;
 
@@ -21,6 +26,7 @@ struct WindowSettings {
     int height;
     const char* title;
     VSync vsync;
+    DisplayType type;
 };
 
 class Window {

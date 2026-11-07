@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 Window::Window(const WindowSettings &settings)
-    : callbackContext{this, nullptr}, width(settings.width), height(settings.height) {
+    : callbackContext {.window = this, .inputSystem = nullptr }, width(settings.width), height(settings.height) {
     if (!glfwInit())
         throw std::runtime_error("Failed to initialize GLFW");
 
@@ -25,12 +25,16 @@ Window::Window(const WindowSettings &settings)
         throw std::runtime_error("Failed to initialize window");
     }
 
-    glfwMakeContextCurrent(handle);
+    glfwMakeContextCurrent(this->handle);
+
+    glfwWindowHint(GLFW_MAXIMIZED, static_cast<int>(settings.type));
+    glfwSetWindowAttrib(this->handle, GLFW_MAXIMIZED, GLFW_TRUE);
+    glfwMaximizeWindow(this->handle);
 
     if (!gladLoadGL())
         throw std::runtime_error("Failed to init glad");
 
-    glfwGetWindowSize(handle, &width, &height);
+    glfwGetWindowSize(this->handle, &width, &height);
     updateFramebuffer();
 
     glEnable(GL_DEPTH_TEST);
@@ -39,14 +43,14 @@ Window::Window(const WindowSettings &settings)
     glfwSwapInterval(static_cast<int>(settings.vsync));
 
     // Window resize handling
-    glfwSetWindowUserPointer(handle, &callbackContext);
-    glfwSetFramebufferSizeCallback(handle, Window::framebufferSizeCallback);
+    glfwSetWindowUserPointer(this->handle, &callbackContext);
+    glfwSetFramebufferSizeCallback(this->handle, Window::framebufferSizeCallback);
 }
 
 Window::~Window() {
-    if (handle) {
-        glfwSetWindowUserPointer(handle, nullptr);
-        glfwDestroyWindow(handle);
+    if (this->handle) {
+        glfwSetWindowUserPointer(this->handle, nullptr);
+        glfwDestroyWindow(this->handle);
         this->handle = nullptr;
     }
 
@@ -55,17 +59,17 @@ Window::~Window() {
 
 void Window::update() {
     glfwPollEvents();
-    glfwGetWindowSize(handle, &width, &height);
+    glfwGetWindowSize(this->handle, &width, &height);
     updateFramebuffer();
 }
 
 void Window::updateFramebuffer() {
-    glfwGetFramebufferSize(handle, &framebufferWidth, &framebufferHeight);
+    glfwGetFramebufferSize(this->handle, &framebufferWidth, &framebufferHeight);
     glViewport(0, 0, framebufferWidth, framebufferHeight);
 }
 
 void Window::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
-    auto* context = static_cast<WindowCallbackContext*>(glfwGetWindowUserPointer(window));
+    const auto* context = static_cast<WindowCallbackContext*>(glfwGetWindowUserPointer(window));
     if (!context || !context->window)
         return;
 
@@ -81,11 +85,11 @@ void Window::windowResize(int width, int height) {
 
 // Displays current frame
 void Window::present() const {
-    glfwSwapBuffers(handle);
+    glfwSwapBuffers(this->handle);
 }
 
 bool Window::shouldClose() const {
-    return glfwWindowShouldClose(handle);
+    return glfwWindowShouldClose(this->handle);
 }
 
 GLFWwindow* Window::getHandle() const {

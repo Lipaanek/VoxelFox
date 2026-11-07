@@ -37,7 +37,7 @@ RUNNER     ?=
 # --- Add new source files to SRCS below ---
 SRCS = \
 	src/main.cpp \
-	src/scene/basic_scene.cpp \
+	src/scene/demo_scene.cpp \
 	src/core/scene/scene_manager.cpp \
 	src/core/scene/scene.cpp \
 	src/core/scene/editor.cpp \
