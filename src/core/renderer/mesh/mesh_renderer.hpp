@@ -3,7 +3,6 @@
 #include <cstddef>
 #include <type_traits>
 
-#include "mesh_manager.hpp"
 #include "../render_context.hpp"
 
 #include "../../scene/scene.hpp"
@@ -21,7 +20,7 @@ static_assert(sizeof(MeshRenderInstance) == sizeof(glm::mat4) + sizeof(glm::vec4
 
 class MeshRenderer {
 private:
-    Buffer instanceBuffer { GL_SHADER_STORAGE_BUFFER };
+    Buffer instanceBuffer { BufferType::InstanceBuffer };
     ShaderProgram program;
 
 public:

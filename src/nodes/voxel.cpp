@@ -3,6 +3,7 @@
 #include <iterator>
 
 #include "core/scene/scene.hpp"
+#include "core/resources/resource_types/mesh_resource.hpp"
 
 namespace {
 
@@ -51,10 +52,14 @@ Voxel::Voxel(const std::string &name) : MeshInstance3D(name) {
 }
 
 void Voxel::onTreeEnter(Scene *newScene) {
-    if (this->getMesh() != static_cast<MeshID>(-1)) return;
+    if (this->getMesh() != 0)
+        return;
 
-    const auto [id] = newScene->getMeshManager().getOrCreate(size, [this]() { return buildMeshData(); });
-    setMesh(id);
+    const MeshData data = buildMeshData();
+    MeshResourceLoadInfo loadInfo;
+    loadInfo.meshData = &data;
+    if (auto resource = newScene->getResourceManager().load<MeshResource>(loadInfo))
+        setMesh(resource->getID());
 }
 
 Voxel::~Voxel() = default;
@@ -82,8 +87,18 @@ MeshData Voxel::buildMeshData() const {
 void Voxel::setSize(float size) {
     this->size = size;
     if (auto* scene = this->getScene()) {
-        const auto [id] = scene->getMeshManager().getOrCreate(size, [this]() { return buildMeshData(); });
+        const MeshData data = buildMeshData();
+        const ResourceID id = getMesh();
+        if (id != 0) {
+            if (auto resource = scene->getResourceManager().getResource<MeshResource>(id)) {
+                resource->setup(data);
+                return;
+            }
+        }
 
-        setMesh(id);
+        MeshResourceLoadInfo loadInfo;
+        loadInfo.meshData = &data;
+        if (auto resource = scene->getResourceManager().load<MeshResource>(loadInfo))
+            setMesh(resource->getID());
     }
 }

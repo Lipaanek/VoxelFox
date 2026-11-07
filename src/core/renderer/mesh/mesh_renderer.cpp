@@ -2,6 +2,8 @@
 
 #include "../../../nodes/mesh_instance_3d.hpp"
 #include "../../util/util.hpp"
+#include "core/resources/resource.hpp"
+#include "core/resources/resource_types/mesh_resource.hpp"
 
 MeshRenderer::MeshRenderer() : program {} {
     Shader frag {"assets/shaders/3d_scene.frag", ShaderType::Fragment};
@@ -30,22 +32,32 @@ void MeshRenderer::render(const FrameRenderData& frameData, Scene& scene) {
 
     this->program.setUniform("u_cameraPos", frameData.camera.position);
 
-    std::unordered_map<MeshID, std::vector<MeshRenderInstance>> instances;
+    std::unordered_map<ResourceID, std::vector<MeshRenderInstance>> instances;
 
     // Group 3D objects by meshes
-    for (const auto&[mesh, transform, color] : frameData.objects3D) {
-        instances[mesh].push_back({
+    for (const auto& [meshID, transform, color] : frameData.objects3D) {
+        if (meshID == 0) {
+            Util::Log::error("MeshRenderer: mesh instance has no resource assigned");
+            continue;
+        }
+
+        instances[meshID].push_back({
             .transform = transform,
             .color = color
         });
     }
 
     // Use instancing to render meshes
-    for (const auto& [meshID, renderInstances] : instances) {
+    for (const auto& [resourceId, renderInstances] : instances) {
         if (renderInstances.empty())
             continue;
 
-        const Mesh& mesh = scene.getMeshManager().get(meshID);
+        const auto mesh = scene.getResourceManager().getResource<MeshResource>(resourceId);
+
+        if (!mesh) {
+            Util::Log::error("MeshRenderer: mesh resource not found");
+            continue;
+        }
 
         instanceBuffer.upload(
             renderInstances.data(),
@@ -57,8 +69,14 @@ void MeshRenderer::render(const FrameRenderData& frameData, Scene& scene) {
 
         program.setStorageBuffer(0, instanceBuffer);
 
-        mesh.renderInstanced(
-            program,
+        program.use();
+        mesh->getVAO().bind();
+
+        glDrawElementsInstanced(
+            GL_TRIANGLES,
+            mesh->getIndexCount(),
+            GL_UNSIGNED_INT,
+            nullptr,
             static_cast<GLsizei>(renderInstances.size())
         );
     }

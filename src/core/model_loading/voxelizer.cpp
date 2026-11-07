@@ -104,17 +104,17 @@ std::vector<GPUVoxel> Voxelizer::voxelize(const MeshData& mesh, float gridSize) 
         return {};
     }
 
-    Buffer voxelBuf(GL_SHADER_STORAGE_BUFFER);
+    Buffer voxelBuf(BufferType::InstanceBuffer);
     voxelBuf.upload(nullptr, cellCount * sizeof(GPUVoxel), GL_DYNAMIC_READ);
 
-    Buffer triBuf(GL_SHADER_STORAGE_BUFFER);
+    Buffer triBuf(BufferType::InstanceBuffer);
     triBuf.upload(tris.data(), tris.size() * sizeof(TriData), GL_STATIC_DRAW);
 
-    Buffer counterBuf(GL_SHADER_STORAGE_BUFFER);
+    Buffer counterBuf(BufferType::InstanceBuffer);
     constexpr GLuint zeroCount = 0;
     counterBuf.upload(&zeroCount, sizeof(GLuint), GL_DYNAMIC_READ);
 
-    Buffer occupiedBuf(GL_SHADER_STORAGE_BUFFER);
+    Buffer occupiedBuf(BufferType::InstanceBuffer);
     std::vector<GLuint> unoccupied(cellCount, 0u);
     occupiedBuf.upload(unoccupied.data(), unoccupied.size() * sizeof(GLuint), GL_DYNAMIC_DRAW);
 

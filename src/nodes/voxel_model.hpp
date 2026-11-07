@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mesh_instance_3d.hpp"
+#include "core/renderer/mesh/mesh_data.hpp"
 #include <glm/glm.hpp>
 #include <vector>
 #include <unordered_set>

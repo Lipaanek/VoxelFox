@@ -114,7 +114,7 @@ namespace {
     }
 }
 
-MeshData ObjLoader::Load(const std::string& filePath, const std::string& mtlPath) {
+MeshData ObjLoader::load(const std::string& filePath, const std::string& mtlPath) {
     MeshData data;
 
     std::string contents = Util::File::read(filePath);

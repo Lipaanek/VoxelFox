@@ -9,7 +9,7 @@ void FrameDataCollector::collectNode(FrameRenderData& data, Node* node) {
     if (const auto* meshNode = dynamic_cast<MeshInstance3D*>(node)) {
         RenderItem3D item3D {};
 
-        item3D.mesh = meshNode->getMesh();
+        item3D.meshID = meshNode->getMesh();
         item3D.transform = meshNode->getGlobalMatrix();
         item3D.color = {meshNode->getColor(), 1.0f};
 

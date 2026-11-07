@@ -1,9 +1,9 @@
 #pragma once
 
-#include "mesh/mesh_manager.hpp"
 #include <glm/glm.hpp>
 
 #include "../lighting/light.hpp"
+#include "core/resources/resource.hpp"
 
 struct CameraRenderData {
     glm::mat4 view { 1.0f };
@@ -12,7 +12,7 @@ struct CameraRenderData {
 };
 
 struct RenderItem3D {
-    MeshID mesh;
+    ResourceID meshID = 0;
     glm::mat4 transform { 1.0f };
     glm::vec4 color { 1.0f };
 };

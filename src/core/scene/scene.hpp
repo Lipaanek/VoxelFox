@@ -1,13 +1,11 @@
 #pragma once
 
 #include <memory>
-#include <cstdint>
 #include <vector>
-
 #include "../../nodes/node.hpp"
 #include "../lighting/lighting.hpp"
-#include "../renderer/mesh/mesh_manager.hpp"
 #include "core/gui/ui_element.hpp"
+#include "core/resources/resource_manager.hpp"
 #include "core/util/util.hpp"
 #include "core/util/event_bus.hpp"
 
@@ -17,8 +15,8 @@ private:
     LuaEngine lua_;
     std::unique_ptr<Node> root = nullptr;
     Lighting lighting;
-    MeshManager meshManager;
     std::vector<UIElement> uiElements;
+    ResourceManager resourceManager;
 
 public:
     Scene();
@@ -33,15 +31,16 @@ public:
     }
 
     Node* getRoot() const { return this->root.get(); }
-
     LuaEngine& lua() { return lua_; }
     Util::EventBus& eventBus() { return eventBus_; }
-    [[nodiscard]] Node* findNode(std::int64_t instanceId) const;
+
     void addUIElement(UIElement element);
+
+    [[nodiscard]] Node* findNode(std::int64_t instanceId) const;
     [[nodiscard]] std::vector<UIElement>& getUIElements();
     [[nodiscard]] const std::vector<UIElement>& getUIElements() const;
 
-    virtual void update(float dt) {
+    virtual void update(const float dt) {
         onUpdate(dt);
         lua_.runUpdate(dt);
     }
@@ -52,12 +51,18 @@ public:
         lua_.runReady();
     }
 
-    MeshManager& getMeshManager() {
-        return this->meshManager;
-    }
     Lighting& getLighting() {
         return this->lighting;
     }
+
+    ResourceManager& getResourceManager() {
+        return this->resourceManager;
+    }
+
+    const ResourceManager& getResourceManager() const {
+        return this->resourceManager;
+    }
+
     const Lighting& getLighting() const {
         return this->lighting;
     }

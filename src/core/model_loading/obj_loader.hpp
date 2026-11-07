@@ -4,5 +4,5 @@
 
 class ObjLoader : public Loader {
 public:
-    MeshData Load(const std::string& filePath, const std::string& mtlPath = "") override;
+    MeshData load(const std::string& filePath, const std::string& mtlPath = "") override;
 };

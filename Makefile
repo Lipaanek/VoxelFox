@@ -47,8 +47,8 @@ SRCS = \
 	src/core/renderer/shader_program.cpp \
 	src/core/renderer/buffer.cpp \
 	src/core/renderer/vertex_array.cpp \
-	src/core/renderer/mesh/mesh.cpp \
-	src/core/renderer/mesh/mesh_manager.cpp \
+	src/core/resources/resource_manager.cpp \
+	src/core/resources/resource_types/mesh_resource.cpp \
 	src/core/renderer/mesh/mesh_renderer.cpp \
     src/core/renderer/frame_data_collector.cpp \
     src/core/renderer/renderer.cpp \
@@ -97,6 +97,7 @@ TEST_SRCS = \
 	tests/test_lua_node_scripts.cpp \
 	tests/test_ui_layout.cpp \
 	tests/test_project_file_handler.cpp \
+	tests/test_resource_manager.cpp \
 
 
 TEST_OBJS = $(TEST_SRCS:tests/%.cpp=$(OBJDIR)/%.o)

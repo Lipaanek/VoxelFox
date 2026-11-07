@@ -7,5 +7,5 @@ class Loader {
 public:
     virtual ~Loader() = default;
 
-    virtual MeshData Load(const std::string& filePath, const std::string& mtlPath = "") = 0;
+    virtual MeshData load(const std::string& filePath, const std::string& mtlPath = "") = 0;
 };

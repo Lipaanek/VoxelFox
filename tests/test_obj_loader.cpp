@@ -33,7 +33,7 @@ TEST_CASE("ObjLoader loads a triangle with MTL colors") {
               "f 1 2 3\n");
 
     ObjLoader loader;
-    MeshData data = loader.Load(OBJ_PATH);
+    MeshData data = loader.load(OBJ_PATH);
 
     REQUIRE(data.vertices.size() == 3);
     REQUIRE(data.indices.size() == 3);
@@ -63,7 +63,7 @@ TEST_CASE("ObjLoader fan-triangulates quads") {
               "f 1 2 3 4\n");
 
     ObjLoader loader;
-    MeshData data = loader.Load(OBJ_PATH);
+    MeshData data = loader.load(OBJ_PATH);
 
     REQUIRE(data.vertices.size() == 4);
     REQUIRE(data.indices.size() == 6);
@@ -81,7 +81,7 @@ TEST_CASE("ObjLoader de-duplicates shared vertices") {
               "f 2 4 3\n");
 
     ObjLoader loader;
-    MeshData data = loader.Load(OBJ_PATH);
+    MeshData data = loader.load(OBJ_PATH);
 
     REQUIRE(data.vertices.size() == 4);
     REQUIRE(data.indices.size() == 6);
@@ -97,7 +97,7 @@ TEST_CASE("ObjLoader uses white when no material is set") {
               "f 1 2 3\n");
 
     ObjLoader loader;
-    MeshData data = loader.Load(OBJ_PATH);
+    MeshData data = loader.load(OBJ_PATH);
 
     REQUIRE(data.vertices.size() == 3);
     for (const Vertex& v : data.vertices) {
@@ -115,7 +115,7 @@ TEST_CASE("ObjLoader supports negative (relative) indices") {
               "f -3 -2 -1\n");
 
     ObjLoader loader;
-    MeshData data = loader.Load(OBJ_PATH);
+    MeshData data = loader.load(OBJ_PATH);
 
     REQUIRE(data.vertices.size() == 3);
     REQUIRE(data.indices.size() == 3);
@@ -139,7 +139,7 @@ TEST_CASE("ObjLoader accepts an explicit MTL path") {
     writeFile(MTL_PATH, "newmtl blue\nKd 0.0 0.0 1.0\n");
 
     ObjLoader loader;
-    MeshData data = loader.Load(OBJ_PATH, MTL_PATH);
+    MeshData data = loader.load(OBJ_PATH, MTL_PATH);
 
     REQUIRE(data.vertices.size() == 3);
     for (const Vertex& v : data.vertices) {
@@ -152,7 +152,7 @@ TEST_CASE("ObjLoader accepts an explicit MTL path") {
 
 TEST_CASE("ObjLoader returns empty data for a missing file") {
     ObjLoader loader;
-    MeshData data = loader.Load("does_not_exist.obj");
+    MeshData data = loader.load("does_not_exist.obj");
 
     REQUIRE(data.vertices.empty());
     REQUIRE(data.indices.empty());

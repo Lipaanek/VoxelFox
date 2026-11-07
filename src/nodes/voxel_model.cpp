@@ -1,5 +1,8 @@
 #include "voxel_model.hpp"
 
+#include "core/resources/resource_types/mesh_resource.hpp"
+#include "core/util/util.hpp"
+
 #include <array>
 #include <cmath>
 
@@ -72,7 +75,7 @@ VoxelHash VoxelModel::computeHash(const glm::ivec3 pos) const {
 
 void VoxelModel::voxelize(const MeshData &mesh) {
     Voxelizer voxelizer;
-    std::vector<GPUVoxel> gpuVoxels = voxelizer.voxelize(mesh, this->gridSize);
+    const std::vector<GPUVoxel> gpuVoxels = voxelizer.voxelize(mesh, this->gridSize);
 
     glm::vec3 minCorner = mesh.vertices[0].position;
     for (const auto& vertex : mesh.vertices) {
@@ -169,15 +172,23 @@ void VoxelModel::bake() {
     const MeshData meshData = buildMeshData();
 
     if (auto* scene = getScene()) {
-        auto meshID = static_cast<MeshID>(-1);
-        if (getMesh() != static_cast<MeshID>(-1)) {
-            scene->getMeshManager().update(getMesh(), meshData);
-            meshID = getMesh();
+        const ResourceID meshID = getMesh();
+        if (meshID != 0) {
+            if (auto resource = scene->getResourceManager().getResource<MeshResource>(meshID)) {
+                if (!resource->setup(meshData))
+                    return;
+            } else {
+                Util::Log::error("VoxelModel: existing mesh resource was not found");
+                return;
+            }
         } else {
-            auto [id] = scene->getMeshManager().add(meshData);
-            meshID = id;
+            MeshResourceLoadInfo loadInfo;
+            loadInfo.meshData = &meshData;
+            const auto resource = scene->getResourceManager().load<MeshResource>(loadInfo);
+            if (!resource)
+                return;
+            setMesh(resource->getID());
         }
-        setMesh(meshID);
     }
 
     this->status = ModelStatus::Baked;

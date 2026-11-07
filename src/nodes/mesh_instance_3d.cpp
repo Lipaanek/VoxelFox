@@ -4,12 +4,12 @@ MeshInstance3D::MeshInstance3D() {
     this->setName("MeshInstance3D");
 }
 
-void MeshInstance3D::setMesh(MeshID mesh) {
-    this->mesh = mesh;
+void MeshInstance3D::setMesh(ResourceID meshID) {
+    this->meshID = meshID;
 }
 
-MeshID MeshInstance3D::getMesh() const {
-    return this->mesh;
+ResourceID MeshInstance3D::getMesh() const {
+    return this->meshID;
 }
 
 void MeshInstance3D::setColor(glm::vec3 color) {

@@ -3,13 +3,19 @@
 #include <glad/glad.h>
 #include <vector>
 
+enum class BufferType : GLenum {
+    ArrayBuffer = GL_ARRAY_BUFFER,
+    ElementBuffer = GL_ELEMENT_ARRAY_BUFFER,
+    InstanceBuffer = GL_SHADER_STORAGE_BUFFER,
+};
+
 class Buffer {
 private:
     GLenum target;
     GLuint id = 0;
 
 public:
-    explicit Buffer(GLenum target); // glGenBuffers
+    explicit Buffer(BufferType target); // glGenBuffers
     ~Buffer();                      // glDeleteBuffers
 
     Buffer(const Buffer&) = delete;

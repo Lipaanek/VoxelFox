@@ -1,7 +1,7 @@
 #include "buffer.hpp"
 #include "../util/util.hpp"
 
-Buffer::Buffer(GLenum target) : target(target) {
+Buffer::Buffer(BufferType target) : target(static_cast<GLenum>(target)) {
     glGenBuffers(1, &this->id);
 
     if (this->id == 0)

@@ -16,6 +16,7 @@
 #include "nodes/voxel.hpp"
 #include "nodes/voxel_model.hpp"
 #include "core/gui/ui_builder.hpp"
+#include "core/resources/resource_types/mesh_resource.hpp"
 
 int main(const int argc, char* argv[]) {
     const std::string_view mode = argc > 1 ? argv[1] : "--editor";
@@ -41,6 +42,7 @@ int main(const int argc, char* argv[]) {
     SceneManager sceneManager(window, renderer, camera);
     InputSystem input(window);
     std::unique_ptr<Environment> currentEnvironment;
+
     if (mode == "--editor") {
         currentEnvironment = std::make_unique<Editor>(
             sceneManager,
@@ -94,44 +96,30 @@ int main(const int argc, char* argv[]) {
 
     // Load mesh
     ObjLoader loader;
-    MeshData wellMeshData = loader.Load(
+    MeshData wellMeshData = loader.load(
         R"(C:\Users\lipov\Downloads\Studanka2\Studanka2.obj)",
         R"(C:\Users\lipov\Downloads\Studanka2\Studanka2.mtl)"
     );
 
-    const MeshData& preVoxelwellMesh = wellMeshData;
-
     auto voxelModel = std::make_unique<VoxelModel>("Model", 0.1f);
-    voxelModel->voxelize(preVoxelwellMesh);
+    voxelModel->voxelize(wellMeshData);
 
     voxelModel->setPosition({ 5.0f, 0.0f, 0.0f });
 
-    // Register mesh (better for sharing the same meshes)
-    MeshResult res = scene->getMeshManager().add(wellMeshData);
+    MeshResourceLoadInfo meshLoadInfo;
+    meshLoadInfo.meshData = &wellMeshData;
+    const auto meshResource = scene->getResourceManager().load<MeshResource>(meshLoadInfo);
+    if (!meshResource)
+        return 1;
 
     // Setup mesh and add node to tree
-    mesh->setMesh(res.id);
+    mesh->setMesh(meshResource->getID());
     root->addChild(std::move(light));
     root->addChild(std::move(mesh));
     root->addChild(std::move(voxelModel));
 
     // Set the tree root
     scene->setRoot(std::move(root));
-
-    // scene->addUIElement(makeContainer(
-    //     "main_hud",
-    //     { .x = 16.0f, .y = 16.0f },
-    //     { .x = 320.0f, .y = 144.0f },
-    //     {
-    //         makeText("welcome", "VoxelFox runtime UI", { 8.0f, 8.0f }),
-    //         makeButton("action", "Click me", [] {
-    //             Util::Log::log("Runtime UI button was clicked.");
-    //         }, { 8.0f, 40.0f }, { 128.0f, 32.0f }),
-    //         makeCheckbox("enabled", "Enabled", [] {
-    //             Util::Log::log("Runtime UI checkbox was clicked.");
-    //         }, false, { 8.0f, 88.0f }),
-    //     }
-    // ));
 
     auto* wellMesh = scene->getRoot()->getChild("studanka");
     currentEnvironment->setScene(std::move(scene));
