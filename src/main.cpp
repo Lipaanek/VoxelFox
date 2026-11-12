@@ -65,6 +65,7 @@ int main(const int argc, char* argv[]) {
         attachDemoSceneScript(*activeScene);
 
     double lastTime = glfwGetTime();
+
     while (!window.shouldClose()) {
         const double currentTime = glfwGetTime();
         const auto dt = static_cast<float>(currentTime - lastTime);

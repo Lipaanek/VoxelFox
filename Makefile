@@ -81,6 +81,7 @@ SRCS = \
 	src/core/gui/ui_layout.cpp \
 	src/core/gui/ui_renderer.cpp \
 	src/core/readable_files/project_file_handler.cpp \
+	src/core/readable_files/scene_file_reader.cpp \
 
 OBJS = $(SRCS:src/%.cpp=$(OBJDIR)/%.o)
 
@@ -98,6 +99,7 @@ TEST_SRCS = \
 	tests/test_ui_layout.cpp \
 	tests/test_project_file_handler.cpp \
 	tests/test_resource_manager.cpp \
+	tests/test_scene_file_reader.cpp \
 
 
 TEST_OBJS = $(TEST_SRCS:tests/%.cpp=$(OBJDIR)/%.o)
