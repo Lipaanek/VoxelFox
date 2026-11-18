@@ -9,41 +9,41 @@
 #include "../scene/scene_manager.hpp"
 
 Environment::Environment(EnvironmentObjects objects)
-    : sceneManager(objects.sceneManager), window(objects.window), inputSystem(objects.inputSystem),
-      uiRenderer(objects.window), camera(objects.camera), uiRenderMode(objects.uiRenderMode),
-      luaApiRegistry(std::move(objects.luaApiRegistry)) {
-    luaEngine.registerApiBindings(
-        luaApiRegistry,
+    : m_sceneManager(objects.sceneManager), m_window(objects.window), m_inputSystem(objects.inputSystem),
+      m_uiRenderer(objects.window), m_camera(objects.camera), m_uiRenderMode(objects.uiRenderMode),
+      m_luaApiRegistry(std::move(objects.luaApiRegistry)) {
+    m_luaEngine.registerApiBindings(
+        m_luaApiRegistry,
         {
-            .camera = &camera,
-            .inputSystem = &inputSystem,
-            .inputMapScope = uiRenderMode == UIRenderMode::Editor
+            .camera = &m_camera,
+            .inputSystem = &m_inputSystem,
+            .inputMapScope = m_uiRenderMode == UIRenderMode::Editor
                 ? InputMapScope::Editor
                 : InputMapScope::Runtime,
-            .eventBus = &eventBus
+            .eventBus = &m_eventBus
         }
     );
 }
 
 Camera& Environment::getCamera() {
-    return camera;
+    return m_camera;
 }
 
 const Camera& Environment::getCamera() const {
-    return camera;
+    return m_camera;
 }
 
 void Environment::update(const float dt) {
-    sceneManager.update(dt);
+    m_sceneManager.update(dt);
 }
 
 void Environment::render() {
-    sceneManager.render();
-    if (uiRenderMode == UIRenderMode::Editor)
+    m_sceneManager.render();
+    if (m_uiRenderMode == UIRenderMode::Editor)
         renderEditorUI();
 
-    if (Scene* scene = sceneManager.getCurrentScene())
-        uiRenderer.renderRuntimeUI(scene->getUIElements(), uiRenderMode);
+    if (Scene* scene = m_sceneManager.getCurrentScene())
+        m_uiRenderer.renderRuntimeUI(scene->getUIElements(), m_uiRenderMode);
 
     endUI();
 }
@@ -51,25 +51,25 @@ void Environment::render() {
 void Environment::setScene(std::unique_ptr<Scene> scene) const {
     if (scene)
         scene->lua().registerApiBindings(
-            luaApiRegistry,
+            m_luaApiRegistry,
             {
-                .camera = &camera,
-                .inputSystem = &inputSystem,
+                .camera = &m_camera,
+                .inputSystem = &m_inputSystem,
                 .eventBus = &scene->eventBus()
             }
         );
 
-    sceneManager.setScene(std::move(scene));
+    m_sceneManager.setScene(std::move(scene));
 }
 
 void Environment::beginUI() {
-    const UICaptureState capture = uiRenderer.begin();
-    inputSystem.setUICapture(capture.mouse, capture.keyboard);
+    const UICaptureState capture = m_uiRenderer.begin();
+    m_inputSystem.setUICapture(capture.mouse, capture.keyboard);
 }
 
 void Environment::endUI() {
-    const UICaptureState capture = uiRenderer.end();
-    inputSystem.setUICapture(capture.mouse, capture.keyboard);
+    const UICaptureState capture = m_uiRenderer.end();
+    m_inputSystem.setUICapture(capture.mouse, capture.keyboard);
 }
 
 void Environment::renderEditorUI() {

@@ -9,12 +9,12 @@ bool MeshResource::setup(const MeshData& data) {
         return false;
     }
 
-    this->vao.bind();
-    this->vbo.upload(data.vertices.data(), data.vertices.size() * sizeof(Vertex));
-    this->ebo.upload(data.indices.data(), data.indices.size() * sizeof(GLuint));
+    this->m_vao.bind();
+    this->m_vbo.upload(data.vertices.data(), data.vertices.size() * sizeof(Vertex));
+    this->m_ebo.upload(data.indices.data(), data.indices.size() * sizeof(GLuint));
 
-    this->layout3D.upload();
-    this->indexCount = data.indices.size();
+    this->m_layout3D.upload();
+    this->m_indexCount = data.indices.size();
     return true;
 }
 

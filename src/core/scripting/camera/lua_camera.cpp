@@ -80,38 +80,38 @@ const luaL_Reg cameraFunctions[] = {
 
 } // namespace
 
-LuaCamera::LuaCamera(Camera* cam) : cam(cam) {}
+LuaCamera::LuaCamera(Camera* cam) : m_cam(cam) {}
 
 void LuaCamera::setPosition(const glm::vec3 pos) const {
-    if (this->cam)
-        this->cam->setPosition(pos);
+    if (this->m_cam)
+        this->m_cam->setPosition(pos);
 }
 
 glm::vec3 LuaCamera::getPosition() const {
-    if (this->cam)
-        return this->cam->getPosition();
+    if (this->m_cam)
+        return this->m_cam->getPosition();
     return glm::vec3(0.0f);
 }
 
 void LuaCamera::setYaw(const float yaw) const {
-    if (this->cam)
-        this->cam->setYaw(yaw);
+    if (this->m_cam)
+        this->m_cam->setYaw(yaw);
 }
 
 void LuaCamera::setPitch(const float pitch) const {
-    if (this->cam)
-        this->cam->setPitch(pitch);
+    if (this->m_cam)
+        this->m_cam->setPitch(pitch);
 }
 
 float LuaCamera::getYaw() const {
-    if (this->cam)
-        return this->cam->getYaw();
+    if (this->m_cam)
+        return this->m_cam->getYaw();
     return 0.0f;
 }
 
 float LuaCamera::getPitch() const {
-    if (this->cam)
-        return this->cam->getPitch();
+    if (this->m_cam)
+        return this->m_cam->getPitch();
     return 0.0f;
 }
 

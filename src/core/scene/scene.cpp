@@ -23,34 +23,34 @@ Node* findNodeRecursive(Node* node, const std::int64_t instanceId) {
 }
 
 Scene::Scene() {
-    eventBus_.subscribe<NodeSetPositionEvent>(
+    m_eventBus_.subscribe<NodeSetPositionEvent>(
         "node.set_position",
         [this](const NodeSetPositionEvent& event) {
-            auto* node = dynamic_cast<Node3D*>(findNode(event.nodeId));
+            auto* node = dynamic_cast<Node3D*>(findNode(event.m_nodeId));
             if (node)
-                node->setPosition(event.position);
+                node->setPosition(event.m_position);
         },
         this
     );
 }
 
 Scene::~Scene() {
-    root.reset();
-    eventBus_.unsubscribeOwner(this);
+    m_root.reset();
+    m_eventBus_.unsubscribeOwner(this);
 }
 
 Node* Scene::findNode(const std::int64_t instanceId) const {
-    return findNodeRecursive(root.get(), instanceId);
+    return findNodeRecursive(m_root.get(), instanceId);
 }
 
 void Scene::addUIElement(UIElement element) {
-    uiElements.push_back(std::move(element));
+    m_uiElements.push_back(std::move(element));
 }
 
 std::vector<UIElement>& Scene::getUIElements() {
-    return uiElements;
+    return m_uiElements;
 }
 
 const std::vector<UIElement>& Scene::getUIElements() const {
-    return uiElements;
+    return m_uiElements;
 }

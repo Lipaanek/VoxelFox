@@ -4,7 +4,7 @@
 
 class Renderer {
 private:
-    MeshRenderer meshRenderer {};
+    MeshRenderer m_meshRenderer {};
 
 public:
     Renderer() = default;

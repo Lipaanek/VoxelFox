@@ -13,34 +13,34 @@
 #include "nodes/lua_node_bindings.hpp"
 
 LuaScript::LuaScript(LuaEngine& engine)
-    : engine_(engine) {
+    : m_engine_(engine) {
 }
 
 LuaScript::LuaScript(LuaEngine& engine, Node& node)
-    : engine_(engine), attachedNode_(&node) {
+    : m_engine_(engine), m_attachedNode_(&node) {
 }
 
 LuaScript::~LuaScript() {
     releaseEnvironment();
-    engine_.removeScript(this);
+    m_engine_.removeScript(this);
 }
 
 void LuaScript::releaseEnvironment() {
-    lua_State* L = engine_.state();
-    if (eventBus_)
-        eventBus_->unsubscribeOwner(this);
-    if (environmentRef_ != LUA_NOREF) {
-        luaL_unref(L, LUA_REGISTRYINDEX, environmentRef_);
-        environmentRef_ = LUA_NOREF;
+    lua_State* L = m_engine_.state();
+    if (m_eventBus_)
+        m_eventBus_->unsubscribeOwner(this);
+    if (m_environmentRef_ != LUA_NOREF) {
+        luaL_unref(L, LUA_REGISTRYINDEX, m_environmentRef_);
+        m_environmentRef_ = LUA_NOREF;
     }
 }
 
 LoadScriptResult LuaScript::setScript(const char* path, const std::vector<std::string>& flags) {
-    lua_State* L = engine_.state();
+    lua_State* L = m_engine_.state();
     releaseEnvironment();
-    eventBus_ = attachedNode_ && attachedNode_->getScene()
-        ? &attachedNode_->getScene()->eventBus()
-        : engine_.eventBus();
+    m_eventBus_ = m_attachedNode_ && m_attachedNode_->getScene()
+        ? &m_attachedNode_->getScene()->eventBus()
+        : m_engine_.eventBus();
 
     const std::string source = Util::File::read(path);
     if (source.empty()) {
@@ -84,24 +84,24 @@ LoadScriptResult LuaScript::setScript(const char* path, const std::vector<std::s
     lua_pushvalue(L, environmentIndex);
     lua_setfield(L, environmentIndex, "_G");
 
-    if (eventBus_)
-        LuaEventBindings::pushApi(L, *eventBus_, this);
+    if (m_eventBus_)
+        LuaEventBindings::pushApi(L, *m_eventBus_, this);
     else
         lua_pushnil(L);
     lua_setfield(L, environmentIndex, "EventBus");
 
-    if (attachedNode_)
-        LuaNodeBindings::pushNodePrototype(L, *attachedNode_);
+    if (m_attachedNode_)
+        LuaNodeBindings::pushNodePrototype(L, *m_attachedNode_);
 
-    if (attachedNode_) {
+    if (m_attachedNode_) {
         lua_setfield(L, environmentIndex, "Node");
     }
 
     lua_pushvalue(L, environmentIndex);
-    environmentRef_ = luaL_ref(L, LUA_REGISTRYINDEX);
+    m_environmentRef_ = luaL_ref(L, LUA_REGISTRYINDEX);
     lua_remove(L, environmentIndex);
 
-    lua_rawgeti(L, LUA_REGISTRYINDEX, environmentRef_);
+    lua_rawgeti(L, LUA_REGISTRYINDEX, m_environmentRef_);
     if (!lua_setupvalue(L, -2, 1)) {
         lua_pop(L, 1);
         releaseEnvironment();
@@ -131,11 +131,11 @@ LoadScriptResult LuaScript::setScript(const char* path, const std::vector<std::s
 LoadScriptResult LuaScript::load(const char* path) const {
     const std::string source = Util::File::read(path);
 
-    if (luaL_loadbuffer(this->engine_.state(), source.c_str(), source.size(), path) != LUA_OK || lua_pcall(this->engine_.state(), 0, 0, 0) != LUA_OK) {
-        const char* rawError = lua_tostring(this->engine_.state(), -1);
+    if (luaL_loadbuffer(this->m_engine_.state(), source.c_str(), source.size(), path) != LUA_OK || lua_pcall(this->m_engine_.state(), 0, 0, 0) != LUA_OK) {
+        const char* rawError = lua_tostring(this->m_engine_.state(), -1);
         const std::string error = rawError ? rawError : "Unknown Lua error";
         Util::Log::error(error);
-        lua_pop(this->engine_.state(), 1);
+        lua_pop(this->m_engine_.state(), 1);
 
         return LoadScriptResult {
             .result = LoadResult::Failed,
@@ -147,12 +147,12 @@ LoadScriptResult LuaScript::load(const char* path) const {
 }
 
 void LuaScript::callLifecycle(const char* name, const float dt, const bool passDelta) const {
-    if (environmentRef_ == LUA_NOREF)
+    if (m_environmentRef_ == LUA_NOREF)
         return;
 
-    lua_State* L = engine_.state();
+    lua_State* L = m_engine_.state();
     const int originalTop = lua_gettop(L);
-    lua_rawgeti(L, LUA_REGISTRYINDEX, environmentRef_);
+    lua_rawgeti(L, LUA_REGISTRYINDEX, m_environmentRef_);
     lua_pushstring(L, name);
     lua_rawget(L, -2);
     lua_remove(L, -2);

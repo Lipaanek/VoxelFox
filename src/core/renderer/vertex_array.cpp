@@ -2,32 +2,32 @@
 #include "../util/util.hpp"
 
 VertexArray::VertexArray() {
-    glGenVertexArrays(1, &this->id);
-    if (this->id == 0)
+    glGenVertexArrays(1, &this->m_id);
+    if (this->m_id == 0)
         Util::Log::error("Failed to generate vertex array");
 }
 
 VertexArray::~VertexArray() {
-    if (id)
-        glDeleteVertexArrays(1, &this->id);
+    if (m_id)
+        glDeleteVertexArrays(1, &this->m_id);
 }
 
-VertexArray::VertexArray(VertexArray&& other) noexcept : id(other.id) {
-    other.id = 0;
+VertexArray::VertexArray(VertexArray&& other) noexcept : m_id(other.m_id) {
+    other.m_id = 0;
 }
 
 VertexArray& VertexArray::operator=(VertexArray&& other) noexcept {
     if (this != &other) {
-        if (id)
-            glDeleteVertexArrays(1, &this->id);
-        id = other.id;
-        other.id = 0;
+        if (m_id)
+            glDeleteVertexArrays(1, &this->m_id);
+        m_id = other.m_id;
+        other.m_id = 0;
     }
     return *this;
 }
 
 void VertexArray::bind() const {
-    glBindVertexArray(this->id);
+    glBindVertexArray(this->m_id);
 }
 
 void VertexArray::unbind() const {
@@ -35,5 +35,5 @@ void VertexArray::unbind() const {
 }
 
 GLuint VertexArray::getID() const {
-    return id;
+    return m_id;
 }

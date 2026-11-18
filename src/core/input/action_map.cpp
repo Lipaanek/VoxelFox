@@ -1,11 +1,11 @@
 #include "action_map.hpp"
 
 ActionMap::BindingMap& ActionMap::bindingsFor(const InputMapScope scope) {
-    return scope == InputMapScope::Editor ? this->editorBindings : this->runtimeBindings;
+    return scope == InputMapScope::Editor ? this->m_editorBindings : this->m_runtimeBindings;
 }
 
 const ActionMap::BindingMap& ActionMap::bindingsFor(const InputMapScope scope) const {
-    return scope == InputMapScope::Editor ? this->editorBindings : this->runtimeBindings;
+    return scope == InputMapScope::Editor ? this->m_editorBindings : this->m_runtimeBindings;
 }
 
 void ActionMap::addBinding(
@@ -21,8 +21,8 @@ void ActionMap::clearBindings(const std::string& name, const InputMapScope scope
 }
 
 void ActionMap::clear() {
-    this->editorBindings.clear();
-    this->runtimeBindings.clear();
+    this->m_editorBindings.clear();
+    this->m_runtimeBindings.clear();
 }
 
 void ActionMap::clear(const InputMapScope scope) {

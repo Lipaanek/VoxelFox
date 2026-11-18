@@ -50,8 +50,8 @@ void pushEventValue(lua_State* L, const EventValue& value) {
 }
 
 void pushEventTable(lua_State* L, const std::string& eventName, const Event& event) {
-    lua_createtable(L, 0, static_cast<int>(event.data.size() + 1));
-    for (const auto& [key, value] : event.data) {
+    lua_createtable(L, 0, static_cast<int>(event.m_data.size() + 1));
+    for (const auto& [key, value] : event.m_data) {
         pushEventValue(L, value);
         lua_pushlstring(L, key.data(), key.size());
         lua_insert(L, -2);
@@ -153,7 +153,7 @@ int eventBusEmit(lua_State* L) {
     size_t nameLength = 0;
     const char* name = luaL_checklstring(L, 1, &nameLength);
     LuaEvent event;
-    event.data = readEventData(L, 2);
+    event.m_data = readEventData(L, 2);
     try {
         eventBus->emit(std::string(name, nameLength), event);
     } catch (const std::exception& error) {
@@ -164,7 +164,7 @@ int eventBusEmit(lua_State* L) {
 
 int eventBusUnsubscribe(lua_State* L) {
     EventBus* eventBus = getEventBus(L);
-    const auto id = static_cast<EventBus::SubscriptionId>(luaL_checkinteger(L, 1));
+    const auto id = luaL_checkinteger(L, 1);
     lua_pushboolean(L, eventBus->unsubscribe(id));
     return 1;
 }

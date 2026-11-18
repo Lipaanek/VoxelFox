@@ -8,6 +8,10 @@
 #include "../util/util.hpp"
 
 class ResourceManager {
+private:
+    std::unordered_map<ResourceID, std::shared_ptr<Resource>> m_cache;
+    ResourceID m_nextID_ = 1;
+
 public:
     template<typename T>
     std::shared_ptr<T> load(const ResourceLoadInfo& loadInfo) {
@@ -19,8 +23,8 @@ public:
             return {};
         }
 
-        resource->id = nextID_++;
-        cache.emplace(resource->id, resource);
+        resource->id = m_nextID_++;
+        m_cache.emplace(resource->id, resource);
         return resource;
     }
 
@@ -30,14 +34,10 @@ public:
     std::shared_ptr<T> getResource(ResourceID id) const {
         static_assert(std::is_base_of_v<Resource, T>);
 
-        const auto it = cache.find(id);
-        if (it == cache.end())
+        const auto it = m_cache.find(id);
+        if (it == m_cache.end())
             return {};
 
         return std::dynamic_pointer_cast<T>(it->second);
     }
-
-private:
-    std::unordered_map<ResourceID, std::shared_ptr<Resource>> cache;
-    ResourceID nextID_ = 1;
 };

@@ -23,13 +23,12 @@ private:
     // Retrieving value from env is easy:
     //
     // auto& value = environment["application"]["project_name"];
-    ProjectFile& projectFile;
+    ProjectFile& m_projectFile;
 
     void buildProjectFile() const;
 
 public:
     [[nodiscard]] std::string valueToString(const VariableValue &value) const;
-
     [[nodiscard]] ProjectFile& getEnv() const;
 
     explicit ProjectFileHandler(ProjectFile& projectFile);

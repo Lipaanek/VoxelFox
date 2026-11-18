@@ -7,7 +7,7 @@ namespace {
 struct NumberEvent final : Util::Event {
     explicit NumberEvent(const int value)
         : value(value) {
-        data.emplace("value", static_cast<std::int64_t>(value));
+        m_data.emplace("value", static_cast<std::int64_t>(value));
     }
 
     int value;
@@ -45,7 +45,7 @@ TEST_CASE("EventBus dispatches named events to matching typed subscribers") {
 TEST_CASE("EventBus snapshots listeners and honors unsubscription during emission") {
     Util::EventBus eventBus;
     int calls = 0;
-    Util::EventBus::SubscriptionId secondSubscription = 0;
+    Util::SubscriptionId secondSubscription = 0;
 
     eventBus.subscribe<NumberEvent>(
         "test.snapshot",

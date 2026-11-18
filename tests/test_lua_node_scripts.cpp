@@ -14,11 +14,11 @@
 namespace {
 
 std::string eventString(const Util::Event& event, const char* key) {
-    return std::get<std::string>(event.data.at(key));
+    return std::get<std::string>(event.m_data.at(key));
 }
 
 double eventNumber(const Util::Event& event, const char* key) {
-    const auto& value = event.data.at(key);
+    const auto& value = event.m_data.at(key);
     if (const auto* number = std::get_if<double>(&value))
         return *number;
     if (const auto* integer = std::get_if<std::int64_t>(&value))
@@ -78,7 +78,7 @@ TEST_CASE("Node scripts isolate lifecycle globals and emit instance-bound events
     REQUIRE(readyEvents == expectedReady);
 
     Util::Event ping;
-    ping.data.emplace("value", std::int64_t{17});
+    ping.m_data.emplace("value", std::int64_t{17});
     scene.eventBus().emit("test.ping", ping);
     scene.eventBus().emit("test.ping", ping);
     const std::vector<std::string> expectedPong{ "a", "b" };
@@ -118,7 +118,7 @@ TEST_CASE("Removing a node unregisters its per-node Lua lifecycle") {
 
     scene.getRoot()->removeChild(childPointer);
     Util::Event ping;
-    ping.data.emplace("value", std::int64_t{17});
+    ping.m_data.emplace("value", std::int64_t{17});
     scene.eventBus().emit("test.ping", ping);
     scene.lua().runUpdate(0.1f);
     REQUIRE(pongCount == 0);

@@ -11,28 +11,28 @@
 
 class Scene {
 private:
-    Util::EventBus eventBus_;
-    LuaEngine lua_;
-    std::unique_ptr<Node> root = nullptr;
-    Lighting lighting;
-    std::vector<UIElement> uiElements;
-    ResourceManager resourceManager;
+    Util::EventBus m_eventBus_;
+    LuaEngine m_lua_;
+    std::unique_ptr<Node> m_root = nullptr;
+    Lighting m_lighting;
+    std::vector<UIElement> m_uiElements;
+    ResourceManager m_resourceManager;
 
 public:
     Scene();
     virtual ~Scene();
 
     void setRoot(std::unique_ptr<Node> newRoot) {
-        root = std::move(newRoot);
+        m_root = std::move(newRoot);
 
-        if (root) {
-            root->setScene(this);
+        if (m_root) {
+            m_root->setScene(this);
         }
     }
 
-    Node* getRoot() const { return this->root.get(); }
-    LuaEngine& lua() { return lua_; }
-    Util::EventBus& eventBus() { return eventBus_; }
+    Node* getRoot() const { return this->m_root.get(); }
+    LuaEngine& lua() { return m_lua_; }
+    Util::EventBus& eventBus() { return m_eventBus_; }
 
     void addUIElement(UIElement element);
 
@@ -42,29 +42,29 @@ public:
 
     virtual void update(const float dt) {
         onUpdate(dt);
-        lua_.runUpdate(dt);
+        m_lua_.runUpdate(dt);
     }
 
     void ready() {
         Util::Log::log("Ready scene");
         onReady();
-        lua_.runReady();
+        m_lua_.runReady();
     }
 
     Lighting& getLighting() {
-        return this->lighting;
+        return this->m_lighting;
     }
 
     ResourceManager& getResourceManager() {
-        return this->resourceManager;
+        return this->m_resourceManager;
     }
 
     const ResourceManager& getResourceManager() const {
-        return this->resourceManager;
+        return this->m_resourceManager;
     }
 
     const Lighting& getLighting() const {
-        return this->lighting;
+        return this->m_lighting;
     }
 
 protected:

@@ -27,11 +27,11 @@ struct LoadScriptResult {
 
 class LuaEngine {
 private:
-    lua_State* L;
-    LuaFlags flags_;
-    std::vector<LuaScript*> scripts_;
-    bool apiBindingsRegistered_ = false;
-    Util::EventBus* eventBus_ = nullptr;
+    lua_State* m_L;
+    LuaFlags m_flags_;
+    std::vector<LuaScript*> m_scripts_;
+    bool m_apiBindingsRegistered_ = false;
+    Util::EventBus* m_eventBus_ = nullptr;
 
 public:
     LuaEngine();

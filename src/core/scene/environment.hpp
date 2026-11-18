@@ -25,16 +25,16 @@ struct EnvironmentObjects {
 
 class Environment {
 protected:
-    SceneManager& sceneManager;
-    Window& window;
-    InputSystem& inputSystem;
-    UIRenderer uiRenderer;
+    SceneManager& m_sceneManager;
+    Window& m_window;
+    InputSystem& m_inputSystem;
+    UIRenderer m_uiRenderer;
 
-    Camera& camera;
-    UIRenderMode uiRenderMode;
-    LuaApiRegistry luaApiRegistry;
-    Util::EventBus eventBus;
-    LuaEngine luaEngine;
+    Camera& m_camera;
+    UIRenderMode m_uiRenderMode;
+    LuaApiRegistry m_luaApiRegistry;
+    Util::EventBus m_eventBus;
+    LuaEngine m_luaEngine;
 
 public:
     explicit Environment(EnvironmentObjects objects);

@@ -10,47 +10,47 @@ ShaderProgram::ShaderProgram() {
         return;
     }
 
-    this->id = program;
+    this->m_id = program;
 }
 
 void ShaderProgram::attach(const Shader& shader) {
-    this->shaders.push_back(&shader);
+    this->m_shaders.push_back(&shader);
 
-    glAttachShader(this->id, shader.getID());
+    glAttachShader(this->m_id, shader.getID());
 }
 
 void ShaderProgram::link() {
-    glLinkProgram(this->id);
+    glLinkProgram(this->m_id);
 
     GLuint success;
-    glGetProgramiv(this->id, GL_LINK_STATUS, (int *)&success);
+    glGetProgramiv(this->m_id, GL_LINK_STATUS, (int *)&success);
 
     if (!success) {
         GLint maxLength = 0;
-	    glGetProgramiv(this->id, GL_INFO_LOG_LENGTH, &maxLength);
+	    glGetProgramiv(this->m_id, GL_INFO_LOG_LENGTH, &maxLength);
 
 	    // The maxLength includes the NULL character
 	    std::vector<GLchar> infoLog(maxLength);
-	    glGetProgramInfoLog(this->id, maxLength, &maxLength, &infoLog[0]);
+	    glGetProgramInfoLog(this->m_id, maxLength, &maxLength, &infoLog[0]);
 
         Util::Log::error(std::format("Shader linking failed: {}", infoLog.data()));
 
 	    // Don't need the program anymore
-	    glDeleteProgram(this->id);
-        this->id = 0;
+	    glDeleteProgram(this->m_id);
+        this->m_id = 0;
 
         return;
     }
 
     // const Shader*
-    for (auto shader : this->shaders) {
-        glDetachShader(this->id, shader->getID());
+    for (auto shader : this->m_shaders) {
+        glDetachShader(this->m_id, shader->getID());
     }
 }
 
 void ShaderProgram::use() const {
-    if (id)
-        glUseProgram(id);
+    if (m_id)
+        glUseProgram(m_id);
 }
 
 void ShaderProgram::setStorageBuffer(const unsigned int binding, const Buffer& buffer) const {
@@ -64,12 +64,12 @@ void ShaderProgram::dispatch(unsigned int x, unsigned int y, unsigned int z) con
 }
 
 GLint ShaderProgram::getUniformLocation(const std::string& name) {
-    auto it = this->uniformLocations.find(name);
-    if (it != this->uniformLocations.end())
+    auto it = this->m_uniformLocations.find(name);
+    if (it != this->m_uniformLocations.end())
         return it->second;
 
-    GLint location = glGetUniformLocation(this->id, name.c_str());
-    this->uniformLocations[name] = location;
+    GLint location = glGetUniformLocation(this->m_id, name.c_str());
+    this->m_uniformLocations[name] = location;
 
     if (location == -1)
         Util::Log::log(std::format("Uniform '{}' not found in shader program", name));

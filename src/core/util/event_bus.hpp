@@ -13,11 +13,31 @@
 
 namespace Util {
 
-class EventBus {
-public:
-    using SubscriptionId = std::int64_t;
-    using Cleanup = std::function<void()>;
+using SubscriptionId = std::int64_t;
+using Cleanup = std::function<void()>;
 
+class EventBus {
+private:
+    struct Subscription {
+        std::string eventName;
+        std::function<void(const Event&)> listener;
+        const void* owner;
+        Cleanup cleanup;
+    };
+
+    SubscriptionId m_nextId_ = 1;
+    std::unordered_map<SubscriptionId, Subscription> m_subscriptions_;
+    std::unordered_map<std::string, std::vector<SubscriptionId>> m_eventSubscriptions_;
+
+    SubscriptionId subscribeImpl(
+        std::string eventName,
+        std::function<void(const Event&)> listener,
+        const void* owner,
+        Cleanup cleanup
+    );
+    void emitEvent(std::string_view eventName, const Event& event) const;
+
+public:
     EventBus() = default;
     ~EventBus();
 
@@ -53,25 +73,7 @@ public:
     bool unsubscribe(SubscriptionId id);
     void unsubscribeOwner(const void* owner);
 
-private:
-    struct Subscription {
-        std::string eventName;
-        std::function<void(const Event&)> listener;
-        const void* owner;
-        Cleanup cleanup;
-    };
 
-    SubscriptionId nextId_ = 1;
-    std::unordered_map<SubscriptionId, Subscription> subscriptions_;
-    std::unordered_map<std::string, std::vector<SubscriptionId>> eventSubscriptions_;
-
-    SubscriptionId subscribeImpl(
-        std::string eventName,
-        std::function<void(const Event&)> listener,
-        const void* owner,
-        Cleanup cleanup
-    );
-    void emitEvent(std::string_view eventName, const Event& event) const;
 };
 
 } // namespace Util

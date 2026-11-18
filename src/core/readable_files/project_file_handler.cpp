@@ -141,14 +141,14 @@ std::string ProjectFileHandler::valueToString(const VariableValue& value) const 
     }, value);
 }
 
-ProjectFileHandler::ProjectFileHandler(ProjectFile& projectFile) : projectFile(projectFile) {}
+ProjectFileHandler::ProjectFileHandler(ProjectFile& projectFile) : m_projectFile(projectFile) {}
 
 ProjectFile &ProjectFileHandler::getEnv() const {
-    return this->projectFile;
+    return this->m_projectFile;
 }
 
 void ProjectFileHandler::load() const {
-    const auto& path = projectFile.file.path();
+    const auto& path = m_projectFile.file.path();
     std::ifstream input(path);
     if (!input.is_open()) {
         throw std::runtime_error(std::format("Cannot open project file: {}", path.string()));
@@ -200,36 +200,36 @@ void ProjectFileHandler::load() const {
     if (input.bad()) {
         throw std::runtime_error(std::format("Failed reading project file: {}", path.string()));
     }
-    projectFile.environment = std::move(environment);
+    m_projectFile.environment = std::move(environment);
 }
 
 void ProjectFileHandler::load(const std::filesystem::path& filePath) const {
     ProjectFile pendingProject{ Util::File(filePath), {} };
     ProjectFileHandler pendingHandler{ pendingProject };
     pendingHandler.load();
-    projectFile = std::move(pendingProject);
+    m_projectFile = std::move(pendingProject);
 }
 
 void ProjectFileHandler::addSection(const std::string& sectionName) const {
-    projectFile.environment.try_emplace(sectionName);
+    m_projectFile.environment.try_emplace(sectionName);
 }
 
 void ProjectFileHandler::removeSection(const std::string& sectionName) const {
-    if (this->projectFile.environment.find(sectionName) == this->projectFile.environment.end()) return;
+    if (this->m_projectFile.environment.find(sectionName) == this->m_projectFile.environment.end()) return;
 
-    this->projectFile.environment.erase(sectionName);
+    this->m_projectFile.environment.erase(sectionName);
 }
 
 void ProjectFileHandler::addVariable(const std::string& sectionName, const std::string& variableName, const VariableValue& value) const {
-    const auto section = projectFile.environment.find(sectionName);
-    if (section == projectFile.environment.end()) return;
+    const auto section = m_projectFile.environment.find(sectionName);
+    if (section == m_projectFile.environment.end()) return;
 
     section->second.insert_or_assign(variableName, value);
 }
 
 void ProjectFileHandler::removeVariable(const std::string &sectionName, const std::string &variableName) const {
-    const auto section = projectFile.environment.find(sectionName);
-    if (section == projectFile.environment.end()) return;
+    const auto section = m_projectFile.environment.find(sectionName);
+    if (section == m_projectFile.environment.end()) return;
 
     section->second.erase(variableName);
 }
@@ -237,7 +237,7 @@ void ProjectFileHandler::removeVariable(const std::string &sectionName, const st
 void ProjectFileHandler::buildProjectFile() const {
     std::string contents = "; VoxelFox project\n";
 
-    for (const auto& [sectionName, variables] : projectFile.environment) {
+    for (const auto& [sectionName, variables] : m_projectFile.environment) {
         contents += std::format("[{}]\n", sectionName);
 
         for (const auto& [variableName, value] : variables) {
@@ -251,7 +251,7 @@ void ProjectFileHandler::buildProjectFile() const {
         contents += '\n';
     }
 
-    projectFile.file.writeText(contents);
+    m_projectFile.file.writeText(contents);
 }
 
 void ProjectFileHandler::save() const {

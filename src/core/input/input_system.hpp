@@ -10,6 +10,33 @@ class Window;
 struct WindowCallbackContext;
 
 class InputSystem {
+private:
+    GLFWwindow* m_window;
+    WindowCallbackContext* m_callbackContext;
+
+    ActionMap m_actionMap;
+    bool m_uiCapturesMouse = false;
+    bool m_uiCapturesKeyboard = false;
+
+    std::unordered_set<int> m_heldKeys;
+    std::unordered_set<int> m_pressedKeys;
+    std::unordered_set<int> m_releasedKeys;
+    std::unordered_set<int> m_heldButtons;
+    std::unordered_set<int> m_pressedButtons;
+    std::unordered_set<int> m_releasedButtons;
+
+    double m_lastMouseX = 0.0;
+    double m_lastMouseY = 0.0;
+    glm::vec2 m_mouseDelta { 0.0f };
+    glm::vec2 m_scrollDelta { 0.0f };
+
+    RawInputState m_rawInputState;
+
+    static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+    static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
+    static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+
 public:
     explicit InputSystem(Window& window);
     ~InputSystem();
@@ -38,31 +65,4 @@ public:
 
     void setUICapture(bool mouse, bool keyboard);
     void setCursorCaptured(bool captured);
-
-private:
-    GLFWwindow* window;
-    WindowCallbackContext* callbackContext;
-
-    ActionMap actionMap;
-    bool uiCapturesMouse = false;
-    bool uiCapturesKeyboard = false;
-
-    std::unordered_set<int> heldKeys;
-    std::unordered_set<int> pressedKeys;
-    std::unordered_set<int> releasedKeys;
-    std::unordered_set<int> heldButtons;
-    std::unordered_set<int> pressedButtons;
-    std::unordered_set<int> releasedButtons;
-
-    double lastMouseX = 0.0;
-    double lastMouseY = 0.0;
-    glm::vec2 mouseDelta { 0.0f };
-    glm::vec2 scrollDelta { 0.0f };
-
-    RawInputState raw;
-
-    static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-    static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
-    static void cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
-    static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 };

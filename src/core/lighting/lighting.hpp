@@ -5,9 +5,9 @@
 
 class Lighting {
 private:
-    float shininess = 32.0f;
-    glm::vec3 skyColor { 0.3f, 0.35f, 0.45f };
-    glm::vec3 groundColor { 0.08f, 0.08f, 0.10f };
+    float m_shininess = 32.0f;
+    glm::vec3 m_skyColor { 0.3f, 0.35f, 0.45f };
+    glm::vec3 m_groundColor { 0.08f, 0.08f, 0.10f };
 public:
     Lighting() = default;
     ~Lighting() = default;

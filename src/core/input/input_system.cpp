@@ -6,50 +6,50 @@
 #include <GLFW/glfw3.h>
 
 InputSystem::InputSystem(Window& window)
-    : window(window.getHandle()),
-      callbackContext(&window.callbackContext),
-      raw { this->heldKeys,
-            this->pressedKeys,
-            this->releasedKeys,
-            this->heldButtons,
-            this->pressedButtons,
-            this->releasedButtons,
-            this->mouseDelta,
-            this->scrollDelta } {
-    if (!this->window)
+    : m_window(window.getHandle()),
+      m_callbackContext(&window.m_callbackContext),
+      m_rawInputState { this->m_heldKeys,
+            this->m_pressedKeys,
+            this->m_releasedKeys,
+            this->m_heldButtons,
+            this->m_pressedButtons,
+            this->m_releasedButtons,
+            this->m_mouseDelta,
+            this->m_scrollDelta } {
+    if (!this->m_window)
         throw std::invalid_argument("InputSystem requires a valid window");
-    if (this->callbackContext->inputSystem)
+    if (this->m_callbackContext->inputSystem)
         throw std::logic_error("Window already has an input system");
 
-    this->callbackContext->inputSystem = this;
-    glfwSetKeyCallback(this->window, keyCallback);
-    glfwSetMouseButtonCallback(this->window, mouseButtonCallback);
-    glfwSetCursorPosCallback(this->window, cursorPosCallback);
-    glfwSetScrollCallback(this->window, scrollCallback);
+    this->m_callbackContext->inputSystem = this;
+    glfwSetKeyCallback(this->m_window, keyCallback);
+    glfwSetMouseButtonCallback(this->m_window, mouseButtonCallback);
+    glfwSetCursorPosCallback(this->m_window, cursorPosCallback);
+    glfwSetScrollCallback(this->m_window, scrollCallback);
 
-    glfwGetCursorPos(this->window, &this->lastMouseX, &this->lastMouseY);
+    glfwGetCursorPos(this->m_window, &this->m_lastMouseX, &this->m_lastMouseY);
 }
 
 InputSystem::~InputSystem() {
-    if (!this->window)
+    if (!this->m_window)
         return;
 
-    if (this->callbackContext && this->callbackContext->inputSystem == this)
-        this->callbackContext->inputSystem = nullptr;
+    if (this->m_callbackContext && this->m_callbackContext->inputSystem == this)
+        this->m_callbackContext->inputSystem = nullptr;
 
-    glfwSetKeyCallback(this->window, nullptr);
-    glfwSetMouseButtonCallback(this->window, nullptr);
-    glfwSetCursorPosCallback(this->window, nullptr);
-    glfwSetScrollCallback(this->window, nullptr);
+    glfwSetKeyCallback(this->m_window, nullptr);
+    glfwSetMouseButtonCallback(this->m_window, nullptr);
+    glfwSetCursorPosCallback(this->m_window, nullptr);
+    glfwSetScrollCallback(this->m_window, nullptr);
 }
 
 void InputSystem::beginInput() {
-    this->pressedKeys.clear();
-    this->releasedKeys.clear();
-    this->pressedButtons.clear();
-    this->releasedButtons.clear();
-    this->mouseDelta = { 0.0f, 0.0f };
-    this->scrollDelta = { 0.0f, 0.0f };
+    this->m_pressedKeys.clear();
+    this->m_releasedKeys.clear();
+    this->m_pressedButtons.clear();
+    this->m_releasedButtons.clear();
+    this->m_mouseDelta = { 0.0f, 0.0f };
+    this->m_scrollDelta = { 0.0f, 0.0f };
 }
 
 void InputSystem::setEditorDefaultBindings() {
@@ -82,58 +82,58 @@ void InputSystem::addBinding(
     const Binding& binding,
     const InputMapScope scope
 ) {
-    this->actionMap.addBinding(name, binding, scope);
+    this->m_actionMap.addBinding(name, binding, scope);
 }
 
 void InputSystem::clearBindings(const std::string& name, const InputMapScope scope) {
-    this->actionMap.clearBindings(name, scope);
+    this->m_actionMap.clearBindings(name, scope);
 }
 
 void InputSystem::clearBindings(const InputMapScope scope) {
-    this->actionMap.clear(scope);
+    this->m_actionMap.clear(scope);
 }
 
 bool InputSystem::isActive(const std::string& name, const InputMapScope scope) const {
-    return this->actionMap.isActive(
+    return this->m_actionMap.isActive(
         name,
-        this->raw,
-        !this->uiCapturesKeyboard,
-        !this->uiCapturesMouse,
+        this->m_rawInputState,
+        !this->m_uiCapturesKeyboard,
+        !this->m_uiCapturesMouse,
         scope
     );
 }
 
 bool InputSystem::isPressed(const std::string& name, const InputMapScope scope) const {
-    return this->actionMap.isPressed(
+    return this->m_actionMap.isPressed(
         name,
-        this->raw,
-        !this->uiCapturesKeyboard,
-        !this->uiCapturesMouse,
+        this->m_rawInputState,
+        !this->m_uiCapturesKeyboard,
+        !this->m_uiCapturesMouse,
         scope
     );
 }
 
 bool InputSystem::isReleased(const std::string& name, const InputMapScope scope) const {
-    return this->actionMap.isReleased(
+    return this->m_actionMap.isReleased(
         name,
-        this->raw,
-        !this->uiCapturesKeyboard,
-        !this->uiCapturesMouse,
+        this->m_rawInputState,
+        !this->m_uiCapturesKeyboard,
+        !this->m_uiCapturesMouse,
         scope
     );
 }
 
 float InputSystem::getAxis(const std::string& name, const InputMapScope scope) const {
-    return this->actionMap.getAxis(name, this->raw, !this->uiCapturesMouse, scope);
+    return this->m_actionMap.getAxis(name, this->m_rawInputState, !this->m_uiCapturesMouse, scope);
 }
 
 void InputSystem::setUICapture(const bool mouse, const bool keyboard) {
-    this->uiCapturesMouse = mouse;
-    this->uiCapturesKeyboard = keyboard;
+    this->m_uiCapturesMouse = mouse;
+    this->m_uiCapturesKeyboard = keyboard;
 }
 
 void InputSystem::setCursorCaptured(bool captured) {
-    glfwSetInputMode(this->window, GLFW_CURSOR,
+    glfwSetInputMode(this->m_window, GLFW_CURSOR,
         captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
 }
 
@@ -144,11 +144,11 @@ void InputSystem::keyCallback(GLFWwindow* window, int key, int, int action, int)
         return;
 
     if (action == GLFW_PRESS) {
-        self->heldKeys.insert(key);
-        self->pressedKeys.insert(key);
+        self->m_heldKeys.insert(key);
+        self->m_pressedKeys.insert(key);
     } else if (action == GLFW_RELEASE) {
-        self->heldKeys.erase(key);
-        self->releasedKeys.insert(key);
+        self->m_heldKeys.erase(key);
+        self->m_releasedKeys.insert(key);
     }
 }
 
@@ -159,11 +159,11 @@ void InputSystem::mouseButtonCallback(GLFWwindow* window, int button, int action
         return;
 
     if (action == GLFW_PRESS) {
-        self->heldButtons.insert(button);
-        self->pressedButtons.insert(button);
+        self->m_heldButtons.insert(button);
+        self->m_pressedButtons.insert(button);
     } else if (action == GLFW_RELEASE) {
-        self->heldButtons.erase(button);
-        self->releasedButtons.insert(button);
+        self->m_heldButtons.erase(button);
+        self->m_releasedButtons.insert(button);
     }
 }
 
@@ -173,10 +173,10 @@ void InputSystem::cursorPosCallback(GLFWwindow* window, double xpos, double ypos
     if (!self)
         return;
 
-    self->mouseDelta.x += static_cast<float>(xpos - self->lastMouseX);
-    self->mouseDelta.y += static_cast<float>(ypos - self->lastMouseY);
-    self->lastMouseX = xpos;
-    self->lastMouseY = ypos;
+    self->m_mouseDelta.x += static_cast<float>(xpos - self->m_lastMouseX);
+    self->m_mouseDelta.y += static_cast<float>(ypos - self->m_lastMouseY);
+    self->m_lastMouseX = xpos;
+    self->m_lastMouseY = ypos;
 }
 
 void InputSystem::scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
@@ -185,6 +185,6 @@ void InputSystem::scrollCallback(GLFWwindow* window, double xoffset, double yoff
     if (!self)
         return;
 
-    self->scrollDelta.x += static_cast<float>(xoffset);
-    self->scrollDelta.y += static_cast<float>(yoffset);
+    self->m_scrollDelta.x += static_cast<float>(xoffset);
+    self->m_scrollDelta.y += static_cast<float>(yoffset);
 }

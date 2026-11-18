@@ -18,20 +18,20 @@ constexpr unsigned int toGL(ShaderType type) {
 
 class Shader {
 private:
-    std::string path;
-    ShaderType shaderType;
-    GLuint id = 0;
+    std::string m_path;
+    ShaderType m_shaderType;
+    GLuint m_id = 0;
 
 public:
     Shader(const std::string& path, ShaderType shaderType);
     ~Shader() {
-        if (id)
-            glDeleteShader(id);
+        if (m_id)
+            glDeleteShader(m_id);
     }
 
     GLuint compile();
 
     [[nodiscard]] GLuint getID() const {
-        return id;
+        return m_id;
     }
 };

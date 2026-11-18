@@ -11,8 +11,8 @@ enum class BufferType : GLenum {
 
 class Buffer {
 private:
-    GLenum target;
-    GLuint id = 0;
+    GLenum m_target;
+    GLuint m_id = 0;
 
 public:
     explicit Buffer(BufferType target); // glGenBuffers
@@ -32,7 +32,7 @@ public:
     void read(std::vector<T>& out) const {
         bind();
         GLint size = 0;
-        glGetBufferParameteriv(target, GL_BUFFER_SIZE, &size);
+        glGetBufferParameteriv(m_target, GL_BUFFER_SIZE, &size);
         out.resize(static_cast<size_t>(size) / sizeof(T));
         download(out.data(), size);
     }

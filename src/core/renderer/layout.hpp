@@ -17,15 +17,15 @@ struct VertexAttribute {
 
 class Layout {
 private:
-    std::vector<VertexAttribute> attributes;
-    size_t stride;
+    std::vector<VertexAttribute> m_attributes;
+    size_t m_stride;
 
 public:
     Layout(std::initializer_list<VertexAttribute> attrs, size_t stride)
-        : attributes(attrs), stride(stride) {}
+        : m_attributes(attrs), m_stride(stride) {}
 
     void upload() const {
-        for (auto& a : this->attributes)
-            a.upload(stride);
+        for (auto& a : this->m_attributes)
+            a.upload(m_stride);
     }
 };

@@ -33,12 +33,12 @@ class Window {
     friend class InputSystem;
 
 private:
-    GLFWwindow* handle = nullptr;
-    WindowCallbackContext callbackContext;
-    int width;
-    int height;
-    int framebufferWidth = 0;
-    int framebufferHeight = 0;
+    GLFWwindow* m_handle = nullptr;
+    WindowCallbackContext m_callbackContext;
+    int m_width;
+    int m_height;
+    int m_framebufferWidth = 0;
+    int m_framebufferHeight = 0;
 
     void updateFramebuffer();
 

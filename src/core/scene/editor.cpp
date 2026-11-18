@@ -26,16 +26,16 @@ Editor::Editor(
         .camera = camera,
         .uiRenderMode = UIRenderMode::Editor
     }),
-    projectFile{ Util::File("project.vfp"), {} },
-    projectFileHandler{ projectFile }
+    m_projectFile{ Util::File("project.vfp"), {} },
+    m_projectFileHandler{ m_projectFile }
 {
     inputSystem.setEditorDefaultBindings();
 
-    editorScripts.emplace_back(
-        std::make_unique<LuaScript>(luaEngine)
+    m_editorScripts.emplace_back(
+        std::make_unique<LuaScript>(m_luaEngine)
     );
 
-    auto& script = *editorScripts.back();
+    auto& script = *m_editorScripts.back();
 
     const auto success = script.setScript(
         "assets/scripts/camera_inputs.lua",
@@ -44,18 +44,18 @@ Editor::Editor(
 
     Util::Log::scriptLoadLog(success);
 
-    luaEngine.addScript(&script);
+    m_luaEngine.addScript(&script);
 }
 
 void Editor::update(const float dt) {
-    luaEngine.runUpdate(dt);
+    m_luaEngine.runUpdate(dt);
 
     // Deleted cus editor doesn't need node scripts to be running
     Environment::update(dt);
 }
 
 ProjectFileHandler& Editor::getProjectFileHandler() noexcept {
-    return projectFileHandler;
+    return m_projectFileHandler;
 }
 
 void Editor::renderEditorUI() {
@@ -105,10 +105,10 @@ void Editor::renderEditorUI() {
                 if (path == nullptr) return;
 
                 try {
-                    projectFileHandler.load(path);
-                    activeProjectPath = path;
+                    m_projectFileHandler.load(path);
+                    m_activeProjectPath = path;
 
-                    Util::Log::log(std::format("Loaded project: {}", activeProjectPath.string()));
+                    Util::Log::log(std::format("Loaded project: {}", m_activeProjectPath.string()));
                 }
                 catch (const std::exception& error) {
                     reportLoadError(error);
@@ -116,7 +116,7 @@ void Editor::renderEditorUI() {
             };
 
             if (ImGui::MenuItem("Save Project")) {
-                if (activeProjectPath.empty()) {
+                if (m_activeProjectPath.empty()) {
                     saveAs();
                 }
                 else {
@@ -142,15 +142,15 @@ void Editor::renderEditorUI() {
         ImGui::EndMainMenuBar();
     }
 
-    uiRenderer.renderEditorDockspace();
+    m_uiRenderer.renderEditorDockspace();
 }
 
 void Editor::saveProject() const {
-    if (activeProjectPath.empty()) {
+    if (m_activeProjectPath.empty()) {
         throw std::logic_error("Cannot save a project before choosing a project path");
     }
 
-    projectFileHandler.save();
+    m_projectFileHandler.save();
 }
 
 void Editor::saveProjectAs(const std::string& filePath) {
@@ -164,7 +164,7 @@ void Editor::saveProjectAs(const std::string& filePath) {
     const std::filesystem::path projectFolder = selectedPath.parent_path() / projectName;
     const Util::Directory directory { projectFolder };
 
-    ProjectFile pendingProject = projectFile;
+    ProjectFile pendingProject = m_projectFile;
     pendingProject.file = directory.file("project.vfp");
 
     const ProjectFileHandler pendingHandler{ pendingProject };
@@ -178,6 +178,6 @@ void Editor::saveProjectAs(const std::string& filePath) {
     pendingHandler.addVariable("application", "project_name", projectName);
     pendingHandler.save();
 
-    projectFile = std::move(pendingProject);
-    activeProjectPath = projectFolder / "project.vfp";
+    m_projectFile = std::move(pendingProject);
+    m_activeProjectPath = projectFolder / "project.vfp";
 }

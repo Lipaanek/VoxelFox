@@ -9,9 +9,9 @@
 
 class ShaderProgram {
 private:
-    GLuint id = 0;
-    std::vector<const Shader*> shaders;
-    std::unordered_map<std::string, GLint> uniformLocations;
+    GLuint m_id = 0;
+    std::vector<const Shader*> m_shaders;
+    std::unordered_map<std::string, GLint> m_uniformLocations;
 
     [[nodiscard]] GLint getUniformLocation(const std::string& name);
 
@@ -19,8 +19,8 @@ public:
     ShaderProgram();
     ShaderProgram(const ShaderProgram&) = delete;
     ~ShaderProgram() {
-        if (id)
-            glDeleteProgram(id);
+        if (m_id)
+            glDeleteProgram(m_id);
     }
 
     ShaderProgram& operator=(const ShaderProgram&) = delete;
@@ -33,7 +33,7 @@ public:
     void dispatch(unsigned int x, unsigned int y = 1, unsigned int z = 1) const;
 
     [[nodiscard]] GLuint getID() const {
-        return id;
+        return m_id;
     }
 
     // Overloads for uniforms

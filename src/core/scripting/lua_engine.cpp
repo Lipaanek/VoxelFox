@@ -27,47 +27,47 @@ static int luaPrint(lua_State* L) {
 }
 
 LuaEngine::LuaEngine() {
-    this->L = luaL_newstate();
-    if (!this->L)
+    this->m_L = luaL_newstate();
+    if (!this->m_L)
         throw std::runtime_error("Failed to create Lua state");
 
-    luaL_openlibs(this->L);
+    luaL_openlibs(this->m_L);
 
-    lua_pushcfunction(this->L, luaPrint);
-    lua_setglobal(this->L, "print");
+    lua_pushcfunction(this->m_L, luaPrint);
+    lua_setglobal(this->m_L, "print");
 }
 
 LuaEngine::~LuaEngine() {
-    if (this->eventBus_)
-        this->eventBus_->unsubscribeOwner(this->L);
-    if (this->L)
-        lua_close(this->L);
+    if (this->m_eventBus_)
+        this->m_eventBus_->unsubscribeOwner(this->m_L);
+    if (this->m_L)
+        lua_close(this->m_L);
 }
 
 lua_State* LuaEngine::state() const {
-    return this->L;
+    return this->m_L;
 }
 
 Util::EventBus* LuaEngine::eventBus() const {
-    return this->eventBus_;
+    return this->m_eventBus_;
 }
 
 void LuaEngine::registerApiBindings(const LuaApiRegistry& registry, const LuaApiContext& context) {
-    if (apiBindingsRegistered_)
+    if (m_apiBindingsRegistered_)
         throw std::logic_error("Lua API bindings are already registered");
 
-    this->eventBus_ = context.eventBus;
-    registry.registerAll(this->L, context);
-    apiBindingsRegistered_ = true;
+    this->m_eventBus_ = context.eventBus;
+    registry.registerAll(this->m_L, context);
+    m_apiBindingsRegistered_ = true;
 }
 
 LoadScriptResult LuaEngine::loadScript(const char* path, const std::vector<std::string>& flags) {
     const std::string source = Util::File::read(path);
-    this->flags_.clear();
-    this->flags_.parse(source);
+    this->m_flags_.clear();
+    this->m_flags_.parse(source);
 
     for (const auto& flag : flags) {
-        if (!this->flags_.has(flag)) {
+        if (!this->m_flags_.has(flag)) {
             return {
                 .result = LoadResult::Skipped,
                 .message = std::format("Missing required flag: {}, skipping script", flag)
@@ -75,12 +75,12 @@ LoadScriptResult LuaEngine::loadScript(const char* path, const std::vector<std::
         }
     }
 
-    if (luaL_loadbuffer(this->L, source.c_str(), source.size(), path) != LUA_OK
-        || lua_pcall(this->L, 0, 0, 0) != LUA_OK) {
-        const char* rawError = lua_tostring(this->L, -1);
+    if (luaL_loadbuffer(this->m_L, source.c_str(), source.size(), path) != LUA_OK
+        || lua_pcall(this->m_L, 0, 0, 0) != LUA_OK) {
+        const char* rawError = lua_tostring(this->m_L, -1);
         const std::string error = rawError ? rawError : "Unknown Lua load error";
         Util::Log::error(error);
-        lua_pop(this->L, 1);
+        lua_pop(this->m_L, 1);
 
         return {
             .result = LoadResult::Failed,
@@ -92,27 +92,27 @@ LoadScriptResult LuaEngine::loadScript(const char* path, const std::vector<std::
 }
 
 void LuaEngine::addScript(LuaScript* script) {
-    if (script && std::find(this->scripts_.begin(), this->scripts_.end(), script) == this->scripts_.end())
-        this->scripts_.push_back(script);
+    if (script && std::find(this->m_scripts_.begin(), this->m_scripts_.end(), script) == this->m_scripts_.end())
+        this->m_scripts_.push_back(script);
 }
 
 void LuaEngine::removeScript(const LuaScript* script) {
-    std::erase(this->scripts_, script);
+    std::erase(this->m_scripts_, script);
 }
 
 void LuaEngine::runUpdate(const float dt) const {
-    const std::vector<LuaScript*> scripts = this->scripts_;
+    const std::vector<LuaScript*> scripts = this->m_scripts_;
     for (const LuaScript* script : scripts) {
-        if (std::find(this->scripts_.begin(), this->scripts_.end(), script) != this->scripts_.end())
+        if (std::find(this->m_scripts_.begin(), this->m_scripts_.end(), script) != this->m_scripts_.end())
             script->update(dt);
     }
 }
 
 void LuaEngine::runReady() const {
     Util::Log::log("Called ready");
-    const std::vector<LuaScript*> scripts = this->scripts_;
+    const std::vector<LuaScript*> scripts = this->m_scripts_;
     for (const LuaScript* script : scripts) {
-        if (std::find(this->scripts_.begin(), this->scripts_.end(), script) != this->scripts_.end())
+        if (std::find(this->m_scripts_.begin(), this->m_scripts_.end(), script) != this->m_scripts_.end())
             script->ready();
     }
 }

@@ -4,7 +4,7 @@
 
 class VertexArray {
 private:
-    GLuint id = 0;
+    GLuint m_id = 0;
 
 public:
     VertexArray(); // glGenVertexArrays

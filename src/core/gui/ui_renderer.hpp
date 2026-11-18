@@ -20,8 +20,8 @@ enum class UIRenderMode {
 
 class UIRenderer {
 private:
-    ImGuiContext* context = nullptr;
-    bool frameStarted = false;
+    ImGuiContext* m_context = nullptr;
+    bool m_frameStarted = false;
 
     void renderElement(
         UIElement& element,

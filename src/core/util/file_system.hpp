@@ -20,7 +20,7 @@ namespace Util {
 
         static std::string read(const std::string& path);
 
-        const std::filesystem::path& path() const noexcept;
+        [[nodiscard]] const std::filesystem::path& path() const noexcept;
 
         File& writeText(std::string_view text);
         File& appendText(std::string_view text);
@@ -74,7 +74,7 @@ namespace Util {
             requires (!std::same_as<T, bool> && sizeof(T) <= sizeof(std::uint64_t))
         File& appendBinary(T value) {
             using Unsigned = std::make_unsigned_t<T>;
-            Unsigned encoded = static_cast<Unsigned>(value);
+            auto encoded = static_cast<Unsigned>(value);
             std::array<std::byte, sizeof(T)> bytes{};
             for (std::size_t i = 0; i < bytes.size(); ++i) {
                 bytes[i] = static_cast<std::byte>((encoded >> (i * 8)) & Unsigned{0xff});
@@ -106,8 +106,8 @@ namespace Util {
     public:
         explicit Directory(std::filesystem::path path);
 
-        Directory folder(const std::string& name) const;
-        File file(const std::string& name) const;
+        [[nodiscard]] Directory folder(const std::string& name) const;
+        [[nodiscard]] File file(const std::string& name) const;
 
         Directory& file(const std::string& name, std::string_view text);
         Directory& file(const std::string& name, const std::string& text);
@@ -143,7 +143,7 @@ namespace Util {
             return *this;
         }
 
-        const std::filesystem::path& path() const noexcept;
+        [[nodiscard]] const std::filesystem::path& path() const noexcept;
 
     private:
         std::filesystem::path path_;

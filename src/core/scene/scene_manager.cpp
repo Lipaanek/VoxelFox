@@ -1,31 +1,31 @@
 #include "scene_manager.hpp"
 
 SceneManager::SceneManager(Window& window, Renderer& renderer, Camera& camera)
-    : window(window), renderer(renderer), camera(camera) {
+    : m_window(window), m_renderer(renderer), m_camera(camera) {
 }
 
 void SceneManager::setScene(std::unique_ptr<Scene> scene) {
-    currentScene = std::move(scene);
-    firstSceneRun = true;
+    m_currentScene = std::move(scene);
+    m_firstSceneRun = true;
 }
 
 Scene* SceneManager::getCurrentScene() const {
-    return currentScene.get();
+    return m_currentScene.get();
 }
 
 void SceneManager::update(const float dt) {
-    if (firstSceneRun == true) {
-        firstSceneRun = false;
-        currentScene->ready();
+    if (m_firstSceneRun == true) {
+        m_firstSceneRun = false;
+        m_currentScene->ready();
     }
 
-    if (currentScene)
-        currentScene->update(dt);
+    if (m_currentScene)
+        m_currentScene->update(dt);
 }
 
 void SceneManager::render() {
-    if (this->currentScene) {
-        const FrameRenderData data = collector.collect(*currentScene, window, camera);
-        renderer.render(data, *this->currentScene);
+    if (this->m_currentScene) {
+        const FrameRenderData data = m_collector.collect(*m_currentScene, m_window, m_camera);
+        m_renderer.render(data, *this->m_currentScene);
     }
 }

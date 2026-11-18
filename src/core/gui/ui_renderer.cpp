@@ -19,8 +19,8 @@ UIRenderer::UIRenderer(const Window& window) {
     }
 
     IMGUI_CHECKVERSION();
-    context = ImGui::CreateContext();
-    if (!context) {
+    m_context = ImGui::CreateContext();
+    if (!m_context) {
         Util::Log::error("Failed to create ImGui context");
         return;
     }
@@ -33,8 +33,8 @@ UIRenderer::UIRenderer(const Window& window) {
     io.IniFilename = nullptr;
 
     if (!ImGui_ImplGlfw_InitForOpenGL(handle, true)) {
-        ImGui::DestroyContext(context);
-        context = nullptr;
+        ImGui::DestroyContext(m_context);
+        m_context = nullptr;
 
         Util::Log::error("Failed to initialize ImGui GLFW backend");
         return;
@@ -42,8 +42,8 @@ UIRenderer::UIRenderer(const Window& window) {
 
     if (!ImGui_ImplOpenGL3_Init()) {
         ImGui_ImplGlfw_Shutdown();
-        ImGui::DestroyContext(context);
-        context = nullptr;
+        ImGui::DestroyContext(m_context);
+        m_context = nullptr;
 
         Util::Log::error("Failed to initialize ImGui OpenGL backend");
         return;
@@ -51,33 +51,33 @@ UIRenderer::UIRenderer(const Window& window) {
 }
 
 UIRenderer::~UIRenderer() {
-    if (!context)
+    if (!m_context)
         return;
 
-    ImGui::SetCurrentContext(context);
-    if (frameStarted)
+    ImGui::SetCurrentContext(m_context);
+    if (m_frameStarted)
         ImGui::EndFrame();
 
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext(context);
+    ImGui::DestroyContext(m_context);
 }
 
 UICaptureState UIRenderer::begin() {
-    if (!context)
+    if (!m_context)
         return {};
 
-    if (frameStarted) {
+    if (m_frameStarted) {
         Util::Log::warning("ImGui frame has already started");
         return {};
     }
 
-    ImGui::SetCurrentContext(context);
+    ImGui::SetCurrentContext(m_context);
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    frameStarted = true;
+    m_frameStarted = true;
     const ImGuiIO& io = ImGui::GetIO();
     return {
         .mouse = io.WantCaptureMouse,
@@ -262,12 +262,12 @@ void UIRenderer::renderElement(
 }
 
 void UIRenderer::renderRuntimeUI(std::vector<UIElement>& elements, const UIRenderMode mode) {
-    if (!frameStarted) {
+    if (!m_frameStarted) {
         Util::Log::warning("Cannot render runtime UI outside an ImGui frame");
         return;
     }
 
-    ImGui::SetCurrentContext(context);
+    ImGui::SetCurrentContext(m_context);
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
     if (!viewport || viewport->Size.y <= 0.0f)
         return;
@@ -290,10 +290,10 @@ void UIRenderer::renderRuntimeUI(std::vector<UIElement>& elements, const UIRende
 }
 
 void UIRenderer::renderEditorDockspace() const {
-    if (!frameStarted)
+    if (!m_frameStarted)
         return;
 
-    ImGui::SetCurrentContext(context);
+    ImGui::SetCurrentContext(m_context);
     ImGui::DockSpaceOverViewport(
         0,
         ImGui::GetMainViewport(),
@@ -302,12 +302,12 @@ void UIRenderer::renderEditorDockspace() const {
 }
 
 UICaptureState UIRenderer::end() {
-    if (!context || !frameStarted) {
+    if (!m_context || !m_frameStarted) {
         Util::Log::warning("Cannot end an ImGui frame that has not started");
         return {};
     }
 
-    ImGui::SetCurrentContext(context);
+    ImGui::SetCurrentContext(m_context);
     const ImGuiIO& io = ImGui::GetIO();
     const UICaptureState capture {
         .mouse = io.WantCaptureMouse,
@@ -316,6 +316,6 @@ UICaptureState UIRenderer::end() {
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    frameStarted = false;
+    m_frameStarted = false;
     return capture;
 }

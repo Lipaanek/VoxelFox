@@ -7,6 +7,7 @@ using ResourceID = unsigned int;
 struct ResourceLoadInfo {
     virtual ~ResourceLoadInfo() = default;
 };
+
 struct AssetRefs {};
 
 class Resource {

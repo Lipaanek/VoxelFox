@@ -16,9 +16,9 @@ struct Light {
 
 class SceneLights {
 private:
-    static constexpr int kMaxLights = 8;
-    std::array<Light, kMaxLights> sceneLights;
-    size_t count = 0;
+    static constexpr int m_kMaxLights = 8;
+    std::array<Light, m_kMaxLights> m_sceneLights;
+    size_t m_lightCount = 0;
 
 public:
     SceneLights() = default;

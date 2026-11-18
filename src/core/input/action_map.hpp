@@ -24,8 +24,8 @@ class ActionMap {
     using BindingMap = std::unordered_map<std::string, std::vector<Binding>>;
 
 private:
-    BindingMap editorBindings;
-    BindingMap runtimeBindings;
+    BindingMap m_editorBindings;
+    BindingMap m_runtimeBindings;
 
     BindingMap& bindingsFor(InputMapScope scope);
     const BindingMap& bindingsFor(InputMapScope scope) const;

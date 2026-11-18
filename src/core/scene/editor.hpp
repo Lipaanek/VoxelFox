@@ -11,10 +11,10 @@ class LuaScript;
 
 class Editor : public Environment {
 private:
-    std::vector<std::unique_ptr<LuaScript>> editorScripts;
-    ProjectFile projectFile;
-    ProjectFileHandler projectFileHandler;
-    std::filesystem::path activeProjectPath;
+    std::vector<std::unique_ptr<LuaScript>> m_editorScripts;
+    ProjectFile m_projectFile;
+    ProjectFileHandler m_projectFileHandler;
+    std::filesystem::path m_activeProjectPath;
 
 public:
     Editor(

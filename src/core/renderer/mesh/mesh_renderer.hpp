@@ -20,8 +20,8 @@ static_assert(sizeof(MeshRenderInstance) == sizeof(glm::mat4) + sizeof(glm::vec4
 
 class MeshRenderer {
 private:
-    Buffer instanceBuffer { BufferType::InstanceBuffer };
-    ShaderProgram program;
+    Buffer m_instanceBuffer { BufferType::InstanceBuffer };
+    ShaderProgram m_program;
 
 public:
     MeshRenderer();

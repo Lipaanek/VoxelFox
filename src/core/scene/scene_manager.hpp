@@ -8,12 +8,12 @@
 
 class SceneManager {
 private:
-    Window& window;
-    std::unique_ptr<Scene> currentScene = nullptr;
-    Renderer& renderer;
-    Camera& camera;
-    FrameDataCollector collector {};
-    bool firstSceneRun = false;
+    Window& m_window;
+    std::unique_ptr<Scene> m_currentScene = nullptr;
+    Renderer& m_renderer;
+    Camera& m_camera;
+    FrameDataCollector m_collector {};
+    bool m_firstSceneRun = false;
 
 public:
     explicit SceneManager(Window& window, Renderer& renderer, Camera& camera);

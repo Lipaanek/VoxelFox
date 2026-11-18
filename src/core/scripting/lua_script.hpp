@@ -10,10 +10,10 @@ namespace Util {
 
 class LuaScript {
 private:
-    LuaEngine& engine_;
-    class Node* attachedNode_ = nullptr;
-    Util::EventBus* eventBus_ = nullptr;
-    int environmentRef_ = LUA_NOREF;
+    LuaEngine& m_engine_;
+    class Node* m_attachedNode_ = nullptr;
+    Util::EventBus* m_eventBus_ = nullptr;
+    int m_environmentRef_ = LUA_NOREF;
 
     void releaseEnvironment();
     void callLifecycle(const char* name, float dt, bool passDelta) const;

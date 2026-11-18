@@ -1,5 +1,5 @@
 #include "renderer.hpp"
 
 void Renderer::render(const FrameRenderData &frd, Scene& scene) {
-    this->meshRenderer.render(frd, scene);
+    this->m_meshRenderer.render(frd, scene);
 }

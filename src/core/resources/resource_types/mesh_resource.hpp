@@ -20,11 +20,11 @@ struct MeshAssetRefs : AssetRefs {
 
 class MeshResource : public Resource {
 private:
-    VertexArray vao;
-    Buffer vbo { BufferType::ArrayBuffer };
-    Buffer ebo { BufferType::ElementBuffer };
+    VertexArray m_vao;
+    Buffer m_vbo { BufferType::ArrayBuffer };
+    Buffer m_ebo { BufferType::ElementBuffer };
 
-    Layout layout3D = {
+    Layout m_layout3D = {
         {
             { .location = 0, .size = 3, .type = GL_FLOAT, .offset = offsetof(Vertex, position)},
             { .location = 1, .size = 3, .type = GL_FLOAT, .offset = offsetof(Vertex, normal)},
@@ -33,7 +33,7 @@ private:
         }, sizeof(Vertex)
     };
 
-    GLsizei indexCount = 0;
+    GLsizei m_indexCount = 0;
 
 public:
     MeshResource() = default;
@@ -41,8 +41,8 @@ public:
     bool setup(const MeshData &data);
     bool loadFromFile(const ResourceLoadInfo& loadInfo) override;
 
-    Buffer& getVBO() { return vbo; }
-    Buffer& getEBO() { return ebo; }
-    VertexArray& getVAO() { return vao; }
-    [[nodiscard]] GLsizei getIndexCount() const { return indexCount; }
+    Buffer& getVBO() { return m_vbo; }
+    Buffer& getEBO() { return m_ebo; }
+    VertexArray& getVAO() { return m_vao; }
+    [[nodiscard]] GLsizei getIndexCount() const { return m_indexCount; }
 };

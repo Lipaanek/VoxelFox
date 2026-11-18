@@ -13,7 +13,7 @@ using EventData = std::unordered_map<std::string, EventValue>;
 struct Event {
     virtual ~Event() = default;
 
-    EventData data;
+    EventData m_data;
 };
 
 } // namespace Util

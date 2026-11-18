@@ -7,17 +7,17 @@
 #include <sstream>
 
 Shader::Shader(const std::string& path, ShaderType shaderType)
-    : path(path), shaderType(shaderType) {}
+    : m_path(path), m_shaderType(shaderType) {}
 
 GLuint Shader::compile() {
-    std::string src = Util::File::read(this->path);
+    std::string src = Util::File::read(this->m_path);
     if (src.empty()) {
         Util::Log::error("Source code of shader is empty.");
         return 0;
     }
 
     // Create shader object
-    GLuint shader = glCreateShader(toGL(this->shaderType));
+    GLuint shader = glCreateShader(toGL(this->m_shaderType));
     if (shader == 0) {
         Util::Log::error("Failed to create shader.");
         return 0;
@@ -43,7 +43,7 @@ GLuint Shader::compile() {
         return 0;
     }
 
-    this->id = shader;
+    this->m_id = shader;
 
     return shader;
 }

@@ -48,7 +48,7 @@ void LuaFlags::parse(const std::string& source) {
                 std::size_t flagEnd = pos;
                 while (flagEnd < body.size() && !isspace(static_cast<unsigned char>(body[flagEnd])))
                     ++flagEnd;
-                this->flags_.push_back(body.substr(pos, flagEnd - pos));
+                this->m_flags_.push_back(body.substr(pos, flagEnd - pos));
                 pos = flagEnd;
             }
         } else if (!isCommentOrBlank(trimmed)) {
@@ -62,14 +62,14 @@ void LuaFlags::parse(const std::string& source) {
 }
 
 void LuaFlags::clear() {
-    this->flags_.clear();
+    this->m_flags_.clear();
 }
 
 bool LuaFlags::has(const std::string& flag) const {
-    return std::find(this->flags_.begin(), this->flags_.end(), toLower(flag))
-        != this->flags_.end();
+    return std::find(this->m_flags_.begin(), this->m_flags_.end(), toLower(flag))
+        != this->m_flags_.end();
 }
 
 const std::vector<std::string>& LuaFlags::all() const {
-    return this->flags_;
+    return this->m_flags_;
 }

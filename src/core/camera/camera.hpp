@@ -4,12 +4,12 @@
 
 class Camera {
 private:
-    glm::vec3 position { 0.0f, 0.0f, 3.0f };
-    float yaw = -90.0f;
-    float pitch = 0.0f;
-    float fov = 45.0f;
-    float near = 0.1f;
-    float far = 100.0f;
+    glm::vec3 m_position { 0.0f, 0.0f, 3.0f };
+    float m_yaw = -90.0f;
+    float m_pitch = 0.0f;
+    float m_fov = 45.0f;
+    float m_near = 0.1f;
+    float m_far = 100.0f;
 
 public:
     Camera() = default;
